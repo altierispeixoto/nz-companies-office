@@ -23,6 +23,9 @@ def build_hetero_data(
     dir_edge_index: torch.LongTensor,
     share_edge_index: torch.LongTensor,
     device: torch.device,
+    x_industry: torch.Tensor | None = None,
+    n_industry: int = 0,
+    ind_edge_index: torch.LongTensor | None = None,
 ) -> HeteroData:
     """Construct a HeteroData graph from pre-computed features and edges.
 
@@ -42,6 +45,9 @@ def build_hetero_data(
         dir_edge_index: 2xE director->company edge index.
         share_edge_index: 2xE shareholder->company edge index.
         device: Target torch device.
+        x_industry: Industry feature matrix (N_ind x feat_dim) or None.
+        n_industry: Number of industry nodes.
+        ind_edge_index: 2xE company->industry edge index or None.
 
     Returns:
         Populated HeteroData object on the target device.
@@ -65,5 +71,11 @@ def build_hetero_data(
     data["company", "rev_directs", "director"].edge_index = dir_edge_index[[1, 0]]
     data["shareholder", "share", "company"].edge_index = share_edge_index
     data["company", "rev_share", "shareholder"].edge_index = share_edge_index[[1, 0]]
+
+    if x_industry is not None and ind_edge_index is not None:
+        data["industry"].x = x_industry
+        data["industry"].num_nodes = n_industry
+        data["company", "has_industry", "industry"].edge_index = ind_edge_index
+        data["industry", "rev_has_industry", "company"].edge_index = ind_edge_index[[1, 0]]
 
     return data.to(device)

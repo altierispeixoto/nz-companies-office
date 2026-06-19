@@ -26,8 +26,10 @@ class ExtractedGraph:
         share_names: Human-readable shareholder names.
         comp_statuses: Company status strings (e.g. "Registered").
         comp_types: Company entity type strings (e.g. "NZ Limited").
+        industry_codes: Industry classification codes (e.g. "A011101").
         dir_edge_index: 2xE director->company edge index.
         share_edge_index: 2xE shareholder->company edge index.
+        ind_edge_index: 2xE company->industry edge index.
 
     """
 
@@ -36,8 +38,10 @@ class ExtractedGraph:
     share_names: list[str]
     comp_statuses: list[str]
     comp_types: list[str]
+    industry_codes: list[str]
     dir_edge_index: torch.LongTensor
     share_edge_index: torch.LongTensor
+    ind_edge_index: torch.LongTensor
 
     @property
     def n_company(self) -> int:
@@ -53,6 +57,11 @@ class ExtractedGraph:
     def n_shareholder(self) -> int:
         """Number of shareholder nodes."""
         return len(self.share_names)
+
+    @property
+    def n_industry(self) -> int:
+        """Number of industry nodes."""
+        return len(self.industry_codes)
 
 
 class GraphExtractor:
@@ -123,8 +132,10 @@ class GraphExtractor:
                 "share_names": graph.share_names,
                 "comp_statuses": graph.comp_statuses,
                 "comp_types": graph.comp_types,
+                "industry_codes": graph.industry_codes,
                 "dir_edge_index": graph.dir_edge_index,
                 "share_edge_index": graph.share_edge_index,
+                "ind_edge_index": graph.ind_edge_index,
             },
             self.CACHE_PATH,
         )
@@ -154,14 +165,21 @@ class GraphExtractor:
             "share_names",
             [f"Shareholder {i}" for i in range(cached.get("n_shareholder", len(cached["comp_names"])))],
         )
+        industry_codes = cached.get("industry_codes", [])
+        ind_edge_index = cached.get(
+            "ind_edge_index",
+            torch.empty(2, 0, dtype=torch.long),
+        )
         return ExtractedGraph(
             comp_names=cached["comp_names"],
             dir_names=dir_names,
             share_names=share_names,
             comp_statuses=cached["comp_statuses"],
             comp_types=cached["comp_types"],
+            industry_codes=industry_codes,
             dir_edge_index=cached["dir_edge_index"],
             share_edge_index=cached["share_edge_index"],
+            ind_edge_index=ind_edge_index,
         )
 
     @staticmethod
@@ -183,6 +201,9 @@ class GraphExtractor:
         )
         director_records = _query("MATCH (d:Director) RETURN d.name AS id, d.name AS name")
         shareholder_records = _query("MATCH (s:Shareholder) RETURN s.name AS id, s.name AS name")
+        industry_records = _query(
+            "MATCH (ind:Industry) RETURN ind.code AS id, ind.code AS name, ind.description AS description",
+        )
 
         # --- fetch edge records -----------------------------------------------
         directs_raw = _query(
@@ -190,6 +211,9 @@ class GraphExtractor:
         )
         shares_raw = _query(
             "MATCH (s:Shareholder)-[:HOLDS_SHARES_IN]->(c:Company) RETURN s.name AS src, c.company_number AS dst",
+        )
+        industry_rels_raw = _query(
+            "MATCH (c:Company)-[:HAS_INDUSTRY]->(ind:Industry) RETURN c.company_number AS src, ind.code AS dst",
         )
         _driver.close()
 
@@ -199,6 +223,7 @@ class GraphExtractor:
         comp_types = [r["entity_type"] for r in company_records]
         dir_names = [r["name"] for r in director_records]
         share_names = [r["name"] for r in shareholder_records]
+        industry_codes = [r["id"] for r in industry_records]
 
         # --- build id → index maps --------------------------------------------
         _norm = self._normalise
@@ -206,6 +231,7 @@ class GraphExtractor:
         comp_index = {_norm(r["id"]): i for i, r in enumerate(company_records)}
         dir_index = {_norm(r["id"]): i for i, r in enumerate(director_records)}
         share_index = {_norm(r["id"]): i for i, r in enumerate(shareholder_records)}
+        ind_index = {_norm(r["id"]): i for i, r in enumerate(industry_records)}
 
         # --- construct edge_index tensors -------------------------------------
         def _valid(edge: dict, id_map: dict[str, int]) -> bool:
@@ -233,14 +259,30 @@ class GraphExtractor:
             else torch.empty(2, 0, dtype=torch.long)
         )
 
+        # --- construct industry edge_index tensor -----------------------------
+        ind_valid = [e for e in industry_rels_raw if _norm(e["src"]) in comp_index and _norm(e["dst"]) in ind_index]
+        ind_edge_index = (
+            torch.tensor(
+                [
+                    [comp_index[_norm(e["src"])] for e in ind_valid],
+                    [ind_index[_norm(e["dst"])] for e in ind_valid],
+                ],
+                dtype=torch.long,
+            )
+            if ind_valid
+            else torch.empty(2, 0, dtype=torch.long)
+        )
+
         return ExtractedGraph(
             comp_names=comp_names,
             dir_names=dir_names,
             share_names=share_names,
             comp_statuses=comp_statuses,
             comp_types=comp_types,
+            industry_codes=industry_codes,
             dir_edge_index=dir_edge_index,
             share_edge_index=share_edge_index,
+            ind_edge_index=ind_edge_index,
         )
 
 
@@ -272,12 +314,18 @@ def filter_removed_companies(graph: ExtractedGraph) -> ExtractedGraph:
     share_edge_index = graph.share_edge_index[:, share_mask].clone()
     share_edge_index[1] = old_to_new[share_edge_index[1]]
 
+    ind_mask = kept_mask[graph.ind_edge_index[0]]
+    ind_edge_index = graph.ind_edge_index[:, ind_mask].clone()
+    ind_edge_index[0] = old_to_new[ind_edge_index[0]]
+
     return ExtractedGraph(
         comp_names=[n for i, n in enumerate(graph.comp_names) if kept_mask[i]],
         dir_names=list(graph.dir_names),
         share_names=list(graph.share_names),
         comp_statuses=[s for i, s in enumerate(graph.comp_statuses) if kept_mask[i]],
         comp_types=[t for i, t in enumerate(graph.comp_types) if kept_mask[i]],
+        industry_codes=list(graph.industry_codes),
         dir_edge_index=dir_edge_index,
         share_edge_index=share_edge_index,
+        ind_edge_index=ind_edge_index,
     )

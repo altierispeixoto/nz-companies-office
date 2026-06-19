@@ -38,13 +38,15 @@ def _(mo, pathlib, torch):
         n_company_feats = _ckpt["n_company_feats"]
         n_director_feats = _ckpt["n_director_feats"]
         n_shareholder_feats = _ckpt["n_shareholder_feats"]
+        n_industry_feats = _ckpt.get("n_industry_feats", 0)
     else:
         mo.output.append(mo.md("\u26a0\ufe0f **No pipeline checkpoint**. Run the main training notebook first."))
         data = None
         n_company_feats = None
         n_director_feats = None
         n_shareholder_feats = None
-    return data, n_company_feats, n_director_feats, n_shareholder_feats
+        n_industry_feats = 0
+    return data, n_company_feats, n_director_feats, n_shareholder_feats, n_industry_feats
 
 
 @app.cell
@@ -55,13 +57,19 @@ def _(
     mo,
     n_company_feats,
     n_director_feats,
+    n_industry_feats,
     n_shareholder_feats,
     pathlib,
     torch,
 ):
     model_ckpt_path = pathlib.Path("data/processed/model_checkpoint.pt")
     if model_ckpt_path.exists() and data is not None:
-        model = LinkPredictor(n_director_feats, n_company_feats, n_shareholder_feats).to(device)
+        model = LinkPredictor(
+            n_director_feats,
+            n_company_feats,
+            n_shareholder_feats,
+            ind_feats=n_industry_feats,
+        ).to(device)
         model.load_state_dict(torch.load(model_ckpt_path, map_location=device, weights_only=True))
         model.eval()
 
@@ -201,7 +209,7 @@ def _(
                         mo.md("### Top predicted shareholders"),
                         mo.ui.table(_pred_rows, selection=None),
                     ]
-                )
+                ),
             ],
             gap=2,
         )
