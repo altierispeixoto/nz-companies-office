@@ -1,0 +1,295 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "8ddc0f5a07f519e9cfb757c836a739e8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "ed0217e151de323071cecfea07fc7eb1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"predicting-investor-types-with-graph-ml\">Predicting Investor Types with Graph ML</h1>\n<span class=\"paragraph\"><strong>Can a machine learning model distinguish a venture capital firm from a\nproperty investor from a professional trustee \u2014 using only the <em>pattern</em>\nof their co-investments?</strong></span>\n<span class=\"paragraph\">We have 16 hand-labeled seed entities across 4 classes:</span>\n<table>\n<thead>\n<tr>\n<th>Class</th>\n<th>Label</th>\n<th>Examples</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Venture Capital</td>\n<td><code>VC</code></td>\n<td>ICEHOUSE VENTURES NOMINEES, ASPIRE NZ SEED FUND, K ONE W ONE, ANGEL HQ</td>\n</tr>\n<tr>\n<td>Property</td>\n<td><code>PROPERTY</code></td>\n<td>Himanshu MITTAL, Abhinav GUPTA, Shivali DUTTA, Bunleng CHHUN</td>\n</tr>\n<tr>\n<td>Trustee</td>\n<td><code>TRUSTEE</code></td>\n<td>Benedict SHEEHAN, Jason TAYLOR, Rebecca DICKIE</td>\n</tr>\n<tr>\n<td>Accounting</td>\n<td><code>ACCOUNTING</code></td>\n<td>David BRISCOE, Hamish WALKER, Alysha HINTON, Kate MITCHELL</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">We classify all 9,257 shareholders in the co-investment graph using:</span>\n<ul>\n<li><strong>Node2Vec embeddings</strong> (32-dim, graph structure)</li>\n<li><strong>Node features</strong> (company count, co-investor count, PageRank)</li>\n<li><strong>Combined</strong> (weighted 0.7 embedding + 0.3 features)</li>\n<li><strong>FastRP + features</strong> (best performing configuration)</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "1af4b3e5e0dcba8748f9c3b70f690fe3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "37f8d9dda43536cb504e491bea5aea0a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-set-seed-labels\">1. Set Seed Labels</h2>\n<span class=\"paragraph\">First we write the ground-truth labels as a temporary property on the\n16 seed shareholders.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "caf11ea1a5e6870e4b6bd32c090387fa",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "b5ea3637b11164ef6b96285645b63ebe",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-embedding-only-knn-classification-node2vec\">2. Embedding-Only kNN Classification (Node2Vec)</h2>\n<span class=\"paragraph\">For each unlabeled shareholder, we compute the average cosine similarity\nto seeds in each class, then predict the class with highest average\nsimilarity.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "f23efadfb3ed0dbd3ed314ab1ae97180",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='Xref-0' random-id='724ba39d-432d-9900-92e7-67d2ca0ffbbf'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;class&#92;&quot;:&#92;&quot;ACCOUNTING&#92;&quot;,&#92;&quot;count&#92;&quot;:8808},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;class&#92;&quot;:&#92;&quot;PROPERTY&#92;&quot;,&#92;&quot;count&#92;&quot;:421},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;class&#92;&quot;:&#92;&quot;TRUSTEE&#92;&quot;,&#92;&quot;count&#92;&quot;:20},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;class&#92;&quot;:&#92;&quot;VC&#92;&quot;,&#92;&quot;count&#92;&quot;:10}]&quot;' data-total-rows='4' data-total-columns='2' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;class&quot;,[&quot;string&quot;,&quot;str&quot;]],[&quot;count&quot;,[&quot;integer&quot;,&quot;i64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "852604290c516e6f21a29a7fb7fdfd4c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Node2Vec embeddings alone produce a distribution dominated by one class.</strong>\nThis is expected \u2014 the embeddings capture co-investment <em>structure</em>, but\nthey don't capture <em>scale</em>. A VC with 30 portfolio companies looks\nstructurally similar to a trustee with 50 companies. We need node features\nto distinguish them.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "35009a354cf2d6d420415a002e485ff2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-combined-classification-embeddings-features\">3. Combined Classification (Embeddings + Features)</h2>\n<span class=\"paragraph\">We add 3 node features normalized to [0, 1]:</span>\n<ul>\n<li><strong>company_count</strong>: number of companies the shareholder invests in\n  (max: 659)</li>\n<li><strong>co_investor_count</strong>: number of co-investment partners (max: 62)</li>\n<li><strong>page_rank</strong>: PageRank score (max: 10.66)</li>\n</ul>\n<span class=\"paragraph\">Combined score = 0.7 \u00d7 embedding_similarity + 0.3 \u00d7 (1 \u2212 feature_distance / \u221a3)</span>\n<span class=\"paragraph\">The \u03b1=0.7 weighting favors structural similarity but uses features\nfor tie-breaking.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "30347c9fb971dc69f30ed2c4018bbc73",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "4ec11dd69ab3343d5f3ef08ca659624e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='Kclp-0' random-id='70ae2a2e-64a8-2d7a-2aab-eb2d7ab0c40a'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;class&#92;&quot;:&#92;&quot;ACCOUNTING&#92;&quot;,&#92;&quot;count&#92;&quot;:8633},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;class&#92;&quot;:&#92;&quot;PROPERTY&#92;&quot;,&#92;&quot;count&#92;&quot;:599},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;class&#92;&quot;:&#92;&quot;VC&#92;&quot;,&#92;&quot;count&#92;&quot;:21},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;class&#92;&quot;:&#92;&quot;TRUSTEE&#92;&quot;,&#92;&quot;count&#92;&quot;:6}]&quot;' data-total-rows='4' data-total-columns='2' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;class&quot;,[&quot;string&quot;,&quot;str&quot;]],[&quot;count&quot;,[&quot;integer&quot;,&quot;i64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "646993a969daa79d813f58db4e5728af",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-fastrp-features-best-performing\">4. FastRP + Features (Best Performing)</h2>\n<span class=\"paragraph\">FastRP (Fast Random Projection) tends to produce better embeddings for\nthis sparse, fragmented graph because it's more deterministic at low\ndimensionalities. The combination with features at \u03b1=0.7 produces the\nmost balanced distribution, which we store as <code>best_label</code>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "963de1211cd8faf00988ba854c1d3dfb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='Hstk-0' random-id='82881d1c-3ba5-3088-d626-f4fd05f877a0'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;class&#92;&quot;:&#92;&quot;ACCOUNTING&#92;&quot;,&#92;&quot;count&#92;&quot;:2550},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;class&#92;&quot;:&#92;&quot;PROPERTY&#92;&quot;,&#92;&quot;count&#92;&quot;:2422},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;class&#92;&quot;:&#92;&quot;VC&#92;&quot;,&#92;&quot;count&#92;&quot;:2401},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;class&#92;&quot;:&#92;&quot;TRUSTEE&#92;&quot;,&#92;&quot;count&#92;&quot;:1886}]&quot;' data-total-rows='4' data-total-columns='2' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;class&quot;,[&quot;string&quot;,&quot;str&quot;]],[&quot;count&quot;,[&quot;integer&quot;,&quot;i64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "e7021c913daa4c15e3bb50e0bfc7efb5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"set-best-label\">Set Best Label</h3></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "8a898755e59fa5d03d275e42dde53078",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='iLit-0' random-id='7cc60107-c62a-92d5-8a0a-2b4cb43705fe'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;class&#92;&quot;:&#92;&quot;ACCOUNTING&#92;&quot;,&#92;&quot;count&#92;&quot;:2550,&#92;&quot;pct&#92;&quot;:27.5},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;class&#92;&quot;:&#92;&quot;PROPERTY&#92;&quot;,&#92;&quot;count&#92;&quot;:2422,&#92;&quot;pct&#92;&quot;:26.2},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;class&#92;&quot;:&#92;&quot;VC&#92;&quot;,&#92;&quot;count&#92;&quot;:2401,&#92;&quot;pct&#92;&quot;:25.9},{&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;class&#92;&quot;:&#92;&quot;TRUSTEE&#92;&quot;,&#92;&quot;count&#92;&quot;:1886,&#92;&quot;pct&#92;&quot;:20.4}]&quot;' data-total-rows='4' data-total-columns='3' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;class&quot;,[&quot;string&quot;,&quot;str&quot;]],[&quot;count&quot;,[&quot;integer&quot;,&quot;i64&quot;]],[&quot;pct&quot;,[&quot;number&quot;,&quot;f64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "93bd3b96e9aee755c23e4a27144fb05b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5-compare-methods-for-test-entities\">5. Compare Methods for Test Entities</h2>\n<span class=\"paragraph\">How do the different methods classify specific known entities?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "ed564ce404ff5b5b78560d404cc576c2",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "could not append value: 2 of type: i64 to the builder; make sure that all rows have the same schema or consider increasing `infer_schema_length`\n\nit might also be that a value overflows the data-type's capacity",
+          "traceback": null
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_1096609/__marimo__cell_ROlb_.py&quot;</span>, line <span class=\"m\">1</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"n\">nh</span><span class=\"o\">.</span><span class=\"n\">mo_table</span><span class=\"p\">(</span>\n  File <span class=\"nb\">&quot;/home/alt/work/projects/nz-companies-office/notebooks/_neo4j_helpers.py&quot;</span>, line <span class=\"m\">35</span>, in <span class=\"n\">mo_table</span>\n<span class=\"w\">    </span><span class=\"n\">df</span> <span class=\"o\">=</span> <span class=\"n\">run_query</span><span class=\"p\">(</span><span class=\"n\">q</span><span class=\"p\">)</span>\n<span class=\"w\">         </span><span class=\"pm\">^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/alt/work/projects/nz-companies-office/notebooks/_neo4j_helpers.py&quot;</span>, line <span class=\"m\">31</span>, in <span class=\"n\">run_query</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"n\">pl</span><span class=\"o\">.</span><span class=\"n\">DataFrame</span><span class=\"p\">(</span><span class=\"n\">records</span><span class=\"p\">)</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/alt/work/projects/nz-companies-office/.venv/lib/python3.12/site-packages/polars/dataframe/frame.py&quot;</span>, line <span class=\"m\">412</span>, in <span class=\"n\">__init__</span>\n<span class=\"w\">    </span><span class=\"bp\">self</span><span class=\"o\">.</span><span class=\"n\">_df</span> <span class=\"o\">=</span> <span class=\"n\">sequence_to_pydf</span><span class=\"p\">(</span>\n<span class=\"w\">               </span><span class=\"pm\">^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/alt/work/projects/nz-companies-office/.venv/lib/python3.12/site-packages/polars/_utils/construction/dataframe.py&quot;</span>, line <span class=\"m\">463</span>, in <span class=\"n\">sequence_to_pydf</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"n\">_sequence_to_pydf_dispatcher</span><span class=\"p\">(</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/alt/.local/share/uv/python/cpython-3.12.7-linux-x86_64-gnu/lib/python3.12/functools.py&quot;</span>, line <span class=\"m\">907</span>, in <span class=\"n\">wrapper</span>\n<span class=\"w\">    </span><span class=\"k\">return</span> <span class=\"n\">dispatch</span><span class=\"p\">(</span><span class=\"n\">args</span><span class=\"p\">[</span><span class=\"mi\">0</span><span class=\"p\">]</span><span class=\"o\">.</span><span class=\"vm\">__class__</span><span class=\"p\">)(</span><span class=\"o\">*</span><span class=\"n\">args</span><span class=\"p\">,</span> <span class=\"o\">**</span><span class=\"n\">kw</span><span class=\"p\">)</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^</span>\n  File <span class=\"nb\">&quot;/home/alt/work/projects/nz-companies-office/.venv/lib/python3.12/site-packages/polars/_utils/construction/dataframe.py&quot;</span>, line <span class=\"m\">719</span>, in <span class=\"n\">_sequence_of_dict_to_pydf</span>\n<span class=\"w\">    </span><span class=\"n\">pydf</span> <span class=\"o\">=</span> <span class=\"n\">PyDataFrame</span><span class=\"o\">.</span><span class=\"n\">from_dicts</span><span class=\"p\">(</span>\n<span class=\"w\">           </span><span class=\"pm\">^^^^^^^^^^^^^^^^^^^^^^^</span>\n<span class=\"gr\">polars.exceptions.ComputeError</span>: <span class=\"n\">could not append value: 2 of type: i64 to the builder; make sure that all rows have the same schema or consider increasing `infer_schema_length`</span>\n\n<span class=\"x\">it might also be that a value overflows the data-type&#39;s capacity</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "7a67239bce737032678194c50fc33c4c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><table>\n<thead>\n<tr>\n<th>Entity</th>\n<th>Expected</th>\n<th>Embeddings only</th>\n<th>Combined (N2V+feat)</th>\n<th>FastRP+feat (best)</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>K ONE W ONE (NO 6)</td>\n<td>VC</td>\n<td>\u2014</td>\n<td>\u2014</td>\n<td>\u2014</td>\n</tr>\n<tr>\n<td>SNOWBALL NOMINEES</td>\n<td>VC</td>\n<td>\u2014</td>\n<td>\u2014</td>\n<td>\u2014</td>\n</tr>\n<tr>\n<td>BAILEY INGHAM TRUSTEES</td>\n<td>TRUSTEE</td>\n<td>\u2014</td>\n<td>\u2014</td>\n<td>\u2014</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">The classification is sensitive to seed selection. With only 16 seeds, the\nmodel can't distinguish subtle differences \u2014 e.g., a nominee for a VC firm\nvs. a professional trustee firm. More diverse labels would improve accuracy.</span>\n<h3 id=\"nearest-labeled-seeds-for-a-specific-entity\">Nearest labeled seeds for a specific entity</h3></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "0a07c285ce1f73399cdd666adc154f28",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "5479ab25d535b175a03b32086a8ea778",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"clean-up-temporary-label-property\">Clean up temporary label property</h3></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "6e1ed7cfb8ac72b923d78547691a5c64",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='DnEU-0' random-id='d1381a9c-fc53-79ac-8d48-9aeefad6d528'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[]&quot;' data-total-rows='0' data-total-columns='0' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "c171e4aac4c75225236383a045c043b2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"key-takeaways\">Key Takeaways</h2>\n<ol>\n<li><strong>Embeddings alone are insufficient</strong> \u2014 Node2Vec kNN predicts mostly\n   one class because structural similarity doesn't capture <em>scale</em>.</li>\n<li><strong>Features are essential</strong> \u2014 company count, co-investor count, and\n   PageRank normalize across 3 orders of magnitude and break the\n   symmetry between a small VC and a large trustee.</li>\n<li><strong>FastRP + features at \u03b1=0.7</strong> produces the most balanced\n   distribution \u2014 the current <code>best_label</code> configuration.</li>\n<li><strong>Seed count (16) is the limiting factor</strong> \u2014 the model would\n   benefit from 50\u2013100 labeled examples per class, especially for\n   fine-grained distinctions (e.g., angel investor vs. VC vs. family\n   office).</li>\n</ol>\n<h2 id=\"where-to-next\">Where to Next?</h2>\n<ul>\n<li><strong>Address overlap</strong> as a second verification signal for entity\n  resolution</li>\n<li><strong>Multi-threshold co-investment graph</strong> (\u22652 shared companies) for\n  a denser, more connected network</li>\n<li><strong>Supervised node classification</strong> with GDS\n  <code>gds.nodeClassification</code> when more labeled data is available</li>\n<li><strong>Industry diversification</strong> as a nominee detection feature</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

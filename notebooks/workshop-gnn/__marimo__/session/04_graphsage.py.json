@@ -1,0 +1,152 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "ea034d919255118723902d2521ddaea4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "6d88cdd1fd4e4ddd13630f8baef61376",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-4-graphsage-inductive-learning\">GNN Workshop 4: GraphSAGE &amp; Inductive Learning</h1>\n<h2 id=\"the-problem-with-gcn-and-gat\">The Problem with GCN and GAT</h2>\n<span class=\"paragraph\">GCN and GAT are <strong>transductive</strong> \u2014 they need the <strong>entire graph</strong> during training. If a new node appears after training, you'd need to retrain the model.</span>\n<span class=\"paragraph\"><strong>GraphSAGE</strong> (Hamilton, Ying, Leskovec, 2017) solves this by learning an <strong>aggregator function</strong> that can generalize to unseen nodes.</span>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>GCN / GAT</th>\n<th>GraphSAGE</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Learning</strong></td>\n<td>Transductive</td>\n<td>Inductive</td>\n</tr>\n<tr>\n<td><strong>New nodes</strong></td>\n<td>Needs retraining</td>\n<td>Zero-shot generalization</td>\n</tr>\n<tr>\n<td><strong>Scalability</strong></td>\n<td>Full graph needed</td>\n<td>Mini-batch training</td>\n</tr>\n<tr>\n<td><strong>Sampling</strong></td>\n<td>No</td>\n<td>Yes (neighborhood sampling)</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "df90334faafd4275c53b840ac6baa16b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "ca7546ad7c6e85f0e401fdea1326d037",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "8210761b6bf3733ce6f5b243bc51af81",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  50/200 | Loss: 0.0054 | Train Acc: 1.000 | Val Acc: 0.724</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 100/200 | Loss: 0.0047 | Train Acc: 1.000 | Val Acc: 0.738</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 150/200 | Loss: 0.0032 | Train Acc: 1.000 | Val Acc: 0.746</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 200/200 | Loss: 0.0044 | Train Acc: 1.000 | Val Acc: 0.748</span></span></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "444ea5a60bd35e7e1c90b5f00d6b8547",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"how-graphsage-works\">How GraphSAGE Works</h2>\n<span class=\"paragraph\">GraphSAGE learns a function that <strong>aggregates features from a sampled neighborhood</strong>:</span>\n<marimo-tex class=\"arithmatex\">||[h_v^{(k+1)} = \\sigma\\left(W^{(k)} \\cdot \\left[h_v^{(k)} \\Big\\Vert \\text{AGG}\\left(\\{h_u^{(k)},\n\\forall u \\in N_{\\text{sampled}}(v)\\}\n\\right)\n\\right]\n\\right)||]</marimo-tex><h3 id=\"three-aggregator-options\">Three Aggregator Options:</h3>\n<ol>\n<li><strong>Mean aggregator</strong>: Average of neighbor features (like GCN)</li>\n<li><strong>Pooling aggregator</strong>: Element-wise max/mean after an MLP</li>\n<li><strong>LSTM aggregator</strong>: Apply LSTM to a random permutation of neighbors</li>\n</ol>\n<h3 id=\"neighborhood-sampling\">Neighborhood Sampling</h3>\n<span class=\"paragraph\">Instead of using all neighbors (which could be millions), GraphSAGE <strong>samples a fixed number</strong> (e.g., 10, 25) of neighbors at each layer. This makes it <strong>scalable to billion-node graphs</strong>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "165aa685194b8ea9b42ae2e74bf8a2eb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"inductive-vs-transductive-a-visual-analogy\">Inductive vs Transductive: A Visual Analogy</h2>\n<span class=\"paragraph\"><strong>Transductive (GCN)</strong>: You see the entire puzzle and learn to label each piece. If new pieces are added, you start over.</span>\n<span class=\"paragraph\"><strong>Inductive (GraphSAGE)</strong>: You learn what makes a piece a \"corner\", \"edge\", or \"center\" based on its local pattern. When new pieces appear, you can classify them immediately.</span>\n<span class=\"paragraph\">GraphSAGE learns <strong>structural patterns</strong> that generalize across the graph, not just specific node IDs.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "bfa79fbf5963f7aa6489e3b0e5b84c7e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-magic-of-inductive-learning\">The Magic of Inductive Learning</h2>\n<span class=\"paragraph\">Let's demonstrate inductive capability: we'll train GraphSAGE on a <strong>subset of nodes</strong> and evaluate on <strong>completely held-out nodes</strong>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "7a62491802fc3ad4b9a6539e9a3f902a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Inductive Learning Results:</strong></span>\n<ul>\n<li><strong>Train accuracy</strong> (seen nodes): 100.00%</li>\n<li><strong>Validation accuracy</strong> (unseen during training): 87.00%</li>\n<li><strong>Test accuracy</strong> (completely held-out): 88.18%</li>\n</ul>\n<span class=\"paragraph\">GraphSAGE can classify <strong>unseen nodes</strong> without retraining! It learned <strong>structural patterns</strong> (how nodes connect) rather than memorizing node identities.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "c850ef47e52f05487d150cc23a82d9fe",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"scaling-to-large-graphs-mini-batch-training\">Scaling to Large Graphs: Mini-Batch Training</h2>\n<span class=\"paragraph\">For graphs with millions of nodes, we can't fit the full graph in memory. GraphSAGE supports <strong>mini-batch training</strong> with neighborhood sampling.</span>\n<div class=\"language-teratermmacro codehilite\"><pre><span></span><code><span class=\"k\">For</span><span class=\"w\"> </span><span class=\"nv\">each</span><span class=\"w\"> </span><span class=\"nv\">mini</span><span class=\"o\">-</span><span class=\"nv\">batch</span><span class=\"w\"> </span><span class=\"nv\">of</span><span class=\"w\"> </span><span class=\"nv\">target</span><span class=\"w\"> </span><span class=\"nv\">nodes</span>:\n\n<span class=\"w\">    </span><span class=\"mi\">1</span>.<span class=\"w\"> </span><span class=\"nv\">Sample</span><span class=\"w\"> </span><span class=\"nv\">K1</span><span class=\"w\"> </span><span class=\"nv\">neighbors</span><span class=\"w\"> </span><span class=\"k\">for</span><span class=\"w\"> </span><span class=\"nv\">each</span><span class=\"w\"> </span><span class=\"nv\">target</span><span class=\"w\"> </span><span class=\"nv\">node</span>\n\n<span class=\"w\">    </span><span class=\"mi\">2</span>.<span class=\"w\"> </span><span class=\"nv\">Sample</span><span class=\"w\"> </span><span class=\"nv\">K2</span><span class=\"w\"> </span><span class=\"nv\">neighbors</span><span class=\"w\"> </span><span class=\"k\">for</span><span class=\"w\"> </span><span class=\"nv\">each</span><span class=\"w\"> </span><span class=\"nv\">of</span><span class=\"w\"> </span><span class=\"nv\">those</span><span class=\"w\"> </span><span class=\"nv\">neighbors</span>\n\n<span class=\"w\">    </span><span class=\"mi\">3</span>.<span class=\"w\"> </span><span class=\"nv\">Build</span><span class=\"w\"> </span><span class=\"nv\">a</span><span class=\"w\"> </span><span class=\"nv\">computational</span><span class=\"w\"> </span><span class=\"nv\">graph</span><span class=\"w\"> </span><span class=\"nv\">of</span><span class=\"w\"> </span><span class=\"nv\">the</span><span class=\"w\"> </span><span class=\"nv\">sampled</span><span class=\"w\"> </span><span class=\"nv\">neighborhood</span>\n\n<span class=\"w\">    </span><span class=\"mi\">4</span>.<span class=\"w\"> </span><span class=\"nv\">Forward</span><span class=\"o\">/</span><span class=\"nv\">backward</span><span class=\"w\"> </span><span class=\"nv\">pass</span><span class=\"w\"> </span><span class=\"nv\">on</span><span class=\"w\"> </span><span class=\"nv\">this</span><span class=\"w\"> </span><span class=\"nv\">subgraph</span>\n</code></pre></div>\n<span class=\"paragraph\">This is handled by PyTorch Geometric's <code>NeighborLoader</code>:</span>\n<div class=\"language-python codehilite\"><pre><span></span><code><span class=\"kn\">from</span><span class=\"w\"> </span><span class=\"nn\">torch_geometric.loader</span><span class=\"w\"> </span><span class=\"kn\">import</span> <span class=\"n\">NeighborLoader</span>\n\n<span class=\"n\">train_loader</span> <span class=\"o\">=</span> <span class=\"n\">NeighborLoader</span><span class=\"p\">(</span>\n    <span class=\"n\">data</span><span class=\"p\">,</span>\n    <span class=\"n\">num_neighbors</span><span class=\"o\">=</span><span class=\"p\">[</span><span class=\"mi\">25</span><span class=\"p\">,</span> <span class=\"mi\">10</span><span class=\"p\">],</span>  <span class=\"c1\"># Sample 25 neighbors at layer 1, 10 at layer 2</span>\n    <span class=\"n\">batch_size</span><span class=\"o\">=</span><span class=\"mi\">256</span><span class=\"p\">,</span>\n    <span class=\"n\">input_nodes</span><span class=\"o\">=</span><span class=\"n\">data</span><span class=\"o\">.</span><span class=\"n\">train_mask</span><span class=\"p\">,</span>\n<span class=\"p\">)</span>\n</code></pre></div></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "f8dc8d13692903accacc37d0f8fd8065",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"comparing-all-three-architectures\">Comparing All Three Architectures</h2>\n<table>\n<thead>\n<tr>\n<th>Aspect</th>\n<th>GCN</th>\n<th>GAT</th>\n<th>GraphSAGE</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Neighbor weighting</strong></td>\n<td>Equal (degree norm)</td>\n<td>Learned (attention)</td>\n<td>Equal or learned</td>\n</tr>\n<tr>\n<td><strong>Inductive</strong></td>\n<td>\u274c Transductive</td>\n<td>\u2705 Inductive</td>\n<td>\u2705 Inductive</td>\n</tr>\n<tr>\n<td><strong>Scalability</strong></td>\n<td>Full graph</td>\n<td>Full graph</td>\n<td>Mini-batch + sampling</td>\n</tr>\n<tr>\n<td><strong>Key advantage</strong></td>\n<td>Simple, effective</td>\n<td>Interpretable, adaptive</td>\n<td>Scales to billion nodes</td>\n</tr>\n<tr>\n<td><strong>Year</strong></td>\n<td>2017</td>\n<td>2018</td>\n<td>2017</td>\n</tr>\n</tbody>\n</table>\n<h3 id=\"when-to-use-what\">When to Use What?</h3>\n<ul>\n<li><strong>Small graphs (&lt;10K nodes)</strong>: GCN or GAT</li>\n<li><strong>Need interpretability</strong>: GAT (attention weights)</li>\n<li><strong>Large graphs (&gt;100K nodes)</strong>: GraphSAGE with sampling</li>\n<li><strong>New nodes appear over time</strong>: GraphSAGE (inductive)</li>\n</ul>\n<h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>GraphSAGE</strong> enables <strong>inductive learning</strong> \u2014 it generalizes to unseen nodes\n\u2705 <strong>Neighborhood sampling</strong> makes GNNs scalable to billion-node graphs\n\u2705 GraphSAGE learns <strong>aggregator functions</strong>, not node-specific embeddings\n\u2705 Multiple aggregation options: mean, pooling, LSTM\n\u2705 Built with <code>SAGEConv</code> in PyTorch Geometric</span>\n<span class=\"paragraph\"><strong>Next up:</strong> Graph Classification &amp; Pooling \u2014 tasks at the graph level!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

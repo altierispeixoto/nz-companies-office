@@ -1,0 +1,157 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "7cc4bbb7e39f4647bf0b50ff678e3015",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "63d10c498c6413b1db000d649310ec78",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"graph-representation-visualization\">Graph Representation &amp; Visualization</h1>\n<span class=\"paragraph\">In the previous notebook, we learned <em>what</em> a graph is. Now let's understand <em>how</em> graphs are stored in a computer and explore different ways to visualize them.</span>\n<h2 id=\"why-does-representation-matter\">Why Does Representation Matter?</h2>\n<span class=\"paragraph\">The way we store a graph affects:</span>\n<ul>\n<li><strong>Memory usage</strong> \u2014 how much RAM we need</li>\n<li><strong>Speed</strong> \u2014 how fast we can traverse or query the graph</li>\n<li><strong>Algorithm choice</strong> \u2014 some algorithms work better with certain representations</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "471e79f0b14ac8f873690de6d3cf7cb2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-three-main-representations\">The Three Main Representations</h2>\n<h3 id=\"1-edge-list\">1. Edge List</h3>\n<span class=\"paragraph\">The simplest format: just list all edges as pairs <code>(u, v)</code>.</span>\n<div class=\"language-text codehilite\"><pre><span></span><code>[(Alice, Bob), (Alice, Charlie), (Bob, Charlie), (Charlie, Diana)]\n</code></pre></div>\n<span class=\"paragraph\">\u2705 Simple and space-efficient for sparse graphs\n\u274c Slow to check if two nodes are connected (<marimo-tex class=\"arithmatex\">||(\\mathcal{O}(|E|)||)</marimo-tex>)</span>\n<h3 id=\"2-adjacency-list\">2. Adjacency List</h3>\n<span class=\"paragraph\">For each node, store a list of its neighbors.</span>\n<div class=\"language-tsql codehilite\"><pre><span></span><code><span class=\"nl\">Alice</span><span class=\"p\">:</span><span class=\"w\">   </span><span class=\"o\">[</span><span class=\"n\">Bob, Charlie</span><span class=\"o\">]</span>\n<span class=\"nl\">Bob</span><span class=\"p\">:</span><span class=\"w\">     </span><span class=\"o\">[</span><span class=\"n\">Alice, Charlie</span><span class=\"o\">]</span>\n<span class=\"nl\">Charlie</span><span class=\"p\">:</span><span class=\"w\"> </span><span class=\"o\">[</span><span class=\"n\">Alice, Bob, Diana</span><span class=\"o\">]</span>\n<span class=\"nl\">Diana</span><span class=\"p\">:</span><span class=\"w\">   </span><span class=\"o\">[</span><span class=\"n\">Charlie</span><span class=\"o\">]</span>\n</code></pre></div>\n<span class=\"paragraph\">\u2705 Fast to find neighbors (<marimo-tex class=\"arithmatex\">||(\\mathcal{O}(1)||)</marimo-tex> per neighbor)\n\u2705 Space-efficient for sparse graphs\n\u2705 Most commonly used in practice</span>\n<h3 id=\"3-adjacency-matrix\">3. Adjacency Matrix</h3>\n<span class=\"paragraph\">An <marimo-tex class=\"arithmatex\">||(n  imes n||)</marimo-tex> matrix where entry <marimo-tex class=\"arithmatex\">||(A_{ij} = 1||)</marimo-tex> if there's an edge from <marimo-tex class=\"arithmatex\">||(i||)</marimo-tex> to <marimo-tex class=\"arithmatex\">||(j||)</marimo-tex>.</span>\n<div class=\"language-text codehilite\"><pre><span></span><code>    Alice Bob Charlie Diana\nAlice  0    1     1      0\nBob    1    0     1      0\nCharlie 1   1     0      1\nDiana  0    0     1      0\n</code></pre></div>\n<span class=\"paragraph\">\u2705 Fast to check if any two nodes are connected (<marimo-tex class=\"arithmatex\">||(\\mathcal{O}(1)||)</marimo-tex>)\n\u274c Uses <marimo-tex class=\"arithmatex\">||(\\mathcal{O}(n^2)||)</marimo-tex> memory \u2014 impractical for large graphs</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "b02e713bdec2667f3704865a0e2cc527",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"lets-compare-zacharys-karate-club\">Let's Compare: Zachary's Karate Club</h2>\n<span class=\"paragraph\">We'll use a famous real-world graph: <strong>Zachary's Karate Club</strong>. It represents friendships between 34 members of a university karate club.</span>\n<table>\n<thead>\n<tr>\n<th>Metric</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Nodes</td>\n<td>34</td>\n</tr>\n<tr>\n<td>Edges</td>\n<td>78</td>\n</tr>\n<tr>\n<td>Adj. Matrix Size</td>\n<td>34 \u00d7 34 = 1156 entries</td>\n</tr>\n<tr>\n<td>Non-zero entries</td>\n<td>462 (only 40.0% filled)</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">Notice how <strong>sparse</strong> the adjacency matrix is! That's why adjacency lists are usually preferred.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "53473d965936ae540384b0ff052e34b2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "0545b9b4b712464cb7e6bbdde765e520",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"interactive-building-graphs-programmatically\">Interactive: Building Graphs Programmatically</h2>\n<span class=\"paragraph\">Let's explore different graph models and see how they look:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "e2e4ff862c32bf0559701a7d9b3cb21e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='Xref-0' random-id='d388d671-1a52-463c-0f56-45db7b9ad092'><marimo-dropdown data-initial-value='[&quot;Erdos-Renyi (Random)&quot;]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eChoose a graph model:&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-options='[&quot;Erdos-Renyi (Random)&quot;,&quot;Barabasi-Albert (Preferential Attachment)&quot;,&quot;Watts-Strogatz (Small World)&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false' data-disabled='false'></marimo-dropdown></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "74ae1f1e693c8cf53c50c016baff1df0",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "8350f7a89b7be17c92e9da2994b9104e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"understanding-graph-models\">Understanding Graph Models</h2>\n<span class=\"paragraph\">Each model captures different properties of real-world networks:</span>\n<h3 id=\"erdos-renyi-random\">\ud83c\udfb2 Erdos-Renyi (Random)</h3>\n<span class=\"paragraph\">Every pair of nodes has probability <marimo-tex class=\"arithmatex\">||(p||)</marimo-tex> of being connected.</span>\n<ul>\n<li><strong>Degree distribution</strong>: Poisson (bell-shaped) \u2014 most nodes have similar degree</li>\n<li><strong>Realism</strong>: Low \u2014 real networks aren't this random</li>\n</ul>\n<h3 id=\"barabasi-albert-preferential-attachment\">\ud83c\udf1f Barabasi-Albert (Preferential Attachment)</h3>\n<span class=\"paragraph\">New nodes are more likely to connect to already well-connected nodes (\"the rich get richer\").</span>\n<ul>\n<li><strong>Degree distribution</strong>: Power law \u2014 few hubs, many low-degree nodes</li>\n<li><strong>Realism</strong>: High \u2014 the internet, social networks, and citation networks follow this pattern</li>\n</ul>\n<h3 id=\"watts-strogatz-small-world\">\ud83d\udd17 Watts-Strogatz (Small World)</h3>\n<span class=\"paragraph\">Start with a regular ring lattice, then randomly rewire some edges.</span>\n<ul>\n<li><strong>Key property</strong>: High clustering (my friends know each other) + short paths (six degrees of separation)</li>\n<li><strong>Realism</strong>: High \u2014 social networks exhibit this \"small world\" phenomenon</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "f10c0a7b8d15a11249f122be353c24a2",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'k' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "eec0cf666f297c54a0695d2cf780c73d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"advanced-visualization-graph-layouts\">Advanced Visualization: Graph Layouts</h2>\n<span class=\"paragraph\">How we position nodes visually matters a lot. Different layout algorithms reveal different structures:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "c6040d529cc28a5d4fce3aaaf9505494",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "d6fc82e77efb61b332e623d652dcfd7c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 Graphs can be stored as edge lists, adjacency lists, or adjacency matrices\n\u2705 The adjacency matrix is simple but wasteful for sparse graphs\n\u2705 Real-world graphs are almost always sparse\n\u2705 Different random graph models capture different real-world properties\n\u2705 Layout algorithms reveal different structural perspectives</span>\n<span class=\"paragraph\"><strong>Next up:</strong> How do we traverse graphs? BFS, DFS, and finding paths!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

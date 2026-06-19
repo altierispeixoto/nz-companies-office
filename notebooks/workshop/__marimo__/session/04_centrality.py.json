@@ -1,0 +1,273 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "8111db850e15d0a3a4406ee17d55880d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "58e5a09a22d60237d604082f07facccf",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"centrality-influence\">Centrality &amp; Influence</h1>\n<span class=\"paragraph\">Not all nodes are equal. Some are more <strong>important</strong> or <strong>central</strong> than others. Centrality measures try to quantify this importance.</span>\n<h2 id=\"why-measure-centrality\">Why Measure Centrality?</h2>\n<ul>\n<li><strong>Who is the most influential person</strong> in a social network?</li>\n<li><strong>Which website</strong> should Google rank highest?</li>\n<li><strong>Which road</strong> is most critical in a city's transportation network?</li>\n<li><strong>Which node</strong> if removed would disconnect the network?</li>\n</ul>\n<span class=\"paragraph\">Different answers to these questions require different centrality measures.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "fcbae9c0e82aedd8ef6bd6eb6121fdbe",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-four-classic-centrality-measures\">The Four Classic Centrality Measures</h2>\n<table>\n<thead>\n<tr>\n<th>Measure</th>\n<th>What It Measures</th>\n<th>Intuition</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Degree Centrality</strong></td>\n<td>How many direct connections</td>\n<td>\"Who has the most friends?\"</td>\n</tr>\n<tr>\n<td><strong>Betweenness Centrality</strong></td>\n<td>How often a node lies on paths between others</td>\n<td>\"Who is the bridge between groups?\"</td>\n</tr>\n<tr>\n<td><strong>Closeness Centrality</strong></td>\n<td>How close a node is to all others</td>\n<td>\"Who can spread information fastest?\"</td>\n</tr>\n<tr>\n<td><strong>Eigenvector Centrality</strong></td>\n<td>How important are the node's connections</td>\n<td>\"Who knows the most important people?\"</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "56703e04592b0a7b13102e7d52697464",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"lets-create-a-network-and-compare\">Let's Create a Network and Compare</h2>\n<span class=\"paragraph\">We'll use a network designed to highlight the differences between each measure.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "70ce48f10c0c8858da06f99d3874801d",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "b435e54994f8bb203041a660c63e328a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='PKri-0' random-id='cefc27bc-2a23-d76c-e989-2e204d4c2054'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;Node&#92;&quot;:&#92;&quot;0&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.455&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.376&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;1&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.455&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.376&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;2&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.455&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.376&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;3&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.455&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.376&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;4&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.455&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.376&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;5&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.467&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.500&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.652&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.428&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;6&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.333&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.200&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.517&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.155&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;7&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.267&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.429&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.085&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;8&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.267&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.429&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.085&#92;&quot;},{&#92;&quot;Node&#92;&quot;:&#92;&quot;9&#92;&quot;,&#92;&quot;Degree&#92;&quot;:&#92;&quot;0.267&#92;&quot;,&#92;&quot;Betweenness&#92;&quot;:&#92;&quot;0.000&#92;&quot;,&#92;&quot;Closeness&#92;&quot;:&#92;&quot;0.429&#92;&quot;,&#92;&quot;Eigenvector&#92;&quot;:&#92;&quot;0.085&#92;&quot;}]&quot;' data-total-rows='16' data-total-columns='5' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-selection='&quot;multi&quot;' data-show-filters='false' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='false' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "999386c8034fdaf9cf1bdd5011fa2e84",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"deep-dive-degree-centrality\">Deep Dive: Degree Centrality</h2>\n<span class=\"paragraph\"><strong>Formula</strong>: $<marimo-tex class=\"arithmatex\">||(\\text{Degree}(v) = \\frac{\\text{number of neighbors of }v}{n - 1}||)</marimo-tex>$</span>\n<span class=\"paragraph\">The simplest measure \u2014 nodes with more connections are more central.</span>\n<ul>\n<li><strong>Strengths</strong>: Simple, intuitive, fast to compute</li>\n<li><strong>Weaknesses</strong>: Only considers LOCAL importance. A node connected to 10 low-importance nodes seems as central as one connected to 10 highly important nodes.</li>\n</ul>\n<blockquote>\n<span class=\"paragraph\">\ud83e\udde0 <strong>Analogy</strong>: In a conference, degree centrality counts how many people you've met.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "4b2e58cf1cd0f8c4eb1682f5cf5b2f62",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'vals' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "41dd361f363bc685c3d02523f7cc5093",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"deep-dive-betweenness-centrality\">Deep Dive: Betweenness Centrality</h2>\n<span class=\"paragraph\"><strong>Formula</strong>: $<marimo-tex class=\"arithmatex\">||(\\text{Betweenness}(v) = \\sum_{s \\neq v \\neq t} \\frac{\\sigma_{st}(v)}{\\sigma_{st}}||)</marimo-tex>$</span>\n<span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(\\sigma_{st}||)</marimo-tex> is the total number of shortest paths from <marimo-tex class=\"arithmatex\">||(s||)</marimo-tex> to <marimo-tex class=\"arithmatex\">||(t||)</marimo-tex>, and <marimo-tex class=\"arithmatex\">||(\\sigma_{st}(v)||)</marimo-tex> is the number of those that pass through <marimo-tex class=\"arithmatex\">||(v||)</marimo-tex>.</span>\n<span class=\"paragraph\">A node with high betweenness is a <strong>bridge</strong> or <strong>bottleneck</strong> \u2014 information flows through it.</span>\n<ul>\n<li><strong>Strengths</strong>: Identifies bridges and gatekeepers</li>\n<li><strong>Weaknesses</strong>: Expensive to compute (<marimo-tex class=\"arithmatex\">||(\\mathcal{O}(VE)||)</marimo-tex> or <marimo-tex class=\"arithmatex\">||(\\mathcal{O}(V^3)||)</marimo-tex>)</li>\n</ul>\n<blockquote>\n<span class=\"paragraph\">\ud83e\udde0 <strong>Analogy</strong>: The person who connects different friend groups \u2014 if they stop showing up, information stops flowing.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "e64254f3df6b699b367e8d947ea09191",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "e7bd3cf912847207a131f680b96d8335",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"deep-dive-closeness-centrality\">Deep Dive: Closeness Centrality</h2>\n<span class=\"paragraph\"><strong>Formula</strong>: $<marimo-tex class=\"arithmatex\">||(\\text{Closeness}(v) = \\frac{n - 1}{\\sum_{u \\neq v} d(v, u)}||)</marimo-tex>$</span>\n<span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(d(v, u)||)</marimo-tex> is the shortest path distance between <marimo-tex class=\"arithmatex\">||(v||)</marimo-tex> and <marimo-tex class=\"arithmatex\">||(u||)</marimo-tex>.</span>\n<span class=\"paragraph\">A node with high closeness can reach everyone quickly \u2014 it's <strong>centrally located</strong>.</span>\n<ul>\n<li><strong>Strengths</strong>: Measures information spread speed</li>\n<li><strong>Weaknesses</strong>: Sensitive to disconnected components</li>\n</ul>\n<blockquote>\n<span class=\"paragraph\">\ud83e\udde0 <strong>Analogy</strong>: The person who can get a message to everyone in the fewest handshakes.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "e33d3e05c635c39c1e9d04aa95a256d9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "2fb41d705cc9835760a0827437c207d9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"deep-dive-eigenvector-centrality-pageranks-cousin\">Deep Dive: Eigenvector Centrality (PageRank's Cousin)</h2>\n<span class=\"paragraph\">Eigenvector centrality doesn't just count your connections \u2014 it measures <strong>who you're connected to</strong>.</span>\n<span class=\"paragraph\"><strong>Intuition</strong>: A node is important if it's connected to other important nodes.</span>\n<marimo-tex class=\"arithmatex\">||[\nx_v = \\frac{1}{\\lambda} \\sum_{t \\in N(v)} x_t\n||]</marimo-tex><span class=\"paragraph\">This is the mathematical foundation of <strong>Google's PageRank</strong> algorithm (PageRank adds a damping factor for random jumps).</span>\n<ul>\n<li><strong>Strengths</strong>: Captures \"influence\" and \"prestige\" \u2014 not just quantity but quality of connections</li>\n<li><strong>Weaknesses</strong>: Can be dominated by a few high-degree nodes</li>\n</ul>\n<blockquote>\n<span class=\"paragraph\">\ud83e\udde0 <strong>Analogy</strong>: You might not know many people, but if those people are the CEO, the mayor, and the president \u2014 you're influential.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "9e6cc0da6b072aeedefa118bd195cb88",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "55828ddba44f43d119f8d6c04d909bd3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"pagerank-from-eigenvector-to-web-search\">PageRank: From Eigenvector to Web Search</h2>\n<span class=\"paragraph\"><strong>PageRank</strong> extends eigenvector centrality by:</span>\n<ol>\n<li>Allowing edges to have direction (important for the web)</li>\n<li>Adding a <strong>damping factor</strong> (<marimo-tex class=\"arithmatex\">||(d \\approx 0.85||)</marimo-tex>) \u2014 simulating random surfing</li>\n</ol>\n<marimo-tex class=\"arithmatex\">||[\n\\text{PR}(v) = \\frac{1 - d}{n} + d \\sum_{u \\in N_{in}(v)} \\frac{\\text{PR}(u)}{\\text{deg}_{\\text{out}}(u)}\n||]</marimo-tex><span class=\"paragraph\">The idea: a random surfer clicks links at random, and occasionally jumps to a random page (probability <marimo-tex class=\"arithmatex\">||(1-d||)</marimo-tex>).\nPageRank is the probability distribution of where the surfer ends up.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "a5dd4c062731c6512d82da151309bdbe",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "93540e07cd739a14cd119c32420c4a4b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"interactive-explore-centrality-on-a-real-network\">Interactive: Explore Centrality on a Real Network</h2>\n<span class=\"paragraph\">Let's apply all four measures to Zachary's Karate Club and see who the key players are.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "5b9239b886976bdec8bc87de5ec6c252",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='qnkX-0' random-id='b9290044-c058-a7a3-81b9-7731523af022'><marimo-dropdown data-initial-value='[&quot;Betweenness&quot;]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eCentrality measure:&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-options='[&quot;Degree&quot;,&quot;Betweenness&quot;,&quot;Closeness&quot;,&quot;Eigenvector&quot;,&quot;PageRank&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false' data-disabled='false'></marimo-dropdown></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "7de426d7b3d67ee94fb89212253fe0ef",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'cmap_name' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "16a12fb872853b6f0bbf06dd23f2cb4c",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "exception",
+          "evalue": "Name `sorted_kc` is not defined. It was expected to be defined in ",
+          "traceback": null
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "<span class=\"codehilite\"><div class=\"highlight\"><pre><span></span><span class=\"gt\">Traceback (most recent call last):</span>\n  File <span class=\"nb\">&quot;/tmp/marimo_2196951/__marimo__cell_Vxnm_.py&quot;</span>, line <span class=\"m\">4</span>, in <span class=\"n\">&lt;module&gt;</span>\n<span class=\"w\">    </span><span class=\"p\">{</span><span class=\"s1\">&#39;, &#39;</span><span class=\"o\">.</span><span class=\"n\">join</span><span class=\"p\">(</span><span class=\"sa\">f</span><span class=\"s1\">&#39;Node </span><span class=\"si\">{</span><span class=\"n\">n</span><span class=\"si\">}</span><span class=\"s1\"> (</span><span class=\"si\">{</span><span class=\"n\">v</span><span class=\"si\">:</span><span class=\"s1\">.3f</span><span class=\"si\">}</span><span class=\"s1\">)&#39;</span> <span class=\"k\">for</span> <span class=\"n\">n</span><span class=\"p\">,</span> <span class=\"n\">v</span> <span class=\"ow\">in</span> <span class=\"n\">sorted_kc</span><span class=\"p\">[:</span><span class=\"mi\">5</span><span class=\"p\">])}</span>\n<span class=\"w\">                                                 </span><span class=\"pm\">^^^^^^^^^</span>\n<span class=\"gr\">NameError</span>: <span class=\"n\">name &#39;sorted_kc&#39; is not defined. Did you mean: &#39;sorted&#39;?</span>\n</pre></div>\n</span>",
+          "mimetype": "application/vnd.marimo+traceback"
+        }
+      ]
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "0f9f41f136bf50c9370e747f1a31cb1e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>Degree Centrality</strong>: Count of direct connections \u2014 simple but local\n\u2705 <strong>Betweenness Centrality</strong>: Bridge between groups \u2014 identifies gatekeepers\n\u2705 <strong>Closeness Centrality</strong>: Distance to all others \u2014 measures information spread speed\n\u2705 <strong>Eigenvector Centrality</strong>: Quality of connections \u2014 captures influence\n\u2705 <strong>PageRank</strong>: The algorithm that powered Google Search\n\u2705 Different measures reveal different aspects of importance \u2014 use the right one for your question</span>\n<span class=\"paragraph\"><strong>Next up:</strong> How do we find communities and clusters in a network?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": null,
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "oSUa",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

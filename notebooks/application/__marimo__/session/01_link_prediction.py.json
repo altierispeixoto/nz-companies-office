@@ -1,0 +1,173 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "b6b34794643cd1f3cc7850d9f827f3cd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "f6330649622e452bda30f7b5a18b1953",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"nz-companies-office-link-prediction-with-gnns\">NZ Companies Office: Link Prediction with GNNs</h1>\n<span class=\"paragraph\">Loads the dataset from <strong>00_dataset.py</strong> and trains a GraphSAGE-based model to recommend potential investors.</span>\n<ol>\n<li>Load checkpoint (graph, splits, feature dimensions)</li>\n<li>Build <strong>shareholder prediction</strong> model (HeteroConv encoder + dot-product decoder)</li>\n<li>Train with binary cross-entropy and early stopping</li>\n<li>Evaluate using AUC-ROC and Average Precision</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "3bcacc7616d7c54615a541faca3a5a27",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"the-business-problem\">The Business Problem</h3>\n<span class=\"paragraph\">A private equity firm wants to identify <strong>potential investors</strong> for NZ companies. Currently they rely on\nmanual networking and industry contacts \u2014 slow, biased, and limited in scale.</span>\n<span class=\"paragraph\"><strong>The insight</strong>: investor networks follow structural patterns. Companies on the same board tend to share\nshareholders; investors in one industry often invest in adjacent ones; the presence of certain directors\nsignals suitability for certain capital.</span>\n<span class=\"paragraph\">This model learns those patterns directly from the graph:</span>\n<ul>\n<li><strong>Directors</strong> provide signals about company governance quality and network proximity</li>\n<li><strong>Existing shareholders</strong> reveal co-investment clusters</li>\n<li><strong>Company attributes</strong> (status, type) filter by investment eligibility</li>\n</ul>\n<span class=\"paragraph\">The output is a ranking of potential new shareholders for any selected company, together with\nexplanations showing <em>why</em> each recommendation makes sense \u2014 which shared directors, co-investors,\nor similar companies support the prediction.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "15caea83f77d1d17ce41aa570945b020",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "6ab139dea2c8a38c3bb8781324250eb8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-model-architecture\">1. Model Architecture</h2>\n<div class=\"language-scdoc codehilite\"><pre><span></span><code>\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                     Encoder (HeteroConv x2)              \u2502\n\u2502                                                          \u2502\n\u2502   Director Feats \u2500\u2500\u2510                                     \u2502\n\u2502                    \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510    \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510   \u2502\n\u2502   Company Feats \u2500\u2500\u2500\u253c\u2500\u2500\u2524 GraphSAGE  \u251c\u2500\u2500\u2500\u2500\u2524 GraphSAGE  \u2502   \u2502\n\u2502                    \u2502  \u2502  Layer 1   \u2502    \u2502  Layer 2   \u2502   \u2502\n\u2502   Shareholder Feats\u2518  \u2502  h=32      \u2502    \u2502  h=16      \u2502   \u2502\n\u2502                       \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518   \u2502\n\u2502                            \u2502                  \u2502          \u2502\n\u2502                     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\n\u2502                     \u2502   z_dir     \u2502     \u2502  z_comp     \u2502  \u2502\n\u2502                     \u2502  z_share    \u2502     \u2502  z_share    \u2502  \u2502\n\u2502                     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2502\n\u2502                            \u2502                  \u2502          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n                             \u2502                  \u2502\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502              Decoder (dot-product)            \u2502           \u2502\n\u2502                     \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u2502           \u2502\n\u2502                     \u2502  z_src \u00b7 z_dst = score\u2502 \u2502\n\u2502                     \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2502           \u2502\n\u2502                            \u2502                  \u2502           \u2502\n\u2502      logit \u2192 sigmoid \u2192 probability \u2208 [0, 1]   \u2502          \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n</code></pre></div>\n<h3 id=\"why-this-architecture\">Why this architecture?</h3>\n<ul>\n<li><strong>Heterogeneous GraphSAGE</strong> (<code>HeteroConv</code> + <code>SAGEConv</code>) was chosen over GCN or GAT because it\n  handles multiple node/edge types natively \u2014 directors, shareholders, and companies all have\n  different features and connect through different relationships. GCN requires a homogeneous\n  graph; GAT is more expressive but slower and prone to overfitting at our graph scale.</li>\n<li><strong>GraphSAGE</strong> is inductive (can generalise to unseen nodes) and uses <strong>mean aggregation</strong>,\n  which acts as a smoothed neighbourhood average \u2014 well-suited for detecting co-investment\n  clusters where the <em>presence</em> of shared investors matters more than their identity.</li>\n<li><strong>Dot-product decoder</strong> is the simplest link prediction head: <code>score = z_src \u00b7 z_dst</code>.\n  Single-vector embeddings are sufficient because each shareholder-company pair has at most\n  one relationship type. A more complex decoder (MLP, bilinear) would add parameters without\n  a corresponding edge-feature signal to justify them.</li>\n<li><strong>Two layers</strong> with 32 \u2192 16 hidden units: one layer reaches direct neighbours (co-investors);\n  a second layer captures 2-hop patterns (investors-of-investors). Three or more layers risk\n  over-smoothing at our graph scale (&lt;100 k edges) without measurable gain.</li>\n</ul>\n<h3 id=\"is-this-the-best-architecture-for-the-problem\">Is this the best architecture for the problem?</h3>\n<table>\n<thead>\n<tr>\n<th>Approach</th>\n<th>Pros</th>\n<th>Cons</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>GraphSAGE (current)</strong></td>\n<td>Fast, inductive, heterogeneous, low parameter count</td>\n<td>Mean-pooling loses fine-grained neighbour identity</td>\n</tr>\n<tr>\n<td><strong>GAT</strong></td>\n<td>Attention-weighted neighbourhoods, captures importance</td>\n<td>~4\u00d7 params, slower, overfits at small scale</td>\n</tr>\n<tr>\n<td><strong>RGCN</strong></td>\n<td>Explicit relation-type matrices for each edge type</td>\n<td>Severe over-parameterisation for our 2 edge types</td>\n</tr>\n<tr>\n<td><strong>Node2Vec + MLP</strong></td>\n<td>Simple, familiar pipeline</td>\n<td>No inductive capacity, no multi-hop structure, separate embedding for each split</td>\n</tr>\n<tr>\n<td><strong>LightGCN</strong></td>\n<td>State-of-the-art for recommendation graphs</td>\n<td>Homogeneous only \u2014 needs workarounds for multi-node-type graphs</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\"><strong>Bottom line</strong>: GraphSAGE hits the sweet spot for this problem \u2014 expressive enough to capture\nco-investment structure, simple enough to train on a single GPU in under a minute, and\nnaturally handles heterogeneous nodes. A GAT-based model would be the next thing to try if\nwe needed to distinguish <em>which</em> director or shareholder matters more for a prediction.</span>\n<h3 id=\"tradeoffs\">Tradeoffs</h3>\n<ul>\n<li><strong>Speed vs expressiveness</strong>: Mean aggregation is fast but treats all neighbours equally.\n  A director who chairs the board gets the same weight as a dormant director.</li>\n<li><strong>Two layers vs deeper</strong>: Two hops capture investor-of-investor patterns but miss longer\n  chains. Deeper networks would need skip connections and normalisation to avoid\n  over-smoothing.</li>\n<li><strong>Low-dimensional embeddings (16d)</strong>: Forces the model to learn compact representations,\n  which acts as regularisation but may lose fine-grained investor specialisation.\n  Increasing to 32\u201364d would be the first hyper-parameter to tune.</li>\n<li><strong>Dot-product vs bilinear decoder</strong>: The dot-product assumes symmetric relationship\n  strength. A bilinear decoder (<code>z_src\u1d40 W z_dst</code>) could model asymmetric patterns\n  but adds |W| = 16\u00b2 = 256 parameters \u2014 negligible cost but also negligible gain for\n  symmetric investor relationships.</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "c0c1830789fd4f1f1adbcfea0dd273bb",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "3773c7bc5ba5c41078635533cbc9b24e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "bc99b5d01eb1bef938d25d2f663cff08",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "631924e0c3f38dce76d262375aa48877",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-training\">2. Training</h2>\n<span class=\"paragraph\">Known shareholder-company edges should score high; randomly sampled non-edges should score low.\nDirectors edges remain visible during message passing, providing structural context.\nEarly stopping: training stops if validation AUC does not improve for 20 epochs.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "723533c85c315d52a7633bf723229ce9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "59b8d914a55db0423173070673210517",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "cdd232a6a3e59d187bd8e196fe9ae290",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-evaluation\">3. Evaluation</h2>\n<span class=\"paragraph\">Evaluates on held-out edges:</span>\n<ul>\n<li><strong>Positive edges</strong>: Real shareholder-company relationships (hidden during training)</li>\n<li><strong>Negative edges</strong>: Randomly sampled non-edges</li>\n</ul>\n<span class=\"paragraph\">Metrics: <strong>AUC-ROC</strong> and <strong>Average Precision</strong>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "9b83d8feae124a4b9bcdf1b9a7fabac5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "2fa0ca21c2ebcb828b9b3dae61e6c4c2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "59ef8e812ed61d9fabf2a8f34f283656",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "621137eac55c0a2b4209e46cf8811220",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-interactive-model-testing\">4. Interactive Model Testing</h2>\n<span class=\"paragraph\">Open <strong><a href=\"02_interactive_testing.py\">02_interactive_testing.py</a></strong> in marimo for the standalone testing notebook.</span>\n<span class=\"paragraph\">This loads the trained model and lets you search companies, see predictions with explanations.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "b69aae44c34413662d47ae67f858fd0a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>Loaded</strong> dataset from <code>00_dataset.py</code></span>\n<span class=\"paragraph\">\u2705 <strong>Trained</strong> a GraphSAGE-based shareholder prediction model</span>\n<span class=\"paragraph\">\u2705 <strong>Achieved strong separation</strong> between known and non-existent investment relationships</span>\n<span class=\"paragraph\">\u2705 <strong>Saved</strong> model weights to <code>data/processed/model_checkpoint.pt</code></span>\n<h3 id=\"next-steps\">Next Steps</h3>\n<ul>\n<li>Open <strong>02_interactive_testing.py</strong> to explore predictions interactively</li>\n<li>Re-run <strong>00_dataset.py</strong> with a fresh Neo4j connection when new data is loaded</li>\n<li>Incorporate Address nodes and geographic proximity for richer features</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "b02575c9a6fc84e5a0b68ba212e93605",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "6daa0ae633ab37096b0bc9c07a0f0e32",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-3-graph-attention-networks-gat\">GNN Workshop 3: Graph Attention Networks (GAT)</h1>\n<span class=\"paragraph\">The <strong>Graph Attention Network</strong> (Veli\u010dkovi\u0107 et al., 2018) addresses a key limitation of GCNs:</span>\n<blockquote>\n<span class=\"paragraph\"><strong>GCN</strong>: All neighbors contribute equally to the aggregation\n<strong>GAT</strong>: Each neighbor contributes a <em>learned weight</em> (attention)</span>\n</blockquote>\n<h2 id=\"why-attention\">Why Attention?</h2>\n<span class=\"paragraph\">Not all neighbors are equally important. In a citation network:</span>\n<ul>\n<li>A paper citing your work is important</li>\n<li>A paper citing completely unrelated work is less important</li>\n</ul>\n<span class=\"paragraph\">GAT learns to <strong>pay more attention</strong> to relevant neighbors and <strong>ignore</strong> irrelevant ones.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "5c266b2828435c5ecfddc52f2b78eb71",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-attention-mechanism\">The Attention Mechanism</h2>\n<span class=\"paragraph\">For each edge <marimo-tex class=\"arithmatex\">||((i, j)||)</marimo-tex>, GAT computes an <strong>attention coefficient</strong>:</span>\n<marimo-tex class=\"arithmatex\">||[e_{ij} =      ext{LeakyReLU}\\left(a^T [W h_i \\, \\Vert \\, W h_j]\night)||]</marimo-tex><span class=\"paragraph\">Then normalizes across neighbors with <strong>softmax</strong>:</span>\n<marimo-tex class=\"arithmatex\">||[\\alpha_{ij} =\nrac{\\exp(e_{ij})}{\\sum_{k \\in N(i)} \\exp(e_{ik})}||]</marimo-tex><span class=\"paragraph\">Finally, <strong>aggregates</strong> using attention weights:</span>\n<marimo-tex class=\"arithmatex\">||[h_i' = \\sigma\\left(\\sum_{j \\in N(i)} \\alpha_{ij} W h_j\night)||]</marimo-tex><h3 id=\"multi-head-attention\">Multi-Head Attention</h3>\n<span class=\"paragraph\">GAT uses <strong>K independent attention heads</strong> and concatenates (or averages) their outputs:</span>\n<marimo-tex class=\"arithmatex\">||[h_i' = \\Big\\Vert_{k=1}^{K} \\sigma\\left(\\sum_{j \\in N(i)} \\alpha_{ij}^{(k)} W^{(k)} h_j\night)||]</marimo-tex><span class=\"paragraph\">This stabilizes learning and captures different types of relationships.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "f6804a0225d9c8b698d16772fd984414",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"gcn-vs-gat-visual-comparison\">GCN vs GAT: Visual Comparison</h2>\n<table>\n<thead>\n<tr>\n<th>Aspect</th>\n<th>GCN</th>\n<th>GAT</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Neighbor weighting</strong></td>\n<td>Equal (normalized degree)</td>\n<td>Learned (attention)</td>\n</tr>\n<tr>\n<td><strong>Expressiveness</strong></td>\n<td>Fixed weights</td>\n<td>Dynamic, per-node-pair weights</td>\n</tr>\n<tr>\n<td><strong>Interpretability</strong></td>\n<td>Harder</td>\n<td>Attention weights can be visualized</td>\n</tr>\n<tr>\n<td><strong>Inductive</strong></td>\n<td>Works</td>\n<td>Works (attention is per-node-pair)</td>\n</tr>\n<tr>\n<td><strong>Parameters</strong></td>\n<td>Fewer</td>\n<td>More (due to attention mechanism)</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "ccacff67d778973add65b907e093406f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "86c5f5c0a179fedc65f0826671823f07",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "33b9e6a790623c17f1fdd3a9346ad0e0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  50/200 | Loss: 0.6179 | Train Acc: 0.829 | Val Acc: 0.630</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 100/200 | Loss: 0.4993 | Train Acc: 0.821 | Val Acc: 0.612</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 150/200 | Loss: 0.3147 | Train Acc: 0.907 | Val Acc: 0.592</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 200/200 | Loss: 0.3910 | Train Acc: 0.886 | Val Acc: 0.576</span></span></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "933a475eb26fbd54e9be2c302c217501",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"visualizing-attention-weights\">Visualizing Attention Weights</h2>\n<span class=\"paragraph\">One of GAT's superpowers: we can visualize <strong>which neighbors each node pays attention to</strong>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "2ac6af76564a69b57ead9e8e7a47225e",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "7a37116997edf3a9741e0d436ee4d661",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"gcn-vs-gat-results\">GCN vs GAT: Results</h2>\n<span class=\"paragraph\">GAT often outperforms GCN because:</span>\n<ol>\n<li><strong>Adaptive weighting</strong>: GAT learns which neighbors matter, rather than assuming all are equally important</li>\n<li><strong>Multi-head attention</strong>: Multiple attention heads capture different types of relationships</li>\n<li><strong>Robustness</strong>: Attention weights can ignore noisy or irrelevant neighbors</li>\n</ol>\n<span class=\"paragraph\">However, GAT has more parameters and may need more data to train effectively.</span>\n<h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>GAT</strong> introduces <strong>learned attention weights</strong> for neighbor aggregation\n\u2705 <strong>Multi-head attention</strong> stabilizes training and captures diverse relationships\n\u2705 Attention weights are <strong>interpretable</strong> \u2014 we can see which neighbors matter\n\u2705 GAT often outperforms GCN, especially on graphs with varying neighbor importance\n\u2705 Built with <code>GATConv</code> in PyTorch Geometric</span>\n<span class=\"paragraph\"><strong>Next up:</strong> GraphSAGE \u2014 scaling GNNs to large graphs with inductive learning!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "edff7d46297071566b37412b8e8e6309",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "b94503cfc90545179b33eb0b023bdf4a",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "4547e699982ec12039b9fa6a0281aa6c",
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

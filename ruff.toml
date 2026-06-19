@@ -1,0 +1,117 @@
+# Enable Ruff's default rules plus additional ones
+lint.select = [
+    "ALL",            # All rules
+    "ASYNC",          # Additional async/await checks
+    "B",             # Bugbear: detecting potential bugs
+    "C4",            # Flake8 comprehensions
+    "DTZ",           # Datetime checks
+    "EM",            # Error messages
+    "ERA",           # Commented-out code detection
+    "INT",           # gettext functions
+    "NPY",           # NumPy-specific rules
+    "PD",            # Pandas-specific rules
+    "PT",            # pytest-specific rules
+    "RUF",           # Ruff-specific rules
+    "S",             # Security checks
+    "SIM",           # Code simplification
+    "SLOT",          # __slots__ checks
+]
+
+# Ignore specific rules
+lint.ignore = [
+    "D100",          # Missing docstring in public module
+    "D104",          # Missing docstring in public package
+    "D203",          # One blank line before class docstring
+    "D212",          # Multi-line docstring should start at the first line
+    "E501",          # Line too long (handled by formatter)
+    "PLR0913",       # Too many arguments to function call
+    "PD901",         # DataFrame variable name should be df
+    "S101",          # Use of assert detected (pytest needs this)
+]
+
+# Allow autofix for all enabled rules (when `--fix` is provided)
+lint.fixable = ["ALL"]
+lint.unfixable = []
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 120
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.10.
+target-version = "py312"
+
+[lint.per-file-ignores]
+# Tests can use assert statements and relative imports
+"tests/**/*" = ["S101", "TID252"]
+# CLI output uses print
+"src/nz_companies_office/cli/*" = ["T201"]
+# Marimo notebook format requires cell functions named __, imports inside cells,
+# omits type annotations, and uses unicode characters in markdown strings
+"notebooks/*.py" = ["ANN001", "ANN202", "ARG001", "B018", "BLE001", "COM812", "COM818", "ERA001", "INP001", "N803", "N806", "N807", "N999", "PLC0415", "PLR1711", "PLR2004", "RET505", "RUF001", "SLF001", "TID252"]
+"notebooks/template.ipynb" = ["ERA001", "NPY002"]
+
+[lint.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 10
+
+[lint.pycodestyle]
+max-doc-length = 120
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+force-single-line = true
+combine-as-imports = true
+known-first-party = ["nz-companies-office"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Body"]
+
+[lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[lint.pylint]
+max-args = 8
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

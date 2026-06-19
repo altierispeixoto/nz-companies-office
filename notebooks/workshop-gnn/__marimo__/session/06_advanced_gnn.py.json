@@ -1,0 +1,191 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "7cd7444734dfcc84291098f10aeb6e79",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "50322c7bc323e89e107e6399de708d50",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-6-advanced-topics\">GNN Workshop 6: Advanced Topics</h1>\n<span class=\"paragraph\">This final workshop covers advanced GNN applications and topics:</span>\n<ol>\n<li><strong>Link Prediction</strong> \u2014 Predicting missing edges</li>\n<li><strong>Explainability</strong> \u2014 Understanding GNN predictions</li>\n<li><strong>Scalability</strong> \u2014 Billion-node graphs</li>\n<li><strong>Real-World Deployment</strong> \u2014 Production GNNs</li>\n<li><strong>Research Frontiers</strong> \u2014 Where the field is heading</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "3677238b30dfa1fe54a0ade34da17f40",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-1-link-prediction\">Part 1: Link Prediction</h1>\n<span class=\"paragraph\"><strong>Link prediction</strong> asks: \"Given two nodes, should there be an edge between them?\"</span>\n<h2 id=\"applications\">Applications</h2>\n<ul>\n<li><strong>Social networks</strong>: Friend recommendations (\"people you may know\")</li>\n<li><strong>E-commerce</strong>: Product recommendations</li>\n<li><strong>Biology</strong>: Predicting protein-protein interactions</li>\n<li><strong>Knowledge graphs</strong>: Completing missing facts</li>\n</ul>\n<h2 id=\"the-approach\">The Approach</h2>\n<ol>\n<li>Train a GNN to produce node embeddings</li>\n<li>For a pair of nodes (u, v), compute a <strong>score</strong> based on their embeddings</li>\n<li>Score functions: dot product, cosine similarity, MLP</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "a4e249e7e21ca46b94e398c1c83d84f8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"link-prediction-with-gnns\">Link Prediction with GNNs</h2>\n<span class=\"paragraph\">We'll use the Cora dataset: hide some edges, train to predict them.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "148fec2431c29337aedddef373a949ea",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Link Prediction Model</strong>: 95,936 parameters</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "5325ea25263429b9350722ba2bddf36f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Link Prediction Test Accuracy</strong>: 79.70%</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "fd0446ab22173ee7a84c260251c5a443",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Link prediction results:</strong></span>\n<ul>\n<li><strong>Accuracy</strong>: 79.70%</li>\n<li>The model learned to distinguish real edges from non-edges based on node embeddings!</li>\n</ul>\n<span class=\"paragraph\">This is how social networks recommend friends \u2014 and how Google Knowledge Graph completes missing facts.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "92df2237ee467ba2624a28d2efdca3af",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-2-gnn-explainability\">Part 2: GNN Explainability</h1>\n<span class=\"paragraph\">Why did my GNN make that prediction? This is critical for:</span>\n<ul>\n<li><strong>Trust</strong>: Would you trust a medical diagnosis model you can't understand?</li>\n<li><strong>Debugging</strong>: Finding spurious correlations</li>\n<li><strong>Science</strong>: Discovering which parts of a molecule determine toxicity</li>\n</ul>\n<h2 id=\"gnnexplainer-ying-et-al-2019\">GNNExplainer (Ying et al., 2019)</h2>\n<span class=\"paragraph\">GNNExplainer finds the <strong>subgraph</strong> and <strong>feature subset</strong> most responsible for a prediction:</span>\n<ol>\n<li>Learn a <strong>mask</strong> over edges (which edges matter?)</li>\n<li>Learn a <strong>mask</strong> over features (which features matter?)</li>\n<li>Maximize mutual information between the masked graph and the prediction</li>\n</ol>\n<blockquote>\n<span class=\"paragraph\">The highlighted subgraph tells us <em>why</em> the model made its decision.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "8120efbeb7b772c79d2545fea75aad1d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"interpreting-gnn-predictions-attention-based\">Interpreting GNN Predictions: Attention-Based</h2>\n<span class=\"paragraph\">Even without formal explainability tools, GAT's <strong>attention weights</strong> give us interpretability:</span>\n<div class=\"language-python codehilite\"><pre><span></span><code><span class=\"c1\"># GAT returns attention weights</span>\n<span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"p\">(</span><span class=\"n\">edge_index</span><span class=\"p\">,</span> <span class=\"n\">attn_weights</span><span class=\"p\">)</span> <span class=\"o\">=</span> <span class=\"n\">gat_conv</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">edge_index</span><span class=\"p\">,</span> <span class=\"n\">return_attention_weights</span><span class=\"o\">=</span><span class=\"kc\">True</span><span class=\"p\">)</span>\n\n<span class=\"c1\"># attn_weights[i] tells us how much node u attends to node v</span>\n</code></pre></div>\n<span class=\"paragraph\">For GCN and GraphSAGE, the GNNExplainer can be used:</span>\n<div class=\"language-python codehilite\"><pre><span></span><code><span class=\"kn\">from</span><span class=\"w\"> </span><span class=\"nn\">torch_geometric.explain</span><span class=\"w\"> </span><span class=\"kn\">import</span> <span class=\"n\">GNNExplainer</span>\n\n<span class=\"n\">explainer</span> <span class=\"o\">=</span> <span class=\"n\">GNNExplainer</span><span class=\"p\">(</span><span class=\"n\">model</span><span class=\"p\">,</span> <span class=\"n\">epochs</span><span class=\"o\">=</span><span class=\"mi\">200</span><span class=\"p\">)</span>\n<span class=\"n\">node_idx</span> <span class=\"o\">=</span> <span class=\"mi\">10</span>\n<span class=\"n\">node_feat_mask</span><span class=\"p\">,</span> <span class=\"n\">edge_mask</span> <span class=\"o\">=</span> <span class=\"n\">explainer</span><span class=\"o\">.</span><span class=\"n\">explain_node</span><span class=\"p\">(</span><span class=\"n\">node_idx</span><span class=\"p\">,</span> <span class=\"n\">x</span><span class=\"p\">,</span> <span class=\"n\">edge_index</span><span class=\"p\">)</span>\n</code></pre></div>\n<blockquote>\n<span class=\"paragraph\"><strong>Note</strong>: <code>torch-geometric&gt;=2.0</code> includes integrated explainability tools.</span>\n</blockquote></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "3a412cdf1e82c1195ed7b22cbc5cd7b5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-3-scalability\">Part 3: Scalability</h1>\n<span class=\"paragraph\">Real-world graphs are <strong>HUGE</strong>:</span>\n<ul>\n<li>Facebook: 3 billion users, trillions of edges</li>\n<li>Web graph: billions of pages</li>\n<li>Knowledge graphs: billions of facts</li>\n</ul>\n<h2 id=\"techniques-for-scaling-gnns\">Techniques for Scaling GNNs</h2>\n<table>\n<thead>\n<tr>\n<th>Technique</th>\n<th>What It Does</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Neighbor Sampling</strong> (GraphSAGE)</td>\n<td>Sample fixed-size neighborhoods</td>\n</tr>\n<tr>\n<td><strong>Cluster-GCN</strong></td>\n<td>Cluster nodes, train on subgraphs</td>\n</tr>\n<tr>\n<td><strong>GraphSAINT</strong></td>\n<td>Sample subgraphs as mini-batches</td>\n</tr>\n<tr>\n<td><strong>ShadowGNN</strong></td>\n<td>Decouple sampling from training</td>\n</tr>\n<tr>\n<td><strong>Distributed training</strong></td>\n<td>Split graph across GPUs</td>\n</tr>\n</tbody>\n</table>\n<h3 id=\"cluster-gcn\">Cluster-GCN</h3>\n<ol>\n<li>Partition the graph into clusters (METIS algorithm)</li>\n<li>Each mini-batch = one cluster (dense connections inside, sparse between)</li>\n<li>Train on cluster subgraphs</li>\n</ol>\n<span class=\"paragraph\">This is <strong>much more efficient</strong> than neighbor sampling because it leverages the graph's natural community structure.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "4e5bb77ac074e2787432efa8f75d62b3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-4-real-world-deployment\">Part 4: Real-World Deployment</h1>\n<h2 id=\"ml-pipeline-for-production-gnns\">ML Pipeline for Production GNNs</h2>\n<div class=\"language-text codehilite\"><pre><span></span><code>Raw Data \u2192 Graph Construction \u2192 Feature Engineering \u2192 GNN Training \u2192 Deployment \u2192 Monitoring\n</code></pre></div>\n<h3 id=\"key-challenges\">Key Challenges</h3>\n<ol>\n<li><strong>Graph Construction</strong><ul>\n<li>Raw data is rarely in graph format</li>\n<li>Need to define nodes, edges, features</li>\n<li>Temporal aspects: graphs change over time</li>\n</ul>\n</li>\n<li><strong>Feature Engineering</strong><ul>\n<li>Node features: embeddings, statistics, metadata</li>\n<li>Edge features: weights, types, timestamps</li>\n<li>Structural features: degree, PageRank, community</li>\n</ul>\n</li>\n<li><strong>Inference at Scale</strong><ul>\n<li>Full-batch inference may be impossible</li>\n<li>Use mini-batch or approximate methods</li>\n<li>Consider model quantization</li>\n</ul>\n</li>\n<li><strong>Serving Infrastructure</strong></li>\n</ol>\n<div class=\"language-python codehilite\"><pre><span></span><code><span class=\"c1\"># Simple deployment with ONNX</span>\n<span class=\"kn\">import</span><span class=\"w\"> </span><span class=\"nn\">torch.onnx</span>\n\n<span class=\"n\">dummy_x</span> <span class=\"o\">=</span> <span class=\"n\">torch</span><span class=\"o\">.</span><span class=\"n\">randn</span><span class=\"p\">(</span><span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"n\">in_dim</span><span class=\"p\">)</span>\n<span class=\"n\">dummy_edge_index</span> <span class=\"o\">=</span> <span class=\"n\">torch</span><span class=\"o\">.</span><span class=\"n\">tensor</span><span class=\"p\">([[</span><span class=\"mi\">0</span><span class=\"p\">],</span> <span class=\"p\">[</span><span class=\"mi\">0</span><span class=\"p\">]])</span>\n<span class=\"n\">torch</span><span class=\"o\">.</span><span class=\"n\">onnx</span><span class=\"o\">.</span><span class=\"n\">export</span><span class=\"p\">(</span><span class=\"n\">model</span><span class=\"p\">,</span> <span class=\"p\">(</span><span class=\"n\">dummy_x</span><span class=\"p\">,</span> <span class=\"n\">dummy_edge_index</span><span class=\"p\">),</span> <span class=\"s2\">&quot;gnn.onnx&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n<ol start=\"5\">\n<li><strong>Monitoring</strong><ul>\n<li>Embedding drift detection</li>\n<li>Prediction confidence tracking</li>\n<li>Graph structure changes</li>\n</ul>\n</li>\n</ol>\n<h3 id=\"tools-for-production\">Tools for Production</h3>\n<ul>\n<li><strong>PyTorch Geometric + TorchServe</strong>: Model serving</li>\n<li><strong>ONNX Runtime</strong>: Cross-platform inference</li>\n<li><strong>DGL + AWS SageMaker</strong>: Cloud deployment</li>\n<li><strong>Neo4j + GDS</strong>: Graph database with built-in GNNs</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "4abde043e5cf175025d9593d4714d578",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-5-research-frontiers\">Part 5: Research Frontiers</h1>\n<h2 id=\"where-is-gnn-research-heading\">Where is GNN Research Heading?</h2>\n<h3 id=\"graph-foundation-models\">\ud83d\udd2e Graph Foundation Models</h3>\n<span class=\"paragraph\">Large pre-trained models that work across diverse graphs and tasks (similar to GPT for text).</span>\n<h3 id=\"temporal-graphs\">\u23f0 Temporal Graphs</h3>\n<span class=\"paragraph\">Most real graphs change over time:</span>\n<ul>\n<li>Social network: new friendships form</li>\n<li>Financial network: transactions happen</li>\n<li>Transportation: traffic fluctuates</li>\n</ul>\n<span class=\"paragraph\"><strong>TGAT</strong> and <strong>TGN</strong> extend GNNs to handle temporal dynamics.</span>\n<h3 id=\"drug-discovery-science\">\ud83d\udd2c Drug Discovery &amp; Science</h3>\n<ul>\n<li><strong>AlphaFold</strong>: Protein folding with graph representations</li>\n<li><strong>Molecule generation</strong>: GNNs + diffusion models for drug design</li>\n<li><strong>Materials discovery</strong>: Predicting crystal properties</li>\n</ul>\n<h3 id=\"graph-transformers\">\ud83e\udde0 Graph Transformers</h3>\n<span class=\"paragraph\">Adapting the Transformer architecture to graphs:</span>\n<ul>\n<li>Positional encodings (Laplacian eigenvectors)</li>\n<li>Full attention over all nodes (for small graphs)</li>\n<li>Promising results on molecular benchmarks</li>\n</ul>\n<h3 id=\"open-challenges\">\ud83e\udd14 Open Challenges</h3>\n<ol>\n<li><strong>Oversmoothing</strong>: After many layers, all node embeddings become identical</li>\n<li><strong>Heterophily</strong>: When connected nodes tend to have <em>different</em> labels (GCN fails)</li>\n<li><strong>Distribution shift</strong>: Training and test graphs come from different distributions</li>\n<li><strong>Causality</strong>: Moving beyond correlation to causal reasoning on graphs</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "af1c07a51e83e97471dd29273d448dd2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"part-6-your-next-steps\">Part 6: Your Next Steps</h1>\n<h2 id=\"learning-path\">Learning Path</h2>\n<div class=\"language-objective-c codehilite\"><pre><span></span><code><span class=\"n\">graph</span><span class=\"w\"> </span><span class=\"n\">TD</span>\n<span class=\"w\">    </span><span class=\"n\">A</span><span class=\"p\">[</span><span class=\"n\">Graph</span><span class=\"w\"> </span><span class=\"n\">Workshop</span><span class=\"w\"> </span><span class=\"mi\">1-6</span><span class=\"p\">]</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">B</span><span class=\"p\">[</span><span class=\"n\">GNN</span><span class=\"w\"> </span><span class=\"n\">Workshop</span><span class=\"w\"> </span><span class=\"mi\">1-6</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"n\">B</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">C</span><span class=\"p\">[</span><span class=\"n\">Paper</span><span class=\"w\"> </span><span class=\"n\">Implementations</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"n\">B</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">D</span><span class=\"p\">[</span><span class=\"n\">PyG</span><span class=\"w\"> </span><span class=\"n\">Documentation</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"n\">B</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">E</span><span class=\"p\">[</span><span class=\"n\">Personal</span><span class=\"w\"> </span><span class=\"n\">Projects</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"n\">C</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">F</span><span class=\"p\">[</span><span class=\"n\">Your</span><span class=\"w\"> </span><span class=\"n\">Research</span><span class=\"w\"> </span><span class=\"o\">/</span><span class=\"w\"> </span><span class=\"n\">Production</span><span class=\"p\">]</span>\n<span class=\"w\">    </span><span class=\"n\">D</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">F</span>\n<span class=\"w\">    </span><span class=\"n\">E</span><span class=\"w\"> </span><span class=\"o\">--&gt;</span><span class=\"w\"> </span><span class=\"n\">F</span>\n</code></pre></div>\n<h2 id=\"project-ideas\">\ud83d\udca1 Project Ideas</h2>\n<table>\n<thead>\n<tr>\n<th>Difficulty</th>\n<th>Project</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>\u2b50</td>\n<td>Node classification on your own graph data</td>\n</tr>\n<tr>\n<td>\u2b50\u2b50</td>\n<td>Link prediction for friend recommendations</td>\n</tr>\n<tr>\n<td>\u2b50\u2b50\u2b50</td>\n<td>Graph classification of molecules (QM9 dataset)</td>\n</tr>\n<tr>\n<td>\u2b50\u2b50\u2b50\u2b50</td>\n<td>Temporal GNN for stock/buy prediction</td>\n</tr>\n<tr>\n<td>\u2b50\u2b50\u2b50\u2b50\u2b50</td>\n<td>Graph generation for drug discovery</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"key-papers\">\ud83d\udcda Key Papers</h2>\n<table>\n<thead>\n<tr>\n<th>Paper</th>\n<th>Year</th>\n<th>What It Introduced</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>GCN (Kipf &amp; Welling)</td>\n<td>2017</td>\n<td>Graph convolution</td>\n</tr>\n<tr>\n<td>GraphSAGE (Hamilton et al.)</td>\n<td>2017</td>\n<td>Inductive learning + sampling</td>\n</tr>\n<tr>\n<td>GAT (Veli\u010dkovi\u0107 et al.)</td>\n<td>2018</td>\n<td>Graph attention</td>\n</tr>\n<tr>\n<td>GIN (Xu et al.)</td>\n<td>2019</td>\n<td>Maximal expressive power</td>\n</tr>\n<tr>\n<td>DiffPool (Ying et al.)</td>\n<td>2018</td>\n<td>Hierarchical pooling</td>\n</tr>\n<tr>\n<td>GNNExplainer (Ying et al.)</td>\n<td>2019</td>\n<td>Explainability</td>\n</tr>\n<tr>\n<td>Cluster-GCN (Chiang et al.)</td>\n<td>2019</td>\n<td>Large-scale training</td>\n</tr>\n<tr>\n<td>Graph Transformers</td>\n<td>2021+</td>\n<td>Attention on graphs</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"libraries\">\ud83d\udee0\ufe0f Libraries</h2>\n<ul>\n<li><strong>PyTorch Geometric (PyG)</strong>: What we used \u2014 most popular GNN library</li>\n<li><strong>DGL (Deep Graph Library)</strong>: Alternative to PyG, good for large graphs</li>\n<li><strong>Jraph</strong> (JAX): For JAX users</li>\n<li><strong>TensorFlow GNN</strong>: For TF ecosystem</li>\n<li><strong>NetworkX</strong>: For graph analysis (pre-GNN)</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "87096d6bc33b27a202ade0ddf2ff81db",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"workshop-summary\">Workshop Summary</h2>\n<table>\n<thead>\n<tr>\n<th>Notebook</th>\n<th>Topic</th>\n<th>You Learned</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>1</strong></td>\n<td>GNN Foundations</td>\n<td>Message passing paradigm, Data objects</td>\n</tr>\n<tr>\n<td><strong>2</strong></td>\n<td>GCN</td>\n<td>Graph convolution, node classification</td>\n</tr>\n<tr>\n<td><strong>3</strong></td>\n<td>GAT</td>\n<td>Attention mechanisms, multi-head attention</td>\n</tr>\n<tr>\n<td><strong>4</strong></td>\n<td>GraphSAGE</td>\n<td>Inductive learning, neighborhood sampling</td>\n</tr>\n<tr>\n<td><strong>5</strong></td>\n<td>Graph Classification</td>\n<td>Pooling, readout, molecular property prediction</td>\n</tr>\n<tr>\n<td><strong>6</strong></td>\n<td>Advanced Topics</td>\n<td>Link prediction, explainability, scalability, frontiers</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"congratulations\">Congratulations! \ud83c\udf89</h2>\n<span class=\"paragraph\">You've gone from <strong>graph foundations</strong> to <strong>cutting-edge GNN research</strong>. You now have the knowledge to:</span>\n<span class=\"paragraph\">\u2705 Choose the right GNN architecture for your problem\n\u2705 Implement and train GNNs with PyTorch Geometric\n\u2705 Scale GNNs to large graphs\n\u2705 Apply GNNs to real-world problems</span>\n<span class=\"paragraph\"><strong>The graph is everywhere \u2014 go explore it!</strong> \ud83d\ude80</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

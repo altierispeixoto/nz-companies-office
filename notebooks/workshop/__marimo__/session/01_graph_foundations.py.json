@@ -1,0 +1,155 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "8111db850e15d0a3a4406ee17d55880d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "aeb8477800300a40c6c0a27e6dbd2c64",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"graph-foundations-what-is-a-graph\">Graph Foundations: What Is a Graph?</h1>\n<span class=\"paragraph\">Welcome to the first notebook of the Graph Workshop! Let's start from the very beginning.</span>\n<h2 id=\"what-is-a-graph\">What is a Graph?</h2>\n<span class=\"paragraph\">A <strong>graph</strong> is a mathematical structure used to model relationships between objects. It consists of:</span>\n<ul>\n<li><strong>Nodes</strong> (also called <strong>vertices</strong>): the objects themselves</li>\n<li><strong>Edges</strong> (also called <strong>links</strong>): the relationships between objects</li>\n</ul>\n<blockquote>\n<span class=\"paragraph\">Think of a social network: people are <strong>nodes</strong>, friendships are <strong>edges</strong>.\nIn a road map: cities are <strong>nodes</strong>, roads connecting them are <strong>edges</strong>.</span>\n</blockquote>\n<span class=\"paragraph\">Graphs are everywhere once you start looking! They model social networks, transportation systems, biological pathways, the internet, recommendation systems, and much more.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "b8a57d719fae5fc27f89aebe33acfbd3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"hands-on-our-first-graph\">Hands-On: Our First Graph</h2>\n<span class=\"paragraph\">Let's create a tiny social network and visualize it. We'll use <strong>NetworkX</strong> \u2014 Python's most popular graph library.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "4e75bb41d2f968c16155cef495521de6",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "6c520b6e4860b837294334f4724588c8",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"key-terminology\">Key Terminology</h2>\n<table>\n<thead>\n<tr>\n<th>Term</th>\n<th>Meaning</th>\n<th>Example</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Node (Vertex)</strong></td>\n<td>An entity in the graph</td>\n<td>Alice, Bob</td>\n</tr>\n<tr>\n<td><strong>Edge (Link)</strong></td>\n<td>A connection between two nodes</td>\n<td>Alice\u2014Bob</td>\n</tr>\n<tr>\n<td><strong>Degree</strong></td>\n<td>Number of edges connected to a node</td>\n<td>Alice knows 2 people \u2192 degree 2</td>\n</tr>\n<tr>\n<td><strong>Neighbor</strong></td>\n<td>A node connected by an edge</td>\n<td>Bob is Alice's neighbor</td>\n</tr>\n<tr>\n<td><strong>Path</strong></td>\n<td>A sequence of edges connecting nodes</td>\n<td>Alice \u2192 Bob \u2192 Charlie</td>\n</tr>\n<tr>\n<td><strong>Component</strong></td>\n<td>A connected subgraph</td>\n<td>A group of people all reachable through friendships</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">Let's inspect these properties for our social network:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "c6312b659064ab0a931da00c7df311a4",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "896f096c98bbd72175cb271bdab44e72",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"types-of-graphs\">Types of Graphs</h2>\n<span class=\"paragraph\">Not all graphs are the same. Here are the most common types:</span>\n<h3 id=\"undirected-vs-directed\">Undirected vs Directed</h3>\n<ul>\n<li><strong>Undirected</strong>: edges have no direction (like friendships)</li>\n<li><strong>Directed (Digraph)</strong>: edges have a direction (like Twitter follows \u2014 A follows B doesn't mean B follows A)</li>\n</ul>\n<h3 id=\"weighted-vs-unweighted\">Weighted vs Unweighted</h3>\n<ul>\n<li><strong>Unweighted</strong>: all edges are equal</li>\n<li><strong>Weighted</strong>: edges have weights (like distance between cities, strength of a relationship)</li>\n</ul>\n<h3 id=\"lets-see-the-difference\">Let's see the difference:</h3></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "38822006c9364156c568f067d91efcf9",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "650149ed94da15305dc9c2884762480a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"interactive-explore-degree-distribution\">Interactive: Explore Degree Distribution</h2>\n<span class=\"paragraph\">Degree tells us how connected a node is. Let's generate random graphs and see how degrees are distributed.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "aad6ba8d139532ab0f632f16072e6d79",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "b9cc6ca509382e0c53a71196363c9f1b",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "ee36ee81b71c9ef0ca79fd1cd41f9956",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-handshaking-lemma\">The Handshaking Lemma</h2>\n<span class=\"paragraph\">One of the most fundamental theorems in graph theory:</span>\n<blockquote>\n<span class=\"paragraph\"><strong>The sum of all node degrees equals twice the number of edges.</strong></span>\n</blockquote>\n<marimo-tex class=\"arithmatex\">||[\\sum_{v \\in V} \\deg(v) = 2|E|||]</marimo-tex><span class=\"paragraph\">Why? Because each edge contributes to the degree of <strong>two</strong> nodes.</span>\n<span class=\"paragraph\">Let's verify this on our graphs.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "f2a1c4c16f147c09eff302de61ac0701",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "51ee26fab354bfb68bcc14630d9d0ab2",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "3b63e11e8badce29848cfbf58e6dde23",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">Congratulations! You've learned the foundations of graph theory:</span>\n<span class=\"paragraph\">\u2705 What a graph is (nodes + edges)\n\u2705 Key terminology (degree, neighbors, paths, components)\n\u2705 Types of graphs (directed/undirected, weighted/unweighted)\n\u2705 How to create and visualize graphs with NetworkX\n\u2705 The Handshaking Lemma</span>\n<span class=\"paragraph\"><strong>Next up:</strong> We'll dive deeper into how graphs are represented in code and how to build more complex networks.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

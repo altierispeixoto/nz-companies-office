@@ -1,0 +1,340 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "9718c5c46cc87f8302410443d8e7e7f5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "dd90546d7613145fcd802c9caafbac2e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"nz-companies-office-dataset-pipeline\">NZ Companies Office \u2014 Dataset Pipeline</h1>\n<span class=\"paragraph\">Creates the heterogeneous graph dataset used by the <strong>shareholder link prediction</strong> model.</span>\n<span class=\"paragraph\"><strong>Output</strong>: <code>data/processed/pipeline_checkpoint/pipeline.pt</code></span>\n<ul>\n<li>Filters out <code>REMOVED</code>-status companies.</li>\n<li>Three <code>HeteroData</code> graphs: one per phase (train / validation / test), each with a\n  different set of shareholder-company edges to prevent message-passing leakage.</li>\n<li>Train/val/test splits of shareholder-to-company edges.</li>\n<li>Negative samples (known non-edges) for evaluation.</li>\n<li>Feature dimensions for instantiating the GNN model.</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "4f186f21089806f8691af56cf48e7ec9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"1-database-connection\">1. Database Connection</h2>\n<span class=\"paragraph\">The Neo4j database stores the NZ Companies Office graph with this schema:</span>\n<table>\n<thead>\n<tr>\n<th>Node Label</th>\n<th>Key Properties</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>Company</code></td>\n<td>company_number, name, status, entity_type, incorporation_date, nzbn</td>\n</tr>\n<tr>\n<td><code>Director</code></td>\n<td>name, role, appointment_date</td>\n</tr>\n<tr>\n<td><code>Shareholder</code></td>\n<td>name, share_count, share_type</td>\n</tr>\n<tr>\n<td><code>Address</code></td>\n<td>address_type, street, city, suburb, postcode, country</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th>Relationship</th>\n<th>Direction</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>[:DIRECTS]</code></td>\n<td>Director \u2192 Company</td>\n</tr>\n<tr>\n<td><code>[:HOLDS_SHARES_IN]</code></td>\n<td>Shareholder \u2192 Company</td>\n</tr>\n<tr>\n<td><code>[:HAS_ADDRESS]</code></td>\n<td>Company \u2192 Address</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "d9eaee64ddbe3f0f0d804eacb85b7375",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Neo4j Connection</strong>: \u2705 Connected</span>\n<span class=\"paragraph\">URI: <code>bolt://localhost:7687</code></span>\n<span class=\"paragraph\">Data source: cache file if present, otherwise live Neo4j query.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "9cae73941322263c2b8e981860037978",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"2-graph-extraction\">2. Graph Extraction</h2>\n<span class=\"paragraph\">Loads the graph from a cached checkpoint (seconds) or queries live Neo4j (minutes).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "df8cb3f0968edbb9b02dca3e94cfd184",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'graph' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "67258bf017c5ffcc6332e0872ded98ed",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "153bcd43df97962b7cd4e249c3d361b1",
+      "outputs": [
+        {
+          "type": "error",
+          "ename": "multiple-defs",
+          "evalue": "The variable 'graph' was defined by another cell",
+          "traceback": []
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "0c3463c27ab1b5b471bb490864fee7cb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"3-dataset-exploration\">3. Dataset Exploration</h2>\n<span class=\"paragraph\">Quick overview of the extracted graph (after filtering out <code>REMOVED</code> companies).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "b5457000f68cd85be9d1b4e5c2a3888a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='BYtC-0' random-id='e6704f97-681d-6eb2-aaa6-898123841089'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Node Type&#92;&quot;:&#92;&quot;Company&#92;&quot;,&#92;&quot;Count&#92;&quot;:1810098},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Node Type&#92;&quot;:&#92;&quot;Director&#92;&quot;,&#92;&quot;Count&#92;&quot;:676325},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Node Type&#92;&quot;:&#92;&quot;Shareholder&#92;&quot;,&#92;&quot;Count&#92;&quot;:909517}]&quot;' data-total-rows='3' data-total-columns='2' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;Node Type&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Count&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "f1304da27f28407c32d2220350d37a5d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='RGSE-0' random-id='ea107459-0d4d-3025-2c49-2d39af233d80'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;&#92;&quot;:570045,&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Name&#92;&quot;:&#92;&quot;COMBINED BUILDING SUPPLIES CO-OPERATIVE LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;COOP&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:5,&#92;&quot;# Shareholders&#92;&quot;:484},{&#92;&quot;&#92;&quot;:808506,&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Name&#92;&quot;:&#92;&quot;FOODSTUFFS NORTH ISLAND LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:11,&#92;&quot;# Shareholders&#92;&quot;:292},{&#92;&quot;&#92;&quot;:1148145,&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Name&#92;&quot;:&#92;&quot;WINSLOW FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:290},{&#92;&quot;&#92;&quot;:78539,&#92;&quot;_marimo_row_id&#92;&quot;:3,&#92;&quot;Name&#92;&quot;:&#92;&quot;ESK VALLEY FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:288},{&#92;&quot;&#92;&quot;:671467,&#92;&quot;_marimo_row_id&#92;&quot;:4,&#92;&quot;Name&#92;&quot;:&#92;&quot;HAMPTON FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:281},{&#92;&quot;&#92;&quot;:1609772,&#92;&quot;_marimo_row_id&#92;&quot;:5,&#92;&quot;Name&#92;&quot;:&#92;&quot;FIORDLAND LOBSTER COMPANY LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:6,&#92;&quot;# Shareholders&#92;&quot;:266},{&#92;&quot;&#92;&quot;:154174,&#92;&quot;_marimo_row_id&#92;&quot;:6,&#92;&quot;Name&#92;&quot;:&#92;&quot;NEW ZEALAND MUSSEL INDUSTRY COUNCIL LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:6,&#92;&quot;# Shareholders&#92;&quot;:265},{&#92;&quot;&#92;&quot;:671468,&#92;&quot;_marimo_row_id&#92;&quot;:7,&#92;&quot;Name&#92;&quot;:&#92;&quot;NGAHAPE FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:261},{&#92;&quot;&#92;&quot;:78569,&#92;&quot;_marimo_row_id&#92;&quot;:8,&#92;&quot;Name&#92;&quot;:&#92;&quot;RATA HILLS FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:257},{&#92;&quot;&#92;&quot;:78559,&#92;&quot;_marimo_row_id&#92;&quot;:9,&#92;&quot;Name&#92;&quot;:&#92;&quot;PUKEREWA FOREST GP LIMITED&#92;&quot;,&#92;&quot;Status&#92;&quot;:&#92;&quot;REGISTERED&#92;&quot;,&#92;&quot;Entity Type&#92;&quot;:&#92;&quot;LTD&#92;&quot;,&#92;&quot;# Directors&#92;&quot;:3,&#92;&quot;# Shareholders&#92;&quot;:254}]&quot;' data-total-rows='1810098' data-total-columns='5' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='true' data-page-size='10' data-field-types='[[&quot;Name&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Status&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Entity Type&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;# Directors&quot;,[&quot;integer&quot;,&quot;int32&quot;]],[&quot;# Shareholders&quot;,[&quot;integer&quot;,&quot;int32&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='true' data-show-data-types='true' data-show-page-size-selector='true' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[[&quot;&quot;,[&quot;integer&quot;,&quot;int64&quot;]]]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "89fd200b186d49684ea944f57b1d6e25",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='Kclp-0' random-id='1a5f1a6e-9dd1-efba-708f-2de62bb2081d'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Relationship&#92;&quot;:&#92;&quot;Director &#92;&#92;u2192 Company&#92;&quot;,&#92;&quot;Edge Count&#92;&quot;:1172977,&#92;&quot;Avg. Degree&#92;&quot;:0.6},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Relationship&#92;&quot;:&#92;&quot;Shareholder &#92;&#92;u2192 Company&#92;&quot;,&#92;&quot;Edge Count&#92;&quot;:1451804,&#92;&quot;Avg. Degree&#92;&quot;:0.8}]&quot;' data-total-rows='2' data-total-columns='3' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;Relationship&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Edge Count&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Avg. Degree&quot;,[&quot;number&quot;,&quot;float64&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "1df4cfae64b36c1de7e5efdf8f8f8e43",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"4-node-feature-construction\">4. Node Feature Construction</h2>\n<table>\n<thead>\n<tr>\n<th>Node Type</th>\n<th>Features</th>\n<th>Dimension</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Company</td>\n<td>status one-hot + entity-type one-hot + normalized director-degree</td>\n<td>~num_statuses + ~num_types + 1</td>\n</tr>\n<tr>\n<td>Director</td>\n<td>normalized director-degree + small random noise</td>\n<td>~num_statuses + ~num_types + 1</td>\n</tr>\n<tr>\n<td>Shareholder</td>\n<td>normalized shareholder-degree + small random noise</td>\n<td>~num_statuses + ~num_types + 1</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">Features are computed from the <strong>full</strong> graph (all remaining edges after filtering\n<code>REMOVED</code> companies). This is standard practice in transductive link prediction \u2014 the\ndegree features provide a fixed structural prior, while the actual information leakage is\nisolated to the message-passing topology (handled next by building separate graphs per\nphase).</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "1350d637b2ae0b91a49af7fb9a7ea779",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "b9ddd8153bf4be7f1905042860d7c084",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"5-edge-split-preventing-data-leakage\">5. Edge Split \u2014 Preventing Data Leakage</h2>\n<span class=\"paragraph\">In transductive link prediction the <strong>same nodes</strong> are used in every phase, so the risk\nis that the encoder's message-passing step leaks information from held-out edges. To\nprevent this we first split all shareholder-company edges, then build <strong>three separate\ngraph objects</strong> \u2014 each containing only the edges that phase is allowed to see:</span>\n<table>\n<thead>\n<tr>\n<th>Graph</th>\n<th>Shareholder Edges Used</th>\n<th>Used For</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>train_data</code></td>\n<td>Training positives only</td>\n<td>Message passing during training</td>\n</tr>\n<tr>\n<td><code>val_data</code></td>\n<td>Training + validation positives</td>\n<td>Encoding during validation</td>\n</tr>\n<tr>\n<td><code>test_data</code></td>\n<td>All edges (training + validation + test)</td>\n<td>Encoding during final evaluation</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">Director edges are <strong>never split</strong> \u2014 they are structural context available in all phases.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "0ba7e446cdfa90a5cc45d9fc3a80a57e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "934d1ebfd20fdb12f5923e24661a91d1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='ZHCJ-0' random-id='f7f151af-bff9-88fd-a246-845a34003457'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Split&#92;&quot;:&#92;&quot;Train&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:1016262,&#92;&quot;Fraction&#92;&quot;:&#92;&quot;70.0%&#92;&quot;},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Split&#92;&quot;:&#92;&quot;Validation&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:217770,&#92;&quot;Fraction&#92;&quot;:&#92;&quot;15.0%&#92;&quot;},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Split&#92;&quot;:&#92;&quot;Test&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:217772,&#92;&quot;Fraction&#92;&quot;:&#92;&quot;15.0%&#92;&quot;}]&quot;' data-total-rows='3' data-total-columns='3' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;Split&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Positive Edges&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Fraction&quot;,[&quot;string&quot;,&quot;object&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "8f796bf0a8c81c3a95008e05eb88a4d1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"6-build-three-heterogeneous-graphs\">6. Build Three Heterogeneous Graphs</h2>\n<span class=\"paragraph\">Each graph shares the same node features, director edges, and node names \u2014 only the\nshareholder-company edge set differs per phase.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "95d2830d2476a05f35deecd8054a6e8e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "88e1faca244424e9a1047cae09f8c218",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Graph Summary \u2014 Shareholder Edges Per Phase</strong></span>\n<table>\n<thead>\n<tr>\n<th>Graph</th>\n<th>Shareholder Edges</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>train_data</code></td>\n<td>1,016,262</td>\n</tr>\n<tr>\n<td><code>val_data</code></td>\n<td>1,234,032</td>\n</tr>\n<tr>\n<td><code>test_data</code></td>\n<td>1,451,804</td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">Director edges (1,172,977) are\nidentical across all three.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "698ebc64c29c7191191a356fdad52949",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"7-negative-sampling-for-evaluation\">7. Negative Sampling for Evaluation</h2>\n<span class=\"paragraph\">Generate negative (non-existent) edges for validation and test metrics. Validation\nnegatives exclude train positives; test negatives exclude train + validation positives\n\u2014 ensuring no evaluation overlap with edges the model has seen.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "943f249d330512782638ba5be9c4f90c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "28fd36afa617ca41e6b69614d413eafb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<marimo-ui-element object-id='ulZA-0' random-id='467f7a21-debc-406e-828d-d387c10ec131'><marimo-table data-initial-value='[]' data-label='null' data-data='&quot;[{&#92;&quot;_marimo_row_id&#92;&quot;:0,&#92;&quot;Split&#92;&quot;:&#92;&quot;Train&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:1016262,&#92;&quot;Negative Edges&#92;&quot;:&#92;&quot;&#92;&#92;u2014&#92;&quot;,&#92;&quot;Total for Evaluation&#92;&quot;:&#92;&quot;&#92;&#92;u2014&#92;&quot;},{&#92;&quot;_marimo_row_id&#92;&quot;:1,&#92;&quot;Split&#92;&quot;:&#92;&quot;Validation&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:217770,&#92;&quot;Negative Edges&#92;&quot;:217770,&#92;&quot;Total for Evaluation&#92;&quot;:435540},{&#92;&quot;_marimo_row_id&#92;&quot;:2,&#92;&quot;Split&#92;&quot;:&#92;&quot;Test&#92;&quot;,&#92;&quot;Positive Edges&#92;&quot;:217772,&#92;&quot;Negative Edges&#92;&quot;:217772,&#92;&quot;Total for Evaluation&#92;&quot;:435544}]&quot;' data-total-rows='3' data-total-columns='4' data-max-columns='50' data-banner-text='&quot;&quot;' data-pagination='false' data-page-size='10' data-field-types='[[&quot;Split&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Positive Edges&quot;,[&quot;integer&quot;,&quot;int64&quot;]],[&quot;Negative Edges&quot;,[&quot;string&quot;,&quot;object&quot;]],[&quot;Total for Evaluation&quot;,[&quot;string&quot;,&quot;object&quot;]]]' data-selection='&quot;multi&quot;' data-show-filters='true' data-show-download='true' data-show-column-summaries='false' data-show-data-types='true' data-show-page-size-selector='false' data-show-column-explorer='true' data-show-chart-builder='true' data-row-headers='[]' data-hidden-columns='[]' data-has-stable-row-id='true' data-lazy='false' data-preload='false'></marimo-table></marimo-ui-element>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "7f002190a0b5b0cee5fc6c087f9b671d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "3a4ebb9058913170a140b11334c1a126",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">Pipeline checkpoint saved to <code>data/processed/pipeline_checkpoint/pipeline.pt</code>.</span>\n<span class=\"paragraph\">Run <strong>01_link_prediction.py</strong> next to train the GNN model and evaluate its\nlink prediction performance.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZwgT",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

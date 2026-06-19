@@ -1,0 +1,208 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "4a0585ab6864d2658ca7e90fa677b872",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "cf809586167f5197c5b73c62889ff595",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-2-graph-convolutional-networks-gcn\">GNN Workshop 2: Graph Convolutional Networks (GCN)</h1>\n<span class=\"paragraph\">The <strong>Graph Convolutional Network</strong> (Kipf &amp; Welling, 2017) is the most influential GNN architecture. It introduced a simple yet effective way to generalize convolution to graphs.</span>\n<h2 id=\"from-cnns-to-gcns\">From CNNs to GCNs</h2>\n<span class=\"paragraph\">In a <strong>CNN</strong>, each pixel's output is a weighted sum of its neighbors (the kernel window). In a <strong>GCN</strong>, each node's output is a normalized sum of its neighbors' features.</span>\n<h3 id=\"the-gcn-layer-formula\">The GCN Layer Formula</h3>\n<marimo-tex class=\"arithmatex\">||[H^{(k+1)} = \\sigma\\left(\\hat{D}^{-1/2} \\hat{A} \\hat{D}^{-1/2} H^{(k)} W^{(k)}\n\\right)||]</marimo-tex><span class=\"paragraph\">Where:</span>\n<ul>\n<li><marimo-tex class=\"arithmatex\">||(\\hat{A} = A + I||)</marimo-tex> \u2014 adjacency matrix with self-loops</li>\n<li><marimo-tex class=\"arithmatex\">||(\\hat{D}_{ii} = \\sum_j \\hat{A}_{ij}||)</marimo-tex> \u2014 degree matrix of <marimo-tex class=\"arithmatex\">||(\\hat{A}||)</marimo-tex></li>\n<li><marimo-tex class=\"arithmatex\">||(H^{(k)}||)</marimo-tex> \u2014 node features at layer <marimo-tex class=\"arithmatex\">||(k||)</marimo-tex></li>\n<li><marimo-tex class=\"arithmatex\">||(W^{(k)}||)</marimo-tex> \u2014 learnable weight matrix</li>\n<li><marimo-tex class=\"arithmatex\">||(\\sigma||)</marimo-tex> \u2014 activation function (ReLU)</li>\n</ul>\n<span class=\"paragraph\">The normalization <marimo-tex class=\"arithmatex\">||(\\hat{D}^{-1/2} \\hat{A} \\hat{D}^{-1/2}||)</marimo-tex> prevents the scale of features from growing with node degree.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "1a85d12d4c964d19ea346a2e2954b7aa",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"setting-up-the-cora-dataset\">Setting Up: The Cora Dataset</h2>\n<span class=\"paragraph\">We'll use the <strong>Cora citation network</strong> \u2014 a classic benchmark for GNNs:</span>\n<ul>\n<li><strong>Nodes</strong>: Scientific papers</li>\n<li><strong>Edges</strong>: Citation links (paper A cites paper B)</li>\n<li><strong>Features</strong>: Bag-of-words representation of each paper</li>\n<li><strong>Labels</strong>: Research topic (one of 7 classes)</li>\n</ul>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Nodes</td>\n<td>2,708</td>\n</tr>\n<tr>\n<td>Edges</td>\n<td>10,556</td>\n</tr>\n<tr>\n<td>Features per node</td>\n<td>1,433</td>\n</tr>\n<tr>\n<td>Classes</td>\n<td>7</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "daaf0892e519431e8bc4709bc0284e8e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Downloaded Cora dataset:</span>\n<ul>\n<li><strong>Nodes</strong>: 2708</li>\n<li><strong>Features</strong>: 1433</li>\n<li><strong>Edges</strong>: 10556</li>\n<li><strong>Classes</strong>: 7</li>\n<li><strong>Training nodes</strong>: 140</li>\n<li><strong>Validation nodes</strong>: 500</li>\n<li><strong>Test nodes</strong>: 1000</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Downloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.x\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.tx\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.allx\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.y\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.ty\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.ally\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.graph\nDownloading https://github.com/kimiyoung/planetoid/raw/master/data/ind.cora.test.index\nProcessing...\nDone!\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "262beef0bcb4ede97e35330172e42013",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "ebd0d7837eec4295e8c31d2a21a21976",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"building-a-2-layer-gcn\">Building a 2-Layer GCN</h2>\n<span class=\"paragraph\">The classic GCN for node classification:</span>\n<marimo-tex class=\"arithmatex\">||[Z = \\text{softmax}\\left(\\hat{A} \\cdot \\text{ReLU}\\left(\\hat{A} \\cdot X W^{(0)}\n\\right) \\cdot W^{(1)}\n\\right)||]</marimo-tex><span class=\"paragraph\">Two layers = 2-hop neighborhood in the final representation.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "2db0f277a556b39e659f37326d0446bc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "c5e048e5ba3b966c7c32f73530bde7e7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Model</strong>: 1433 \u2192 16 \u2192 7 (GCN with 23063 parameters)</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "2e389140a8eaeb31c994c95829caed51",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "96985414a5a1b69d2965ea56546f7663",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Training complete!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "0f660bc001a414f2a25eab6127505b77",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "eaad45a4be68ec721bcd28fe883e45f0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"visualizing-gcn-predictions\">Visualizing GCN Predictions</h2>\n<span class=\"paragraph\">Let's see how the GCN's learned embeddings look in 2D:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "348f3acc6b5aea02011ca5907e8f4ca5",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "750caa2646f0e620ae691e31ac3567d0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"gcn-vs-mlp-why-the-graph-matters\">GCN vs MLP: Why the Graph Matters</h2>\n<span class=\"paragraph\">To understand why GCNs are powerful, let's compare with a simple MLP that ignores graph structure entirely.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "cc69e008ddc18578d46de70cc6756fc2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><table>\n<thead>\n<tr>\n<th>Model</th>\n<th style=\"text-align: center;\">Test Accuracy</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>MLP</strong> (no graph structure)</td>\n<td style=\"text-align: center;\">42.40%</td>\n</tr>\n<tr>\n<td><strong>GCN</strong> (uses graph structure)</td>\n<td style=\"text-align: center;\">13.10%</td>\n</tr>\n<tr>\n<td><strong>Improvement</strong></td>\n<td style=\"text-align: center;\"><strong>-29.30%</strong></td>\n</tr>\n</tbody>\n</table>\n<span class=\"paragraph\">The GCN outperforms the MLP because it leverages the <strong>graph structure</strong> \u2014 papers that cite each other tend to be about similar topics!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "f4fb3b10aa51855a09846d1a4aae1489",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "f1948e00b23cd51b9834e301623014c7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"why-does-the-gcn-work-better\">Why Does the GCN Work Better?</h2>\n<span class=\"paragraph\">The GCN's secret sauce is the <strong>graph structure</strong> \u2014 it acts as a <strong>smoothing prior</strong>:</span>\n<ol>\n<li><strong>Homophily</strong>: In citation networks, papers that cite each other tend to be about similar topics</li>\n<li><strong>Feature smoothing</strong>: The GCN averages features across connected nodes, reducing noise</li>\n<li><strong>Information flow</strong>: Labels propagate from labeled to unlabeled nodes through the graph</li>\n</ol>\n<span class=\"paragraph\">The MLP sees each paper in isolation \u2014 it only has the bag-of-words features. The GCN also sees <strong>who cites whom</strong>, giving it a crucial additional signal.</span>\n<h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>GCN</strong> generalizes convolution to graphs via normalized neighborhood aggregation\n\u2705 GCNs significantly outperform MLPs on node classification when the graph has <strong>homophily</strong>\n\u2705 Two GCN layers capture 2-hop neighborhood information\n\u2705 PyTorch Geometric makes building GCNs simple with <code>GCNConv</code>\n\u2705 The graph structure provides a powerful inductive bias for learning</span>\n<span class=\"paragraph\"><strong>Next up:</strong> Graph Attention Networks (GAT) \u2014 learning which neighbors matter most!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "742d0b8206761bf3bb8891078df8ba9f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "982ca509737ba938eb38a992c408a270",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-5-graph-classification-pooling\">GNN Workshop 5: Graph Classification &amp; Pooling</h1>\n<span class=\"paragraph\">So far we've focused on <strong>node-level</strong> tasks (classifying individual nodes). But many real-world problems require <strong>graph-level</strong> predictions:</span>\n<ul>\n<li>Is this molecule toxic or safe? (molecule classification)</li>\n<li>Is this code snippet buggy? (program analysis)</li>\n<li>What type of community is this? (social network analysis)</li>\n</ul>\n<h2 id=\"the-challenge\">The Challenge</h2>\n<span class=\"paragraph\">Node-level GNNs output a feature vector <strong>per node</strong>. To make a <strong>graph-level</strong> prediction, we need to combine all node features into a single representation.</span>\n<span class=\"paragraph\">This is called <strong>readout</strong> or <strong>pooling</strong>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "b6031f2bfe817c4426b4ac130113935f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"global-pooling-readout\">Global Pooling / Readout</h2>\n<span class=\"paragraph\">The simplest approach: aggregate all node features into one vector.</span>\n<h3 id=\"common-pooling-functions\">Common Pooling Functions</h3>\n<span class=\"paragraph\"><strong>Mean Pooling</strong>: $<marimo-tex class=\"arithmatex\">||(\\mathbf{h}_G = \\frac{1}{|V|} \\sum_{v \\in V} \\mathbf{h}_v||)</marimo-tex>$</span>\n<span class=\"paragraph\"><strong>Max Pooling</strong>: $<marimo-tex class=\"arithmatex\">||(\\mathbf{h}_G = \\max_{v \\in V} \\mathbf{h}_v||)</marimo-tex>$ (element-wise)</span>\n<span class=\"paragraph\"><strong>Sum Pooling</strong>: $<marimo-tex class=\"arithmatex\">||(\\mathbf{h}_G = \\sum_{v \\in V} \\mathbf{h}_v||)</marimo-tex>$</span>\n<blockquote>\n<span class=\"paragraph\">\ud83d\udca1 <strong>Sum pooling</strong> is often preferred because it can distinguish graph sizes (e.g., a molecule with 50 atoms vs 5 atoms should have different representations).</span>\n</blockquote>\n<h3 id=\"the-complete-architecture\">The Complete Architecture</h3>\n<div class=\"language-objective-c codehilite\"><pre><span></span><code><span class=\"n\">Node</span><span class=\"w\"> </span><span class=\"n\">Features</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"p\">[</span><span class=\"n\">GNN</span><span class=\"w\"> </span><span class=\"n\">Layers</span><span class=\"p\">]</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"n\">Node</span><span class=\"w\"> </span><span class=\"n\">Embeddings</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"p\">[</span><span class=\"n\">Pooling</span><span class=\"p\">]</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"n\">Graph</span><span class=\"w\"> </span><span class=\"n\">Embedding</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"p\">[</span><span class=\"n\">MLP</span><span class=\"p\">]</span><span class=\"w\"> </span><span class=\"err\">\u2192</span><span class=\"w\"> </span><span class=\"n\">Prediction</span>\n</code></pre></div></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "38882a8f5c8bbf9e9e385b855d88dff7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"dataset-mutag\">Dataset: MUTAG</h2>\n<span class=\"paragraph\"><strong>MUTAG</strong> is a dataset of 188 mutagenic molecules labeled by their mutagenicity.</span>\n<table>\n<thead>\n<tr>\n<th>Property</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Graphs</td>\n<td>188</td>\n</tr>\n<tr>\n<td>Classes</td>\n<td>2</td>\n</tr>\n<tr>\n<td>Node features</td>\n<td>7</td>\n</tr>\n<tr>\n<td>Avg. nodes/graph</td>\n<td>17.9</td>\n</tr>\n<tr>\n<td>Avg. edges/graph</td>\n<td>39.6</td>\n</tr>\n<tr>\n<td>Train</td>\n<td>120</td>\n</tr>\n<tr>\n<td>Test</td>\n<td>68</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stderr",
+          "text": "Downloading https://www.chrsmrrs.com/graphkerneldatasets/MUTAG.zip\nProcessing...\nDone!\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "4351db580af7f905d4108810bb832bd8",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "728b75df388ed6d17944ab15b75d83e2",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Graph Classifier</strong>: 8,962 parameters</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "9287ac99132b977fc1bf772df0f1e6e3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Final Test Accuracy</strong>: 64.71%</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "dcfd7ea37a0d7fbb5ba712cd9eeb60ec",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "0f76f4a5f2fae773ebaed9a520e77699",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"comparing-pooling-strategies\">Comparing Pooling Strategies</h2>\n<span class=\"paragraph\">How does the choice of pooling affect performance?</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "50f722ac35060cc0a650de705b70d3eb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "631377739db1fb44904ad3717a5cc637",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "233d4952eb7b2dd1aeedd786f169f09d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"hierarchical-pooling\">Hierarchical Pooling</h2>\n<span class=\"paragraph\">Global pooling discards all graph structure. <strong>Hierarchical pooling</strong> progressively coarsens the graph:</span>\n<ol>\n<li>Start with the original graph</li>\n<li>Cluster nodes and pool them into super-nodes</li>\n<li>Repeat</li>\n</ol>\n<span class=\"paragraph\">This creates a <strong>graph of graphs</strong> \u2014 preserving hierarchical structure.</span>\n<h3 id=\"diffpool-ying-et-al-2018\">DiffPool (Ying et al., 2018)</h3>\n<span class=\"paragraph\">Learns a <strong>soft cluster assignment</strong> matrix <marimo-tex class=\"arithmatex\">||(S||)</marimo-tex>:</span>\n<marimo-tex class=\"arithmatex\">||[S^{(k)} = \\text{softmax}(\\text{GNN}^{(k)}(A^{(k)}, X^{(k)}))||]</marimo-tex><span class=\"paragraph\">Then pools:</span>\n<marimo-tex class=\"arithmatex\">||[X^{(k+1)} = (S^{(k)})^T X^{(k)}||]</marimo-tex><marimo-tex class=\"arithmatex\">||[A^{(k+1)} = (S^{(k)})^T A^{(k)} S^{(k)}||]</marimo-tex><h3 id=\"topkpool-gao-ji-2019\">TopKPool (Gao &amp; Ji, 2019)</h3>\n<span class=\"paragraph\">Simple and efficient: project node features to a score, keep the top-<marimo-tex class=\"arithmatex\">||(k||)</marimo-tex> nodes, discard the rest.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "fa658990220fb7a0b61a35f1b9d61818",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"when-to-use-which-pooling\">When to Use Which Pooling?</h2>\n<table>\n<thead>\n<tr>\n<th>Pooling</th>\n<th>When to Use</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>Global Mean</strong></td>\n<td>Simple baseline, graphs of similar sizes</td>\n</tr>\n<tr>\n<td><strong>Global Sum</strong></td>\n<td>Graph size matters (e.g., molecule with more atoms = different properties)</td>\n</tr>\n<tr>\n<td><strong>Global Max</strong></td>\n<td>Only the most salient feature matters</td>\n</tr>\n<tr>\n<td><strong>DiffPool</strong></td>\n<td>Hierarchical structure is important, you have enough data</td>\n</tr>\n<tr>\n<td><strong>TopKPool</strong></td>\n<td>You want to keep important nodes and discard noise</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"beyond-classification-other-graph-level-tasks\">Beyond Classification: Other Graph-Level Tasks</h2>\n<ul>\n<li><strong>Graph regression</strong>: Predicting a continuous value (e.g., molecular energy)</li>\n<li><strong>Graph generation</strong>: Creating new graphs (e.g., drug discovery)</li>\n<li><strong>Graph matching</strong>: Comparing two graphs (e.g., shape matching)</li>\n<li><strong>Anomaly detection</strong>: Finding unusual graphs (e.g., fraud detection)</li>\n</ul>\n<h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 <strong>Graph-level tasks</strong> require pooling node embeddings into a single graph representation\n\u2705 <strong>Global pooling</strong> options: mean, max, sum \u2014 each has different properties\n\u2705 <strong>Hierarchical pooling</strong> preserves structure while coarsening\n\u2705 PyTorch Geometric supports <code>global_mean_pool</code>, <code>global_max_pool</code>, <code>global_add_pool</code>\n\u2705 Graph classification enables applications in drug discovery, materials science, and more</span>\n<span class=\"paragraph\"><strong>Next up:</strong> Advanced topics \u2014 link prediction, explainability, and real-world deployment!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

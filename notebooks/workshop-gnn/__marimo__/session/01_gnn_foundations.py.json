@@ -1,0 +1,216 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.9",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "6058d3bce309973c8da62c1a5115defc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "2dab88542374c74f54083844fb875de9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"gnn-workshop-1-foundations-message-passing\">GNN Workshop 1: Foundations &amp; Message Passing</h1>\n<span class=\"paragraph\">Welcome to the first notebook in the Graph Neural Networks workshop! This series assumes you understand basic graph concepts (nodes, edges, adjacency). If not, check the <strong>Graph Workshop</strong> (notebooks/workshop/) first.</span>\n<h2 id=\"why-gnns\">Why GNNs?</h2>\n<span class=\"paragraph\">Traditional deep learning (CNNs, RNNs, Transformers) assumes <strong>grid-like data</strong>:</span>\n<ul>\n<li>Images: regular 2D grid of pixels</li>\n<li>Text: sequential 1D tokens</li>\n<li>Tabular: fixed set of features</li>\n</ul>\n<span class=\"paragraph\"><strong>Graphs are different</strong>: each node has a variable number of neighbors, and there's no fixed ordering. We need architectures that can handle this <strong>irregular structure</strong>.</span>\n<h2 id=\"the-core-idea-message-passing\">The Core Idea: Message Passing</h2>\n<span class=\"paragraph\">GNNs are built on a simple yet powerful idea:</span>\n<blockquote>\n<span class=\"paragraph\">Each node <strong>aggregates information</strong> from its neighbors and <strong>updates</strong> its own representation.</span>\n</blockquote>\n<span class=\"paragraph\">After enough rounds of message passing, every node knows about its local neighborhood structure.</span>\n<marimo-tex class=\"arithmatex\">||[h_v^{(k+1)} = \\text{UPDATE}^{(k)}\\left(h_v^{(k)}, \\text{AGGREGATE}^{(k)}\\left(\\{h_u^{(k)} : u \\in N(v)\\}\n\\right)\n\\right)||]</marimo-tex></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "61d190333a6e8267dafbe31903a1b419",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"visualizing-message-passing\">Visualizing Message Passing</h2>\n<span class=\"paragraph\">Let's create a small graph and see how information flows from node to node:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "657d3b307b3587ba88f795345f2478bb",
+      "outputs": [],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "f2044f5c6ce24705859fa40c3ee31756",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"building-a-message-passing-layer-from-scratch\">Building a Message Passing Layer from Scratch</h2>\n<span class=\"paragraph\">Let's implement the simplest GNN layer \u2014 <strong>Graph Convolution (GCN)</strong> \u2014 from scratch. The GCN layer does three things:</span>\n<ol>\n<li><strong>Message</strong>: Each neighbor sends its features to the center node</li>\n<li><strong>Aggregate</strong>: The center node sums up all neighbor messages</li>\n<li><strong>Update</strong>: The center node transforms the aggregated message + its own features</li>\n</ol>\n<marimo-tex class=\"arithmatex\">||[h_v' = W \\cdot \\left(\n\\frac{1}{|N(v)|} \\sum_{u \\in N(v)} h_u\n\\right)||]</marimo-tex><span class=\"paragraph\">where <marimo-tex class=\"arithmatex\">||(W||)</marimo-tex> is a learnable weight matrix.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "9a243f2bfa6b0f2484a6a23c214b864d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "c3f0e9f6a1fec0b8b12751f8a2bdaa08",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Input shape</strong>: (6, 2) (6 nodes, 2 features each)<br />\n<strong>Output shape</strong>: (6, 4) (6 nodes, 4 features each)</span>\n<span class=\"paragraph\">Each node now has a 4-dimensional feature vector that incorporates information from its neighbors!</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "1c5acda21a8fe4b6f6ffe526af3b6e20",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"pytorch-geometrics-data-object\">PyTorch Geometric's Data Object</h2>\n<span class=\"paragraph\">PyTorch Geometric uses a <code>Data</code> object to represent graphs. Key attributes:</span>\n<table>\n<thead>\n<tr>\n<th>Attribute</th>\n<th>Shape</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>x</code></td>\n<td><code>[N, F]</code></td>\n<td>Node features (N nodes, F features)</td>\n</tr>\n<tr>\n<td><code>edge_index</code></td>\n<td><code>[2, E]</code></td>\n<td>Graph connectivity (edge list)</td>\n</tr>\n<tr>\n<td><code>y</code></td>\n<td><code>[N]</code> or <code>[1]</code></td>\n<td>Labels (per-node or per-graph)</td>\n</tr>\n<tr>\n<td><code>edge_attr</code></td>\n<td><code>[E, D]</code></td>\n<td>Edge features (optional)</td>\n</tr>\n<tr>\n<td><code>train_mask</code></td>\n<td><code>[N]</code></td>\n<td>Boolean mask for training nodes</td>\n</tr>\n<tr>\n<td><code>val_mask</code> / <code>test_mask</code></td>\n<td><code>[N]</code></td>\n<td>Validation/test masks</td>\n</tr>\n</tbody>\n</table></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "BYtC",
+      "code_hash": "5b1cf281e05072aeacdfd23cff16ab1c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
+      "code_hash": "6f8d1b12a577eaa82b342d3a87865d5e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"interactive-watch-message-passing-in-action\">Interactive: Watch Message Passing in Action</h2>\n<span class=\"paragraph\">Let's trace how information flows from a source node through the graph with multiple layers:</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "a15252f6739faea9fa5079d62d06858d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "b63253665fd4a0c5dc316160727e426f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "b18fe9fa97652854b0025f7c41ffd23b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"the-receptive-field-of-a-gnn\">The Receptive Field of a GNN</h2>\n<span class=\"paragraph\">A key property: after <marimo-tex class=\"arithmatex\">||(k||)</marimo-tex> layers of message passing, a node's representation contains information from its <marimo-tex class=\"arithmatex\">||(k||)</marimo-tex>-hop neighborhood.</span>\n<blockquote>\n<span class=\"paragraph\">\ud83e\udde0 <strong>Analogy</strong>: If the graph is a social network and you're the target node:\n- 1 layer = you know your direct friends\n- 2 layers = you know friends-of-friends\n- 3 layers = you know friends-of-friends-of-friends\n- ... and so on</span>\n</blockquote>\n<span class=\"paragraph\">This is the GNN's <strong>receptive field</strong> \u2014 analogous to the field of view in a CNN.</span>\n<h3 id=\"three-key-design-decisions\">Three Key Design Decisions</h3>\n<span class=\"paragraph\">When building a GNN layer, we must choose:</span>\n<ol>\n<li><strong>AGGREGATE</strong>: How do we combine neighbor messages? (sum, mean, max, attention)</li>\n<li><strong>UPDATE</strong>: How do we combine the node's own features with the aggregated message? (concat, add, gate)</li>\n<li><strong>Number of layers</strong>: How many hops of neighborhood do we need?</li>\n</ol></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "10dc9976c59b84bf37125dc5d2f6b2bc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "b36dfd7dea3e0a4d36bda2b9ff5e8083",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "b2d3e80d0b10bdd0ad0202e9f029fa6d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"summary\">Summary</h2>\n<span class=\"paragraph\">\u2705 GNNs use <strong>message passing</strong> to learn from graph-structured data\n\u2705 Each layer aggregates neighbor information and updates node representations\n\u2705 The <strong>Data</strong> object in PyTorch Geometric is the fundamental data structure\n\u2705 After <marimo-tex class=\"arithmatex\">||(k||)</marimo-tex> layers, each node knows about its <marimo-tex class=\"arithmatex\">||(k||)</marimo-tex>-hop neighborhood\n\u2705 Key design choices: <strong>AGGREGATE</strong> (sum/mean/max) and <strong>UPDATE</strong> (concat/add)\n\u2705 We built a GNN layer from scratch in just a few lines of code!</span>\n<span class=\"paragraph\"><strong>Next up:</strong> Graph Convolutional Networks (GCN) \u2014 the most popular GNN architecture.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "yblU",
+      "code_hash": null,
+      "outputs": [],
+      "console": []
+    }
+  ]
+}
