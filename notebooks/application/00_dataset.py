@@ -5,7 +5,7 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
@@ -75,13 +75,13 @@ def _(mo):
     | ``Company`` | company_number, name, status, entity_type, incorporation_date, nzbn |
     | ``Director`` | name, role, appointment_date |
     | ``Shareholder`` | name, share_count, share_type |
-    | ``Address`` | address_type, street, city, suburb, postcode, country |
+    | ``Industry`` | code, description |
 
     | Relationship | Direction |
     |---|---|
     | ``[:DIRECTS]`` | Director → Company |
     | ``[:HOLDS_SHARES_IN]`` | Shareholder → Company |
-    | ``[:HAS_ADDRESS]`` | Company → Address |
+    | ``[:HAS_INDUSTRY]`` | Company → Industry |
     """)
     return
 
@@ -147,8 +147,13 @@ def _(mo):
 def _(graph, mo, pd):
     _node_df = pd.DataFrame(
         {
-            "Node Type": ["Company", "Director", "Shareholder"],
-            "Count": [graph.n_company, graph.n_director, graph.n_shareholder],
+            "Node Type": ["Company", "Director", "Shareholder", "Industry"],
+            "Count": [
+                graph.n_company,
+                graph.n_director,
+                graph.n_shareholder,
+                graph.n_industry,
+            ],
         }
     )
     mo.ui.table(_node_df)
@@ -178,11 +183,20 @@ def _(degree, graph, mo, pd):
 def _(graph, mo, pd):
     _edge_df = pd.DataFrame(
         {
-            "Relationship": ["Director → Company", "Shareholder → Company"],
-            "Edge Count": [graph.dir_edge_index.shape[1], graph.share_edge_index.shape[1]],
+            "Relationship": [
+                "Director → Company",
+                "Shareholder → Company",
+                "Company → Industry",
+            ],
+            "Edge Count": [
+                graph.dir_edge_index.shape[1],
+                graph.share_edge_index.shape[1],
+                graph.ind_edge_index.shape[1],
+            ],
             "Avg. Degree": [
                 round(graph.dir_edge_index.shape[1] / max(graph.n_company, 1), 1),
                 round(graph.share_edge_index.shape[1] / max(graph.n_company, 1), 1),
+                round(graph.ind_edge_index.shape[1] / max(graph.n_company, 1), 1),
             ],
         }
     )
@@ -200,6 +214,7 @@ def _(mo):
     | Company | status one-hot + entity-type one-hot + normalized director-degree | ~num_statuses + ~num_types + 1 |
     | Director | normalized director-degree + small random noise | ~num_statuses + ~num_types + 1 |
     | Shareholder | normalized shareholder-degree + small random noise | ~num_statuses + ~num_types + 1 |
+    | Industry | normalized industry-degree + small random noise | ~num_statuses + ~num_types + 1 |
 
     Features are computed from the **full** graph (all remaining edges after filtering
     ``REMOVED`` companies). This is standard practice in transductive link prediction — the
@@ -212,7 +227,16 @@ def _(mo):
 
 @app.cell
 def _(build_node_features, graph):
-    x_company, x_director, x_shareholder, n_company_feats, n_director_feats, n_shareholder_feats = build_node_features(
+    (
+        x_company,
+        x_director,
+        x_shareholder,
+        n_company_feats,
+        n_director_feats,
+        n_shareholder_feats,
+        x_industry,
+        n_industry_feats,
+    ) = build_node_features(
         comp_statuses=graph.comp_statuses,
         comp_types=graph.comp_types,
         dir_edge_index=graph.dir_edge_index,
@@ -220,13 +244,17 @@ def _(build_node_features, graph):
         n_company=graph.n_company,
         n_shareholder=graph.n_shareholder,
         share_edge_index=graph.share_edge_index,
+        ind_edge_index=graph.ind_edge_index,
+        n_industry=graph.n_industry,
     )
     return (
         n_company_feats,
         n_director_feats,
+        n_industry_feats,
         n_shareholder_feats,
         x_company,
         x_director,
+        x_industry,
         x_shareholder,
     )
 
@@ -296,6 +324,7 @@ def _(
     validation_edges,
     x_company,
     x_director,
+    x_industry,
     x_shareholder,
 ):
     device = torch.device("cpu")
@@ -314,6 +343,9 @@ def _(
         dir_edge_index=graph.dir_edge_index,
         share_edge_index=training_edges,
         device=device,
+        x_industry=x_industry,
+        n_industry=graph.n_industry,
+        ind_edge_index=graph.ind_edge_index,
     )
 
     # Validation graph: training + validation shareholder edges
@@ -331,6 +363,9 @@ def _(
         dir_edge_index=graph.dir_edge_index,
         share_edge_index=val_share_edges,
         device=device,
+        x_industry=x_industry,
+        n_industry=graph.n_industry,
+        ind_edge_index=graph.ind_edge_index,
     )
 
     # Test graph: all shareholder edges (full graph)
@@ -347,6 +382,9 @@ def _(
         dir_edge_index=graph.dir_edge_index,
         share_edge_index=graph.share_edge_index,
         device=device,
+        x_industry=x_industry,
+        n_industry=graph.n_industry,
+        ind_edge_index=graph.ind_edge_index,
     )
     return test_data, train_data, val_data
 
@@ -367,7 +405,8 @@ def _(mo, test_data, train_data, val_data):
         | ``val_data`` | {_sz_val:,} |
         | ``test_data`` | {_sz_tst:,} |
 
-        Director edges ({test_data["director", "directs", "company"].edge_index.shape[1]:,}) are
+        Director edges ({test_data["director", "directs", "company"].edge_index.shape[1]:,}) and
+        Industry edges ({test_data["company", "has_industry", "industry"].edge_index.shape[1]:,}) are
         identical across all three.
         """
     )
@@ -434,6 +473,7 @@ def _(
 def _(
     n_company_feats,
     n_director_feats,
+    n_industry_feats,
     n_shareholder_feats,
     pathlib,
     test_data,
@@ -466,6 +506,7 @@ def _(
             "n_company_feats": n_company_feats,
             "n_director_feats": n_director_feats,
             "n_shareholder_feats": n_shareholder_feats,
+            "n_industry_feats": n_industry_feats,
         },
         checkpoint_dir / "pipeline.pt",
     )

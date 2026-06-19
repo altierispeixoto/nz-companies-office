@@ -93,15 +93,17 @@ def _(device, mo, pathlib, torch):
         company_feature_dim = checkpoint["n_company_feats"]
         director_feature_dim = checkpoint["n_director_feats"]
         shareholder_feature_dim = checkpoint["n_shareholder_feats"]
+        industry_feature_dim = checkpoint.get("n_industry_feats", 0)
     else:
         mo.output.append(mo.md("\u26a0\ufe0f **No pipeline checkpoint**. Run **00_dataset.py** first."))
         train_data = val_data = test_data = None
         training_edges = validation_edges = test_edges = validation_negatives = test_negatives = None
-        company_feature_dim = director_feature_dim = shareholder_feature_dim = None
+        company_feature_dim = director_feature_dim = shareholder_feature_dim = industry_feature_dim = None
     return (
         company_feature_dim,
         director_feature_dim,
         shareholder_feature_dim,
+        industry_feature_dim,
         test_data,
         test_edges,
         test_negatives,
@@ -205,6 +207,7 @@ def _(
     company_feature_dim,
     device,
     director_feature_dim,
+    industry_feature_dim,
     shareholder_feature_dim,
     torch,
 ):
@@ -212,6 +215,7 @@ def _(
         dir_feats=director_feature_dim,
         comp_feats=company_feature_dim,
         share_feats=shareholder_feature_dim,
+        ind_feats=industry_feature_dim,
     ).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=1e-4)
     parameter_count = sum(p.numel() for p in model.parameters())

@@ -15,12 +15,15 @@ def build_node_features(
     n_company: int,
     n_shareholder: int,
     share_edge_index: torch.LongTensor,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int, int]:
-    """Build feature tensors for company, director, and shareholder nodes.
+    ind_edge_index: torch.LongTensor | None = None,
+    n_industry: int = 0,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int, int, torch.Tensor | None, int]:
+    """Build feature tensors for company, director, shareholder, and industry nodes.
 
     Company features: status one-hot + type one-hot + normalized director-degree.
     Director features: normalized degree + small random noise.
     Shareholder features: normalized degree + small random noise.
+    Industry features: normalized degree + small random noise (when edge data provided).
 
     Args:
         comp_statuses: Company status strings (e.g. "Registered", "Removed").
@@ -30,10 +33,13 @@ def build_node_features(
         n_company: Number of company nodes.
         n_shareholder: Number of shareholder nodes.
         share_edge_index: 2xE tensor of shareholder->company edges.
+        ind_edge_index: 2xE tensor of company->industry edges (optional).
+        n_industry: Number of industry nodes (optional).
 
     Returns:
         Tuple of (x_company, x_director, x_shareholder,
-                  n_company_feats, n_director_feats, n_shareholder_feats).
+                  n_company_feats, n_director_feats, n_shareholder_feats,
+                  x_industry, n_industry_feats).
 
     """
     num_statuses = len(set(comp_statuses))
@@ -82,4 +88,32 @@ def build_node_features(
     n_director_feats = x_director.shape[1]
     n_shareholder_feats = x_shareholder.shape[1]
 
-    return x_company, x_director, x_shareholder, n_company_feats, n_director_feats, n_shareholder_feats
+    # Industry features: normalized degree + small random noise
+    if ind_edge_index is not None and n_industry > 0:
+        ind_deg = (
+            degree(ind_edge_index[1], num_nodes=n_industry).float().unsqueeze(1)
+            if ind_edge_index.shape[1] > 0
+            else torch.zeros(n_industry, 1)
+        )
+        x_industry = torch.cat(
+            [
+                ind_deg / (ind_deg.max() + 1e-8),
+                torch.randn(n_industry, num_statuses + num_types) * 0.1,
+            ],
+            dim=1,
+        )
+        n_industry_feats = x_industry.shape[1]
+    else:
+        x_industry = None
+        n_industry_feats = 0
+
+    return (
+        x_company,
+        x_director,
+        x_shareholder,
+        n_company_feats,
+        n_director_feats,
+        n_shareholder_feats,
+        x_industry,
+        n_industry_feats,
+    )
