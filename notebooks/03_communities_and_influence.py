@@ -5,7 +5,7 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
@@ -382,6 +382,7 @@ def _(mo):
     - **ICEHOUSE VENTURES NOMINEES** (VC): degree=1076, LCC=0.071
       — low clustering despite thick relationships; classic VC connector
       bridging unrelated portfolio companies
+
     - **NEW ZEALAND TRUSTEE SERVICES**: degree=648, LCC=0.082
       — similar profile but smaller in scale; broad connector network
     - **Paayal GARG / Himanshu MITTAL / Abhinav GUPTA**: degree~1850, LCC~0.964
@@ -407,17 +408,17 @@ def _(mo):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(mo, nh):
     # Check if embeddings exist
     emb_count = nh.run_query(
         "MATCH (s:Shareholder) WHERE s.embedding IS NOT NULL RETURN count(*) AS c",
     ).item(0, "c")
 
     if emb_count > 0:
-        return mo.md(f"✅ Node2Vec embeddings exist on {emb_count:,} shareholders")
+        x = mo.md(f"✅ Node2Vec embeddings exist on {emb_count:,} shareholders")
     else:
-        return mo.md(
+        x = mo.md(
             "⚠️ Embeddings not found. Run the Node2Vec generation query first:\n"
             "```cypher\n"
             "CALL gds.node2vec.write('coinvest', {\n"
@@ -427,9 +428,22 @@ app._unparsable_cell(
             "})\n"
             "```",
         )
-    """,
-    name="_",
-)
+
+        nh.run_query(
+            """
+            CALL gds.node2vec.write('coinvest', {
+              embeddingDimension: 32,
+              walkLength: 10,
+              walksPerNode: 10,
+              windowSize: 5,
+              relationshipWeightProperty: 'weight',
+              writeProperty: 'embedding'
+            })
+            """,
+        )
+
+    x
+    return
 
 
 @app.cell
@@ -444,7 +458,7 @@ def _(mo):
 def _(nh):
     nh.mo_table(
         """
-        MATCH (anchor:Shareholder {name: 'ICEHOUSE VENTURES NOMINEES LIMITED'})
+        MATCH (anchor:Shareholder {name: 'ICEHOUSE VENTURES LIMITED'})
         MATCH (s:Shareholder)
         WHERE s.name <> anchor.name
           AND s.embedding IS NOT NULL

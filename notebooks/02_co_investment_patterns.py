@@ -5,7 +5,7 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
@@ -79,7 +79,7 @@ def _(mo):
 def _(nh):
     nh.mo_table(
         """
-        MATCH (s1:Shareholder)-[:HOLDS_SHARES_IN]->(c:Company)<-[:HOLDS_SHARES_IN]-(s2:Shareholder)
+        MATCH (s1:Shareholder)-[:HOLDS_SHARES_IN]->(c:Company {status:'REGISTERED'} )<-[:HOLDS_SHARES_IN]-(s2:Shareholder)
         WHERE s1 <> s2
         WITH s1, count(DISTINCT s2) AS co_investors
         RETURN s1.name AS shareholder,
@@ -426,28 +426,15 @@ def _(nh):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Key Takeaways
-
-    1. **Co-investor pairs are dominated by trustees** — the most frequent
-       pairs are trustee-corporate duos (DOG TRUSTEE + nominee directors),
-       not genuine business partnerships.
-    2. **Tight syndicates (triangles)** survive trustee filtering — removing
-       trust/nominee/custodian names surfaces real property development and
-       VC co-investment groups.
-    3. **Director-shareholder gaps** — individuals like Melissa CLARK have
-       160+ more shareholdings than directorships, consistent with nominee
-       placement rather than active investment.
-    4. **Industry diversification anomaly** — Singh, Kaur, and Wei names
-       appear across 17 of 19 ANZSIC divisions, while 90%+ of individuals
-       invest in 1–3 industries.
-    5. **Introduction paths** — `shortestPath` through shared companies
-       can find who could introduce you to any person in the graph within
-       a few hops.
-
     Up next: **[03: Communities & Influence](http://localhost:2718/?file=03_communities_and_influence.py)**
     — network science on the co-investment graph (centrality, communities,
     embeddings).
     """)
+    return
+
+
+@app.cell
+def _():
     return
 
 

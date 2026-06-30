@@ -6,6 +6,8 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch_geometric.utils import degree
 
+from nz_companies_office.graph.embeddings import embed_industry_descriptions
+
 
 def build_node_features(
     comp_statuses: list[str],
@@ -17,13 +19,14 @@ def build_node_features(
     share_edge_index: torch.LongTensor,
     ind_edge_index: torch.LongTensor | None = None,
     n_industry: int = 0,
+    industry_descriptions: list[str] | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int, int, torch.Tensor | None, int]:
     """Build feature tensors for company, director, shareholder, and industry nodes.
 
     Company features: status one-hot + type one-hot + normalized director-degree.
     Director features: normalized degree + small random noise.
     Shareholder features: normalized degree + small random noise.
-    Industry features: normalized degree + small random noise (when edge data provided).
+    Industry features: normalized degree + sentence-transformer description embedding.
 
     Args:
         comp_statuses: Company status strings (e.g. "Registered", "Removed").
@@ -35,6 +38,8 @@ def build_node_features(
         share_edge_index: 2xE tensor of shareholder->company edges.
         ind_edge_index: 2xE tensor of company->industry edges (optional).
         n_industry: Number of industry nodes (optional).
+        industry_descriptions: Human-readable description strings for each
+            industry node (used to compute dense embeddings).
 
     Returns:
         Tuple of (x_company, x_director, x_shareholder,
@@ -88,17 +93,21 @@ def build_node_features(
     n_director_feats = x_director.shape[1]
     n_shareholder_feats = x_shareholder.shape[1]
 
-    # Industry features: normalized degree + small random noise
+    # Industry features: normalized degree + sentence-transformer embeddings
     if ind_edge_index is not None and n_industry > 0:
         ind_deg = (
             degree(ind_edge_index[1], num_nodes=n_industry).float().unsqueeze(1)
             if ind_edge_index.shape[1] > 0
             else torch.zeros(n_industry, 1)
         )
+        if industry_descriptions:
+            ind_embs = embed_industry_descriptions(industry_descriptions)
+        else:
+            ind_embs = torch.randn(n_industry, num_statuses + num_types) * 0.1
         x_industry = torch.cat(
             [
                 ind_deg / (ind_deg.max() + 1e-8),
-                torch.randn(n_industry, num_statuses + num_types) * 0.1,
+                ind_embs,
             ],
             dim=1,
         )

@@ -1,13 +1,13 @@
 {
   "version": "1",
   "metadata": {
-    "marimo_version": "0.23.9",
+    "marimo_version": "0.23.10",
     "script_metadata_hash": null
   },
   "cells": [
     {
       "id": "Hbol",
-      "code_hash": "b6b34794643cd1f3cc7850d9f827f3cd",
+      "code_hash": "8a25a0c7977cf61380ad836a7e86ea6e",
       "outputs": [
         {
           "type": "data",
@@ -46,8 +46,15 @@
     },
     {
       "id": "bkHC",
-      "code_hash": "15caea83f77d1d17ce41aa570945b020",
-      "outputs": [],
+      "code_hash": "23a23d0abc47c35fbab074947cdaa3d1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
@@ -65,20 +72,41 @@
     },
     {
       "id": "PKri",
-      "code_hash": "c0c1830789fd4f1f1adbcfea0dd273bb",
-      "outputs": [],
+      "code_hash": "09bc5851d02cdc42d4c202cea1288cc7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "Xref",
       "code_hash": "3773c7bc5ba5c41078635533cbc9b24e",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Model</strong>: HeteroConv encoder + dot-product decoder \u2014 <strong>33,312</strong> parameters</span></span>"
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "SFPL",
       "code_hash": "bc99b5d01eb1bef938d25d2f663cff08",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
@@ -96,8 +124,15 @@
     },
     {
       "id": "RGSE",
-      "code_hash": "723533c85c315d52a7633bf723229ce9",
-      "outputs": [],
+      "code_hash": "4894cb83e94716ae0750123f7ccac55c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  20/200 | Loss: 1.0967 | Val AUC: 0.6650 | Best: 0.6650</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  40/200 | Loss: 1.0349 | Val AUC: 0.7213 | Best: 0.7213</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  60/200 | Loss: 0.9539 | Val AUC: 0.8065 | Best: 0.8065</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch  80/200 | Loss: 0.8016 | Val AUC: 0.8564 | Best: 0.8564</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 100/200 | Loss: 0.7469 | Val AUC: 0.8722 | Best: 0.8722</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 120/200 | Loss: 0.7038 | Val AUC: 0.8826 | Best: 0.8826</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 140/200 | Loss: 0.7060 | Val AUC: 0.8903 | Best: 0.8903</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 160/200 | Loss: 0.6737 | Val AUC: 0.8967 | Best: 0.8967</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 180/200 | Loss: 0.6618 | Val AUC: 0.9010 | Best: 0.9010</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Epoch 200/200 | Loss: 0.6507 | Val AUC: 0.9047 | Best: 0.9047</span></span><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\">Training completed \u2014 best Val AUC 0.9047 at epoch 200.</span></span></div>"
+          }
+        }
+      ],
       "console": []
     },
     {
@@ -122,23 +157,56 @@
     {
       "id": "Hstk",
       "code_hash": "9b83d8feae124a4b9bcdf1b9a7fabac5",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
     },
     {
       "id": "nWHF",
+      "code_hash": "5b18eab8134384e39141e58f0909a82d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Optimal threshold</strong> (Youden's J): <strong>0.5300</strong> \u2014 maximises <code>sensitivity + specificity \u2212 1</code> on the validation set.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
       "code_hash": "2fa0ca21c2ebcb828b9b3dae61e6c4c2",
       "outputs": [],
       "console": []
     },
     {
-      "id": "iLit",
-      "code_hash": "59ef8e812ed61d9fabf2a8f34f283656",
+      "id": "ZHCJ",
+      "code_hash": "d6cd178825db03d0320c8fd7e914847f",
       "outputs": [],
       "console": []
     },
     {
-      "id": "ZHCJ",
+      "id": "ROlb",
+      "code_hash": "57ea551e434bfe6e13c56b4f00110f6a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"results\">Results</h2>\n<table>\n<thead>\n<tr>\n<th>Metric</th>\n<th>Validation</th>\n<th>Test</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><strong>AUC-ROC</strong></td>\n<td>0.905</td>\n<td>0.879</td>\n</tr>\n<tr>\n<td><strong>Average Precision</strong></td>\n<td>0.883</td>\n<td>0.858</td>\n</tr>\n</tbody>\n</table>\n<h3 id=\"interpretation\">Interpretation</h3>\n<ul>\n<li><strong>AUC-ROC &gt; 0.9</strong>: The model effectively distinguishes real investment relationships from non-edges</li>\n<li><strong>High Average Precision</strong>: High-scoring predictions are very likely to be real investors</li>\n<li><strong>Optimal threshold</strong> (Youden's J) balances sensitivity and specificity \u2014 see confusion matrix below</li>\n<li>The model learned structural patterns: how board composition, industry proximity, and existing investors predict future investors</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qnkX",
       "code_hash": "621137eac55c0a2b4209e46cf8811220",
       "outputs": [
         {
@@ -151,7 +219,7 @@
       "console": []
     },
     {
-      "id": "ROlb",
+      "id": "TqIu",
       "code_hash": "b69aae44c34413662d47ae67f858fd0a",
       "outputs": [
         {
@@ -164,7 +232,7 @@
       "console": []
     },
     {
-      "id": "qnkX",
+      "id": "Vxnm",
       "code_hash": null,
       "outputs": [],
       "console": []

@@ -5,16 +5,16 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
 @app.cell
 def _():
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import numpy as np
     import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
 
     return mo, np, nx, plt
 
@@ -22,21 +22,27 @@ def _():
 @app.cell
 def _(mo):
     mo.md("""
-    # Graph Foundations: What Is a Graph?
+    # 01 — Graph Foundations: What Is a Graph?
 
-    Welcome to the first notebook of the Graph Workshop! Let's start from the very beginning.
+    Welcome! This notebook builds your intuition for what graphs are and why they matter.
 
-    ## What is a Graph?
+    | # | Topic | What You'll Learn |
+    |---|-------|-------------------|
+    | 1 | **What Is a Graph?** | Nodes, edges, and the core idea |
+    | 2 | **Our First Graph** | Build and visualize a tiny social network |
+    | 3 | **Key Terminology** | Degree, neighbors, paths, components |
+    | 4 | **Types of Graphs** | Directed/undirected, weighted/unweighted |
+    | 5 | **Interactive Degree Distribution** | Explore random graphs with sliders |
+    | 6 | **The Handshaking Lemma** | A fundamental graph theorem |
 
-    A **graph** is a mathematical structure used to model relationships between objects. It consists of:
+    ---
 
-    - **Nodes** (also called **vertices**): the objects themselves
-    - **Edges** (also called **links**): the relationships between objects
+    A **graph** is a structure for modeling **relationships between objects**:
 
-    > Think of a social network: people are **nodes**, friendships are **edges**.
-    > In a road map: cities are **nodes**, roads connecting them are **edges**.
+    - **Nodes (vertices)** — the objects
+    - **Edges (links)** — the relationships
 
-    Graphs are everywhere once you start looking! They model social networks, transportation systems, biological pathways, the internet, recommendation systems, and much more.
+    > **Analogy**: People at a party are **nodes**. If two people have met, there's an **edge** between them. The whole party is a **graph**.
     """)
     return
 
@@ -44,9 +50,25 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Hands-On: Our First Graph
+    "\"
+    ## Topic 1: What Is a Graph?
 
-    Let's create a tiny social network and visualize it. We'll use **NetworkX** — Python's most popular graph library.
+    A graph answers one question: **what connects to what?**
+
+    | Real-world system | Nodes | Edges |
+    |---|---|--|
+    | Social network | People | Friendships |
+    | Road map | Cities | Roads |
+    | The internet | Websites | Hyperlinks |
+    | Brain | Neurons | Synapses |
+    | Protein network | Proteins | Interactions |
+
+    > **The power of graphs**: Once you encode a system as a graph, you can ask universal questions — Who is most connected? What's the shortest path? Are there clusters?
+
+
+    "\""
+        "Let's build our first graph and make this concrete."
+        "
     """)
     return
 
@@ -79,18 +101,20 @@ def _(mo, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Key Terminology
+    ## Topic 2: Key Terminology
 
-    | Term | Meaning | Example |
-    |------|---------|---------|
-    | **Node (Vertex)** | An entity in the graph | Alice, Bob |
-    | **Edge (Link)** | A connection between two nodes | Alice—Bob |
-    | **Degree** | Number of edges connected to a node | Alice knows 2 people → degree 2 |
-    | **Neighbor** | A node connected by an edge | Bob is Alice's neighbor |
-    | **Path** | A sequence of edges connecting nodes | Alice → Bob → Charlie |
-    | **Component** | A connected subgraph | A group of people all reachable through friendships |
+    Once we have a graph, we need a shared vocabulary to talk about it.
 
-    Let's inspect these properties for our social network:
+    | Term | Definition | In our social network |
+    |------|-----------|---------------------|
+    | **Node** | An entity | Alice, Bob, Charlie, Diana |
+    | **Edge** | A connection between two nodes | Alice—Bob |
+    | **Degree** | Number of edges incident to a node | Alice has degree 2 (Bob, Charlie) |
+    | **Neighbor** | A node reached by one edge | Bob and Charlie are Alice's neighbors |
+    | **Path** | A sequence of edges connecting two nodes | Alice → Bob → Charlie |
+    | **Component** | A maximal connected subgraph | All 4 people are one component |
+
+    > **How it works**: The degree of a node counts its connections. A path is any route you can walk along edges. A component is everything reachable from a starting node.
     """)
     return
 
@@ -98,26 +122,36 @@ def _(mo):
 @app.cell
 def _(G, mo):
     nodes_info = {n: {"degree": G.degree(n), "neighbors": list(G.neighbors(n))} for n in G.nodes()}
-    mo.ui.table([{"Node": n, "Degree": v["degree"], "Neighbors": ", ".join(v["neighbors"])} for n, v in nodes_info.items()])
+    mo.ui.table(
+        [{"Node": n, "Degree": v["degree"], "Neighbors": ", ".join(v["neighbors"])} for n, v in nodes_info.items()]
+    )
     return
 
 
 @app.cell
 def _(mo):
     mo.md("""
-    ## Types of Graphs
+    ## Topic 3: Types of Graphs
 
-    Not all graphs are the same. Here are the most common types:
+    Not all graphs are the same. The type you choose depends on what you're modeling.
 
     ### Undirected vs Directed
-    - **Undirected**: edges have no direction (like friendships)
-    - **Directed (Digraph)**: edges have a direction (like Twitter follows — A follows B doesn't mean B follows A)
+
+    | | Undirected | Directed (Digraph) |
+    |---|---|---|
+    | **Edges** | No direction (friendship) | Direction matters (Twitter follow) |
+    | **Notation** | `(u, v)` means same as `(v, u)` | `(u, v)` means u→v |
+    | **Analogy** | Handshake (mutual) | Gift (one-way) |
 
     ### Weighted vs Unweighted
-    - **Unweighted**: all edges are equal
-    - **Weighted**: edges have weights (like distance between cities, strength of a relationship)
 
-    ### Let's see the difference:
+    | | Unweighted | Weighted |
+    |---|---|---|
+    | **Edges** | All equal | Have a numeric value |
+    | **Analogy** | "Knows" | "Knows well" (strength: 1–5) |
+    | **Example** | Friendship graph | Road distances |
+
+    > **When to use each**: Use **undirected** for symmetric relationships (siblings, co-authors). Use **direct`ed** for asymmetric ones (followers, citations). Add **weights** when connections have different strengths (distances, ratings, capacities).
     """)
     return
 
@@ -144,7 +178,13 @@ def _(mo, nx, plt):
     nx.draw_networkx_nodes(DG, pos2, node_color="lightgreen", node_size=500, ax=ax2)
     nx.draw_networkx_labels(DG, pos2, font_weight="bold", ax=ax2)
     nx.draw_networkx_edges(
-        DG, pos2, width=3, alpha=0.7, ax=ax2, arrows=True, arrowsize=20,
+        DG,
+        pos2,
+        width=3,
+        alpha=0.7,
+        ax=ax2,
+        arrows=True,
+        arrowsize=20,
         edge_color=[DG[u][v]["weight"] for u, v in DG.edges()],
         edge_cmap=plt.cm.Blues,
     )
@@ -161,9 +201,13 @@ def _(mo, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Interactive: Explore Degree Distribution
+    ## Topic 4: Interactive Degree Distribution
 
-    Degree tells us how connected a node is. Let's generate random graphs and see how degrees are distributed.
+    Degree tells us **how connected a node is**. In a random graph, most nodes have similar degree (bell curve). In real networks, a few nodes have very high degree (power law).
+
+    > **Analogy**: In a conference, most people know 5–20 people (bell curve). On Twitter, a few celebrities have millions of followers while most have dozens (power law).
+
+    Use the sliders below to generate random graphs and see how the degree distribution changes with graph size and edge density.
     """)
     return
 
@@ -203,7 +247,7 @@ def _(edge_prob, mo, n_nodes, np, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## The Handshaking Lemma
+    ## Topic 5: The Handshaking Lemma
 
     One of the most fundamental theorems in graph theory:
 
@@ -211,7 +255,9 @@ def _(mo):
 
     $$\sum_{v \in V} \deg(v) = 2|E|$$
 
-    Why? Because each edge contributes to the degree of **two** nodes.
+    **Why?** Each edge contributes 1 to the degree of **both** of its endpoints — so every edge adds 2 to the total degree sum.
+
+    > **Analogy**: At a party, if you count everyone's handshakes and add them up, you get twice the actual number of handshakes (because each handshake involves two people).
 
     Let's verify this on our graphs.
     """)
@@ -246,15 +292,16 @@ def _(mo):
     mo.md("""
     ## Summary
 
-    Congratulations! You've learned the foundations of graph theory:
+    | # | You've Learned | Key Insight |
+    |---|---------------|-------------|
+    | 1 | **What a graph is** | Nodes + edges model any system of relationships |
+    | 2 | **Our first graph** | NetworkX makes creating graphs trivial |
+    | 3 | **Key terminology** | Degree, neighbors, paths, components |
+    | 4 | **Types of graphs** | Directed/undirected, weighted/unweighted |
+    | 5 | **Degree distribution** | Real networks have "rich-get-richer" dynamics |
+    | 6 | **Handshaking lemma** | Sum of degrees = 2 × edges (always!) |
 
-    ✅ What a graph is (nodes + edges)
-    ✅ Key terminology (degree, neighbors, paths, components)
-    ✅ Types of graphs (directed/undirected, weighted/unweighted)
-    ✅ How to create and visualize graphs with NetworkX
-    ✅ The Handshaking Lemma
-
-    **Next up:** We'll dive deeper into how graphs are represented in code and how to build more complex networks.
+    **Next up:** [02 — Graph Representation](./02_graph_representation.py) — how graphs are stored in a computer and how to build complex networks.
     """)
     return
 

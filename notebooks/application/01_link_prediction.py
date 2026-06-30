@@ -5,7 +5,7 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
@@ -17,8 +17,13 @@ def _():
     # Third-party
     import marimo as mo
     import matplotlib.pyplot as plt
+    import numpy as np
     import torch
+    from sklearn.metrics import ConfusionMatrixDisplay
     from sklearn.metrics import RocCurveDisplay
+    from sklearn.metrics import classification_report
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import roc_curve
 
     # Local utilities
     from nz_companies_office.models.link_predictor import LinkPredictor
@@ -27,13 +32,18 @@ def _():
 
     device = get_device()
     return (
+        ConfusionMatrixDisplay,
         LinkPredictor,
         LinkPredictorTrainer,
         RocCurveDisplay,
+        classification_report,
+        confusion_matrix,
         device,
         mo,
+        np,
         pathlib,
         plt,
+        roc_curve,
         torch,
     )
 
@@ -102,8 +112,8 @@ def _(device, mo, pathlib, torch):
     return (
         company_feature_dim,
         director_feature_dim,
-        shareholder_feature_dim,
         industry_feature_dim,
+        shareholder_feature_dim,
         test_data,
         test_edges,
         test_negatives,
@@ -276,13 +286,13 @@ def _(mo, torch, trainer):
         if epoch == 1 or epoch % 20 == 0:
             mo.output.append(
                 mo.md(
-                    f"Epoch {epoch:3d}/50 | Loss: {loss:.4f} | Val AUC: {validation_auc:.4f} "
+                    f"Epoch {epoch:3d}/200 | Loss: {loss:.4f} | Val AUC: {validation_auc:.4f} "
                     f"| Best: {best_validation_auc:.4f}"
                 )
             )
 
     training_result = trainer.train(
-        num_epochs=50,
+        num_epochs=200,
         patience=20,
         progress_callback=_display_progress,
     )
@@ -359,6 +369,21 @@ def _(
 
 
 @app.cell
+def _(mo, np, roc_curve, validation_results):
+    val_scores = validation_results.scores.cpu().numpy()
+    val_labels = validation_results.labels.cpu().numpy()
+    fpr, tpr, thresholds = roc_curve(val_labels, val_scores)
+    youden_j = tpr - fpr
+    best_idx = youden_j.argmax()
+    best_threshold = thresholds[best_idx]
+    mo.md(
+        f"**Optimal threshold** (Youden's J): **{best_threshold:.4f}** — "
+        f"maximises `sensitivity + specificity − 1` on the validation set."
+    )
+    return (best_threshold,)
+
+
+@app.cell
 def _(RocCurveDisplay, mo, plt, test_results):
     _fig, (roc_axis, score_axis) = plt.subplots(1, 2, figsize=(14, 5))
 
@@ -401,6 +426,44 @@ def _(RocCurveDisplay, mo, plt, test_results):
 
 
 @app.cell
+def _(
+    ConfusionMatrixDisplay,
+    best_threshold,
+    classification_report,
+    confusion_matrix,
+    mo,
+    plt,
+    test_results,
+):
+    test_scores = test_results.scores.cpu().numpy()
+    test_labels = test_results.labels.cpu().numpy()
+    test_preds = (test_scores >= best_threshold).astype(int)
+
+    cm = confusion_matrix(test_labels, test_preds)
+    report = classification_report(test_labels, test_preds, target_names=["Non-edge", "Edge"], digits=3)
+
+    _fig, ax = plt.subplots(figsize=(6, 5))
+    ConfusionMatrixDisplay(cm, display_labels=["Non-edge", "Edge"]).plot(ax=ax, cmap="Blues")
+    ax.set_title(f"Confusion Matrix (threshold = {best_threshold:.4f})")
+    plt.tight_layout()
+
+    mo.hstack(
+        [
+            mo.mpl.interactive(plt.gcf()),
+            mo.vstack(
+                [
+                    mo.md(f"### Classification Report\n```\n{report}\n```"),
+                    mo.md(f"**Accuracy**: `{(test_preds == test_labels).mean():.4f}`"),
+                ],
+                gap=1,
+            ),
+        ],
+        gap=2,
+    )
+    return
+
+
+@app.cell
 def _(mo, test_results, validation_results):
     mo.md(f"""
     ## Results
@@ -414,7 +477,8 @@ def _(mo, test_results, validation_results):
 
     - **AUC-ROC > 0.9**: The model effectively distinguishes real investment relationships from non-edges
     - **High Average Precision**: High-scoring predictions are very likely to be real investors
-    - The model learned structural patterns: how board composition and existing investors predict future investors
+    - **Optimal threshold** (Youden's J) balances sensitivity and specificity — see confusion matrix below
+    - The model learned structural patterns: how board composition, industry proximity, and existing investors predict future investors
     """)
     return
 

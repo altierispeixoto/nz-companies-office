@@ -27,6 +27,7 @@ class ExtractedGraph:
         comp_statuses: Company status strings (e.g. "Registered").
         comp_types: Company entity type strings (e.g. "NZ Limited").
         industry_codes: Industry classification codes (e.g. "A011101").
+        industry_descriptions: Human-readable descriptions of industry classes.
         dir_edge_index: 2xE director->company edge index.
         share_edge_index: 2xE shareholder->company edge index.
         ind_edge_index: 2xE company->industry edge index.
@@ -39,6 +40,7 @@ class ExtractedGraph:
     comp_statuses: list[str]
     comp_types: list[str]
     industry_codes: list[str]
+    industry_descriptions: list[str]
     dir_edge_index: torch.LongTensor
     share_edge_index: torch.LongTensor
     ind_edge_index: torch.LongTensor
@@ -133,6 +135,7 @@ class GraphExtractor:
                 "comp_statuses": graph.comp_statuses,
                 "comp_types": graph.comp_types,
                 "industry_codes": graph.industry_codes,
+                "industry_descriptions": graph.industry_descriptions,
                 "dir_edge_index": graph.dir_edge_index,
                 "share_edge_index": graph.share_edge_index,
                 "ind_edge_index": graph.ind_edge_index,
@@ -166,6 +169,7 @@ class GraphExtractor:
             [f"Shareholder {i}" for i in range(cached.get("n_shareholder", len(cached["comp_names"])))],
         )
         industry_codes = cached.get("industry_codes", [])
+        industry_descriptions = cached.get("industry_descriptions", [])
         ind_edge_index = cached.get(
             "ind_edge_index",
             torch.empty(2, 0, dtype=torch.long),
@@ -177,6 +181,7 @@ class GraphExtractor:
             comp_statuses=cached["comp_statuses"],
             comp_types=cached["comp_types"],
             industry_codes=industry_codes,
+            industry_descriptions=industry_descriptions,
             dir_edge_index=cached["dir_edge_index"],
             share_edge_index=cached["share_edge_index"],
             ind_edge_index=ind_edge_index,
@@ -224,6 +229,7 @@ class GraphExtractor:
         dir_names = [r["name"] for r in director_records]
         share_names = [r["name"] for r in shareholder_records]
         industry_codes = [r["id"] for r in industry_records]
+        industry_descriptions = [r["description"] or "" for r in industry_records]
 
         # --- build id → index maps --------------------------------------------
         _norm = self._normalise
@@ -280,6 +286,7 @@ class GraphExtractor:
             comp_statuses=comp_statuses,
             comp_types=comp_types,
             industry_codes=industry_codes,
+            industry_descriptions=industry_descriptions,
             dir_edge_index=dir_edge_index,
             share_edge_index=share_edge_index,
             ind_edge_index=ind_edge_index,
@@ -325,6 +332,7 @@ def filter_removed_companies(graph: ExtractedGraph) -> ExtractedGraph:
         comp_statuses=[s for i, s in enumerate(graph.comp_statuses) if kept_mask[i]],
         comp_types=[t for i, t in enumerate(graph.comp_types) if kept_mask[i]],
         industry_codes=list(graph.industry_codes),
+        industry_descriptions=list(graph.industry_descriptions),
         dir_edge_index=dir_edge_index,
         share_edge_index=share_edge_index,
         ind_edge_index=ind_edge_index,
