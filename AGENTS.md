@@ -6,7 +6,6 @@
 - **Task runner**: `just`. See `justfile` for common commands (`just setup`, `just install`, `just run <cmd>`).
 - **Lint+format**: `ruff check .` and `ruff format .` (run both). Config: `ruff.toml`.
 - **Pre-commit**: hooks include ruff (lint+format), mypy (`--disallow-untyped-defs`), nbstripout (notebooks), gitleaks, sqlfluff, nbqa, DVC. Install with `pre-commit install`.
-- **DVC**: data versioning. `dvc pull` / `dvc push` before committing model/data changes.
 - **SQL**: SQLFluff with Snowflake dialect + dbt templater. Config: `sql/.sqlfluff`.
 
 ## Commands
@@ -37,10 +36,8 @@ just run mypy src/                  # typecheck
 - Source: `src/nz_companies_office/`. Currently a scaffold (no real code yet).
 - Data dirs (`data/raw/`, `data/processed/`, `data/staging/`, `data/model_features/`) are git-ignored inside (track only `.gitignore`). Use DVC to version data files.
 - `pyproject.toml` defines a CLI entrypoint: `nz-companies-office = "nz-companies-office.main:run"` (module not yet created).
-- `notebooks/` should be cleaned via `nbstripout` before commit (enforced by pre-commit).
 
 ## Git / workflow
 
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 - Branch from `master` as `feature/your-feature-name`.
-- Data updates: `dvc add <file>` → `dvc push` → `git add <file>.dvc` → commit.

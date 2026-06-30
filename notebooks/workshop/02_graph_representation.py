@@ -5,17 +5,16 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
 @app.cell
 def _():
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import numpy as np
     import marimo as mo
-    from scipy.sparse import csr_matrix
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
 
     return mo, np, nx, plt
 
@@ -23,16 +22,22 @@ def _():
 @app.cell
 def _(mo):
     mo.md("""
-    # Graph Representation & Visualization
+    # 02 — Graph Representation & Visualization
 
-    In the previous notebook, we learned *what* a graph is. Now let's understand *how* graphs are stored in a computer and explore different ways to visualize them.
+    We know *what* a graph is. Now let's understand *how* graphs are stored inside a computer and explore different ways to visualize them.
 
-    ## Why Does Representation Matter?
+    | # | Topic | What You'll Learn |
+    |---|-------|-------------------|
+    | 1 | **Why Representation Matters** | Memory, speed, and algorithm trade-offs |
+    | 2 | **Three Main Representations** | Edge list vs adjacency list vs adjacency matrix |
+    | 3 | **Real-World: Karate Club** | See sparsity in action |
+    | 4 | **Graph Models** | Random, preferential attachment, small-world |
+    | 5 | **Interactive Model Explorer** | Compare models side-by-side |
+    | 6 | **Graph Layouts** | Different visual perspectives |
 
-    The way we store a graph affects:
-    - **Memory usage** — how much RAM we need
-    - **Speed** — how fast we can traverse or query the graph
-    - **Algorithm choice** — some algorithms work better with certain representations
+    ---
+
+    > **Analogy**: Describing a road network as a list of connected intersections (edge list) vs a matrix with rows/columns for every intersection (adjacency matrix) — both are correct, but one is far more practical.
     """)
     return
 
@@ -40,20 +45,43 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md("""
-    ## The Three Main Representations
+    ## Topic 1: Why Representation Matters
 
-    ### 1. Edge List
-    The simplest format: just list all edges as pairs `(u, v)`.
+    The way we store a graph affects everything:
+
+    | Factor | Edge List | Adjacency List | Adjacency Matrix |
+    |--------|-----------|---------------|------------------|
+    | **Memory** | O(E) | O(V + E) | O(V²) |
+    | **Check connection** | O(E) — scan all edges | O(deg(v)) — scan neighbors | O(1) — matrix lookup |
+    | **Find all neighbors** | O(E) — scan all edges | O(1) — direct lookup | O(V) — scan row |
+    | **Add edge** | O(1) — append | O(1) — append | O(1) — set entry |
+    | **Best for** | Simple storage | Most graph algorithms | Dense graphs, linear algebra |
+
+    > **Key insight**: Real-world graphs are **sparse** — way fewer edges than possible (|E| << |V|²). An adjacency matrix for the Facebook graph would have 10¹⁶ entries (impossible). An adjacency list? ~10¹¹ (manageable with distributed systems).
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    ## Topic 2: The Three Main Representations
+
+    ### 1. Edge List — The Simplest
+
+    Just list every edge as a pair `(u, v)`:
 
     ```
-    [(Alice, Bob), (Alice, Charlie), (Bob, Charlie), (Charlie, Diana)]
+    [("Alice", "Bob"), ("Alice", "Charlie"), ("Bob", "Charlie"), ("Charlie", "Diana")]
     ```
 
-    ✅ Simple and space-efficient for sparse graphs
-    ❌ Slow to check if two nodes are connected (\(\mathcal{O}(|E|)\))
+    **How it works**: Each row is one relationship. To find Alice's friends, scan the whole list.
 
-    ### 2. Adjacency List
-    For each node, store a list of its neighbors.
+    > **When to use**: File storage, data exchange formats. Not for algorithms.
+
+    ### 2. Adjacency List — The Workhorse
+
+    For each node, store a list of its neighbors:
 
     ```
     Alice:   [Bob, Charlie]
@@ -62,12 +90,13 @@ def _(mo):
     Diana:   [Charlie]
     ```
 
-    ✅ Fast to find neighbors (\(\mathcal{O}(1)\) per neighbor)
-    ✅ Space-efficient for sparse graphs
-    ✅ Most commonly used in practice
+    **How it works**: Dictionary/hash map from node → list of neighbors. Finding Alice's friends? Direct lookup.
 
-    ### 3. Adjacency Matrix
-    An \(n 	imes n\) matrix where entry \(A_{ij} = 1\) if there's an edge from \(i\) to \(j\).
+    > **When to use**: Default choice for almost all graph algorithms (BFS, DFS, Dijkstra, PageRank).
+
+    ### 3. Adjacency Matrix — The Math Tool
+
+    An n×n matrix where entry A[i][j] = 1 if there's an edge from i to j:
 
     ```
         Alice Bob Charlie Diana
@@ -77,8 +106,9 @@ def _(mo):
     Diana  0    0     1      0
     ```
 
-    ✅ Fast to check if any two nodes are connected (\(\mathcal{O}(1)\))
-    ❌ Uses \(\mathcal{O}(n^2)\) memory — impractical for large graphs
+    **How it works**: Direct row/column indexing. Powers of A give path counts (A²[i][j] = number of length-2 paths from i to j).
+
+    > **When to use**: Spectral analysis, algebraic graph theory, dense graphs, GPU computation.
     """)
     return
 
@@ -88,14 +118,12 @@ def _(mo, nx):
     G = nx.karate_club_graph()
 
     adj_matrix = nx.to_numpy_array(G)
-    adj_list = {n: list(G.neighbors(n)) for n in G.nodes()}
-    edge_list = list(G.edges())
 
     mo.md(
         f"""
-        ## Let's Compare: Zachary's Karate Club
+        ## Topic 3: Real-World Comparison — Zachary's Karate Club
 
-        We'll use a famous real-world graph: **Zachary's Karate Club**. It represents friendships between 34 members of a university karate club.
+        We'll use a famous real-world graph: **Zachary's Karate Club** — 34 members of a university karate club.
 
         | Metric | Value |
         |--------|-------|
@@ -104,7 +132,9 @@ def _(mo, nx):
         | Adj. Matrix Size | {adj_matrix.shape[0]} × {adj_matrix.shape[1]} = {adj_matrix.shape[0] * adj_matrix.shape[1]} entries |
         | Non-zero entries | {int(adj_matrix.sum())} (only {int(adj_matrix.sum()) / (adj_matrix.shape[0] * adj_matrix.shape[1]) * 100:.1f}% filled) |
 
-        Notice how **sparse** the adjacency matrix is! That's why adjacency lists are usually preferred.
+        Notice how **sparse** the adjacency matrix is — less than 10% filled! That's why adjacency lists are the default.
+
+        > **Analogy**: An adjacency matrix for a city's road network would be a spreadsheet with a row/column for every address, but only 0.001% of cells have a road. The adjacency list is just a map of "this address connects to these addresses."
         """
     )
     return (G,)
@@ -144,9 +174,42 @@ def _(G, mo, np, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Interactive: Building Graphs Programmatically
+    ## Topic 4: Graph Models
 
-    Let's explore different graph models and see how they look:
+    Random graph models help us understand what real networks look like by comparison. Each model captures different structural properties:
+
+    ### 🎲 Erdos-Renyi (Random)
+
+    Every pair of nodes has probability p of being connected.
+
+    - **How it works**: Flip a biased coin for each potential edge
+    - **Degree distribution**: Poisson (bell-shaped) — most nodes have similar degree
+    - **Realism**: Low — real networks aren't this random
+    - **When to use**: Null model for statistical tests, mathematical tractability
+
+    **Analogy**: A party where everyone randomly meets everyone else with the same probability.
+
+    ### 🌟 Barabasi-Albert (Preferential Attachment)
+
+    New nodes connect to existing nodes with probability proportional to their degree ("the rich get richer").
+
+    - **How it works**: Start with a small graph. Add nodes one by one. Each new node picks m neighbors weighted by degree.
+    - **Degree distribution**: Power law — few hubs, many low-degree nodes
+    - **Realism**: High — the internet, social networks, and citation networks follow this pattern
+    - **When to use**: Modeling growth processes, scale-free networks
+
+    **Analogy**: A new Twitter user follows the celebrities everyone else follows (high-degree nodes).
+
+    ### 🔗 Watts-Strogatz (Small World)
+
+    Start with a regular ring lattice, then randomly rewire some edges.
+
+    - **How it works**: Each node connects to k nearest neighbors in a ring. Then rewire each edge with probability p.
+    - **Key property**: High clustering (friends know each other) + short paths (six degrees)
+    - **Realism**: High — social networks exhibit this "small world" phenomenon
+    - **When to use**: Modeling social networks, disease spread
+
+    **Analogy**: Your friends likely know each other (high clustering), yet you're only a few introductions away from anyone in the world (short paths).
     """)
     return
 
@@ -202,31 +265,6 @@ def _(graph_type, mo, np, nx, plt):
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    ## Understanding Graph Models
-
-    Each model captures different properties of real-world networks:
-
-    ### 🎲 Erdos-Renyi (Random)
-    Every pair of nodes has probability \(p\) of being connected.
-    - **Degree distribution**: Poisson (bell-shaped) — most nodes have similar degree
-    - **Realism**: Low — real networks aren't this random
-
-    ### 🌟 Barabasi-Albert (Preferential Attachment)
-    New nodes are more likely to connect to already well-connected nodes ("the rich get richer").
-    - **Degree distribution**: Power law — few hubs, many low-degree nodes
-    - **Realism**: High — the internet, social networks, and citation networks follow this pattern
-
-    ### 🔗 Watts-Strogatz (Small World)
-    Start with a regular ring lattice, then randomly rewire some edges.
-    - **Key property**: High clustering (my friends know each other) + short paths (six degrees of separation)
-    - **Realism**: High — social networks exhibit this "small world" phenomenon
-    """)
-    return
-
-
-@app.cell
 def _(G_model, mo, nx, plt):
     fig_props, (ax_p, ax_s) = plt.subplots(1, 2, figsize=(14, 4))
 
@@ -241,8 +279,8 @@ def _(G_model, mo, nx, plt):
 
     ax_p.axis("off")
     y = 0.9
-    for k, v in props.items():
-        ax_p.text(0.1, y, f"{k}: {v}", fontsize=13, transform=ax_p.transAxes)
+    for key, val in props.items():
+        ax_p.text(0.1, y, f"{key}: {val}", fontsize=13, transform=ax_p.transAxes)
         y -= 0.12
 
     degree_sequence = sorted([d for _, d in G_model.degree()], reverse=True)
@@ -260,9 +298,18 @@ def _(G_model, mo, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Advanced Visualization: Graph Layouts
+    ## Topic 5: Graph Layouts — Seeing Different Structures
 
-    How we position nodes visually matters a lot. Different layout algorithms reveal different structures:
+    How we position nodes visually matters. Different layout algorithms reveal different aspects:
+
+    | Layout | How It Works | When to Use |
+    |--------|-------------|-------------|
+    | **Spring (force-directed)** | Simulates physics — nodes repel, edges attract | General purpose, reveals clusters |
+    | **Circular** | Nodes arranged in a circle | Ring structures, periodic data |
+    | **Kamada-Kawai** | Minimizes energy between all node pairs | Large graphs, needs speed |
+    | **Spectral** | Uses eigenvectors of Laplacian | Reveals spectral structure, connects to theory |
+
+    > **Analogy**: The same social network can look like a hairball (force-directed), a merry-go-round (circular), or reveal hidden factions (spectral). The layout is a lens, not the graph itself.
     """)
     return
 
@@ -276,7 +323,7 @@ def _(G_model, mo, nx, plt):
         "Spectral": nx.spectral_layout(G_model),
     }
 
-    fig_layout, axes_layout = plt.subplots(2, 2, figsize=(14, 12))
+    fig_layout, axes_layout = plt.subplots(2, 2, figsize=(20, 20))
     for (name, pos_layout), ax in zip(layouts.items(), axes_layout.flat):
         nx.draw_networkx_nodes(G_model, pos_layout, node_size=30, node_color="lightblue", alpha=0.7, ax=ax)
         nx.draw_networkx_edges(G_model, pos_layout, width=0.3, alpha=0.3, ax=ax)
@@ -293,13 +340,15 @@ def _(mo):
     mo.md("""
     ## Summary
 
-    ✅ Graphs can be stored as edge lists, adjacency lists, or adjacency matrices
-    ✅ The adjacency matrix is simple but wasteful for sparse graphs
-    ✅ Real-world graphs are almost always sparse
-    ✅ Different random graph models capture different real-world properties
-    ✅ Layout algorithms reveal different structural perspectives
+    | # | You've Learned | Key Insight |
+    |---|---------------|-------------|
+    | 1 | **Why representation matters** | Memory, speed, and algorithm choice depend on the format |
+    | 2 | **Three representations** | Edge list (simple), adjacency list (default), adjacency matrix (math) |
+    | 3 | **Sparsity** | Real graphs are sparse — adjacency matrix has < 10% non-zero entries |
+    | 4 | **Graph models** | Random, preferential attachment, and small-world capture different properties |
+    | 5 | **Layouts** | Each layout algorithm reveals a different structural perspective |
 
-    **Next up:** How do we traverse graphs? BFS, DFS, and finding paths!
+    **Next up:** [03 — Graph Traversal](./03_graph_traversal.py) — BFS, DFS, finding paths, and exploring connected components.
     """)
     return
 

@@ -114,20 +114,20 @@ def _(mo):
 
 @app.cell
 def _(extractor):
-    graph = extractor.extract(use_cache=True)
-    return (graph,)
+    raw_graph = extractor.extract(use_cache=True)
+    return (raw_graph,)
 
 
 @app.cell
-def _(extractor, graph):
-    extractor.save_cache(graph)
+def _(extractor, raw_graph):
+    extractor.save_cache(raw_graph)
     return
 
 
 @app.cell
-def _(filter_removed_companies, mo):
-    n_before = graph.n_company
-    graph = filter_removed_companies(graph)
+def _(filter_removed_companies, mo, raw_graph):
+    n_before = raw_graph.n_company
+    graph = filter_removed_companies(raw_graph)
     n_removed = n_before - graph.n_company
     mo.md(f"Removed **{n_removed}** companies with status ``REMOVED`` ({graph.n_company} companies remaining).")
     return (graph,)
@@ -214,7 +214,7 @@ def _(mo):
     | Company | status one-hot + entity-type one-hot + normalized director-degree | ~num_statuses + ~num_types + 1 |
     | Director | normalized director-degree + small random noise | ~num_statuses + ~num_types + 1 |
     | Shareholder | normalized shareholder-degree + small random noise | ~num_statuses + ~num_types + 1 |
-    | Industry | normalized industry-degree + small random noise | ~num_statuses + ~num_types + 1 |
+    | Industry | normalized industry-degree + sentence-transformer description embedding | 1 + 384 |
 
     Features are computed from the **full** graph (all remaining edges after filtering
     ``REMOVED`` companies). This is standard practice in transductive link prediction — the
@@ -246,6 +246,7 @@ def _(build_node_features, graph):
         share_edge_index=graph.share_edge_index,
         ind_edge_index=graph.ind_edge_index,
         n_industry=graph.n_industry,
+        industry_descriptions=graph.industry_descriptions,
     )
     return (
         n_company_feats,
@@ -395,6 +396,10 @@ def _(mo, test_data, train_data, val_data):
     _sz_val = val_data["shareholder", "share", "company"].edge_index.shape[1]
     _sz_tst = test_data["shareholder", "share", "company"].edge_index.shape[1]
 
+    _dir_edges = test_data["director", "directs", "company"].edge_index.shape[1]
+    _has_ind = ("company", "has_industry", "industry") in test_data.edge_types
+    _ind_edges = test_data["company", "has_industry", "industry"].edge_index.shape[1] if _has_ind else 0
+
     mo.md(
         f"""
         **Graph Summary — Shareholder Edges Per Phase**
@@ -405,9 +410,8 @@ def _(mo, test_data, train_data, val_data):
         | ``val_data`` | {_sz_val:,} |
         | ``test_data`` | {_sz_tst:,} |
 
-        Director edges ({test_data["director", "directs", "company"].edge_index.shape[1]:,}) and
-        Industry edges ({test_data["company", "has_industry", "industry"].edge_index.shape[1]:,}) are
-        identical across all three.
+        Director edges ({_dir_edges:,}) are identical across all three.
+        {"Industry edges (" + str(_ind_edges) + ") are identical across all three." if _has_ind else ""}
         """
     )
     return
@@ -470,7 +474,16 @@ def _(
 
 
 @app.cell
+def _(graph):
+    industry_codes = graph.industry_codes
+    industry_descriptions = graph.industry_descriptions
+    return industry_codes, industry_descriptions
+
+
+@app.cell
 def _(
+    industry_codes,
+    industry_descriptions,
     n_company_feats,
     n_director_feats,
     n_industry_feats,
@@ -507,6 +520,9 @@ def _(
             "n_director_feats": n_director_feats,
             "n_shareholder_feats": n_shareholder_feats,
             "n_industry_feats": n_industry_feats,
+            # Industry metadata
+            "industry_codes": industry_codes,
+            "industry_descriptions": industry_descriptions,
         },
         checkpoint_dir / "pipeline.pt",
     )

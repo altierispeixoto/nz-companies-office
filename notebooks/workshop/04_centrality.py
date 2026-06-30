@@ -5,16 +5,16 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
 @app.cell
 def _():
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import numpy as np
     import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
 
     return mo, np, nx, plt
 
@@ -22,18 +22,23 @@ def _():
 @app.cell
 def _(mo):
     mo.md("""
-    # Centrality & Influence
+    # 04 — Centrality & Influence
 
-    Not all nodes are equal. Some are more **important** or **central** than others. Centrality measures try to quantify this importance.
+    Not all nodes are equal. Some are more **important** or **central** than others. Centrality measures quantify this importance.
 
-    ## Why Measure Centrality?
+    | # | Topic | What You'll Learn |
+    |---|-------|-------------------|
+    | 1 | **Four Classic Measures** | Degree, Betweenness, Closeness, Eigenvector |
+    | 2 | **Side-by-Side Comparison** | See all four on one network |
+    | 3 | **Degree Centrality** | Counting connections |
+    | 4 | **Betweenness Centrality** | Bridges and gatekeepers |
+    | 5 | **Closeness Centrality** | Speed of information spread |
+    | 6 | **Eigenvector Centrality & PageRank** | Influence and Google's algorithm |
+    | 7 | **Interactive Explorer** | Apply measures to the Karate Club |
 
-    - **Who is the most influential person** in a social network?
-    - **Which website** should Google rank highest?
-    - **Which road** is most critical in a city's transportation network?
-    - **Which node** if removed would disconnect the network?
+    ---
 
-    Different answers to these questions require different centrality measures.
+    > **Analogy**: In an organization, different people are important for different reasons — the CEO (power), the gossip (information flow), the only person who talks to both engineering and sales (bridge), the person everyone wants to impress (prestige).
     """)
     return
 
@@ -41,14 +46,16 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md("""
-    ## The Four Classic Centrality Measures
+    ## Topic 1: The Four Classic Centrality Measures
 
-    | Measure | What It Measures | Intuition |
-    |---------|-----------------|-----------|
+    | Measure | What It Measures | Real-World Question |
+    |---------|-----------------|---------------------|
     | **Degree Centrality** | How many direct connections | "Who has the most friends?" |
     | **Betweenness Centrality** | How often a node lies on paths between others | "Who is the bridge between groups?" |
     | **Closeness Centrality** | How close a node is to all others | "Who can spread information fastest?" |
     | **Eigenvector Centrality** | How important are the node's connections | "Who knows the most important people?" |
+
+    > **Key insight**: Different questions need different measures. The most connected person (degree) isn't necessarily the best bridge (betweenness) or the most influential (eigenvector).
     """)
     return
 
@@ -56,9 +63,9 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Let's Create a Network and Compare
+    ## Topic 2: Side-by-Side Comparison
 
-    We'll use a network designed to highlight the differences between each measure.
+    We'll build a network with three friend groups (cliques) connected by a few bridge nodes. This design highlights how each measure assigns importance differently.
     """)
     return
 
@@ -67,7 +74,7 @@ def _(mo):
 def _(mo, np, nx, plt):
     G_comp = nx.Graph()
 
-    clique_a = range(0, 6)
+    clique_a = range(6)
     clique_b = range(6, 11)
     clique_c = range(11, 16)
 
@@ -81,23 +88,21 @@ def _(mo, np, nx, plt):
     G_comp.add_edge(5, 11)
     G_comp.add_edge(10, 11)
 
-    bridge_node = 5
-
     deg_cent = nx.degree_centrality(G_comp)
     btw_cent = nx.betweenness_centrality(G_comp)
     clo_cent = nx.closeness_centrality(G_comp)
     eig_cent = nx.eigenvector_centrality(G_comp, max_iter=1000)
 
-    fig_comp, axes_comp = plt.subplots(2, 2, figsize=(16, 14))
+    _fig_comp, axes_comp = plt.subplots(2, 2, figsize=(16, 14))
     pos_comp = nx.spring_layout(G_comp, seed=42, k=2)
 
     titles = ["Degree Centrality", "Betweenness Centrality", "Closeness Centrality", "Eigenvector Centrality"]
     cent_data = [deg_cent, btw_cent, clo_cent, eig_cent]
     cmaps = ["Oranges", "Reds", "Purples", "Greens"]
 
-    for ax, title, cent, cmap_name in zip(axes_comp.flat, titles, cent_data, cmaps):
-        vals = np.array(list(cent.values()))
-        node_colors = plt.cm.get_cmap(cmap_name)((vals - vals.min()) / (vals.max() - vals.min() + 1e-10))
+    for ax, title, cent, _cmap_name in zip(axes_comp.flat, titles, cent_data, cmaps, strict=True):
+        _vals = np.array(list(cent.values()))
+        node_colors = plt.cm.get_cmap(_cmap_name)((_vals - _vals.min()) / (_vals.max() - _vals.min() + 1e-10))
         nx.draw_networkx_nodes(G_comp, pos_comp, node_color=node_colors, node_size=600, ax=ax)
         nx.draw_networkx_edges(G_comp, pos_comp, width=1.5, alpha=0.5, ax=ax)
         nx.draw_networkx_labels(G_comp, pos_comp, ax=ax)
@@ -111,23 +116,16 @@ def _(mo, np, nx, plt):
 
 @app.cell
 def _(btw_cent, clo_cent, deg_cent, eig_cent, mo):
-    top_n = 5
-    measures = {
-        "Degree": deg_cent,
-        "Betweenness": btw_cent,
-        "Closeness": clo_cent,
-        "Eigenvector": eig_cent,
-    }
-
-    rows = []
-    for node in deg_cent:
-        rows.append({
+    rows = [
+        {
             "Node": str(node),
             "Degree": f"{deg_cent[node]:.3f}",
             "Betweenness": f"{btw_cent[node]:.3f}",
             "Closeness": f"{clo_cent[node]:.3f}",
             "Eigenvector": f"{eig_cent[node]:.3f}",
-        })
+        }
+        for node in deg_cent
+    ]
 
     mo.ui.table(rows)
     return
@@ -136,16 +134,20 @@ def _(btw_cent, clo_cent, deg_cent, eig_cent, mo):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## Deep Dive: Degree Centrality
+    ## Topic 3: Degree Centrality
 
     **Formula**: $$\text{Degree}(v) = \frac{\text{number of neighbors of }v}{n - 1}$$
 
-    The simplest measure — nodes with more connections are more central.
+    **What it measures**: How many direct connections a node has.
 
-    - **Strengths**: Simple, intuitive, fast to compute
-    - **Weaknesses**: Only considers LOCAL importance. A node connected to 10 low-importance nodes seems as central as one connected to 10 highly important nodes.
+    **How it works**: Count the node's neighbors, divide by the maximum possible (n-1). Normalized to [0, 1].
 
-    > 🧠 **Analogy**: In a conference, degree centrality counts how many people you've met.
+    **When to use**: Quick popularity check. "Who has the most followers?"
+
+    > **Strengths**: Simple, intuitive, O(V) to compute all nodes.
+    > **Weaknesses**: Only considers LOCAL importance. A node connected to 10 nobodies scores as high as one connected to 10 influential people.
+
+    **Analogy**: At a conference, degree centrality counts how many people you've met. It doesn't care who they are.
     """)
     return
 
@@ -154,7 +156,7 @@ def _(mo):
 def _(deg_cent, mo, plt):
     sorted_by_deg = sorted(deg_cent.items(), key=lambda x: x[1], reverse=True)
 
-    fig_deg, ax_deg = plt.subplots(figsize=(12, 4))
+    _fig_deg, ax_deg = plt.subplots(figsize=(12, 4))
     nodes_str = [str(n) for n, _ in sorted_by_deg]
     vals = [v for _, v in sorted_by_deg]
     colors_deg = ["#e03131" if n == 5 else "#ffa94d" for n, _ in sorted_by_deg]
@@ -171,18 +173,22 @@ def _(deg_cent, mo, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## Deep Dive: Betweenness Centrality
+    ## Topic 4: Betweenness Centrality
 
     **Formula**: $$\text{Betweenness}(v) = \sum_{s \neq v \neq t} \frac{\sigma_{st}(v)}{\sigma_{st}}$$
 
-    where \(\sigma_{st}\) is the total number of shortest paths from \(s\) to \(t\), and \(\sigma_{st}(v)\) is the number of those that pass through \(v\).
+    where \(\sigma_{st}\) is the total number of shortest paths from s to t, and \(\sigma_{st}(v)\) is the number that pass through v.
 
-    A node with high betweenness is a **bridge** or **bottleneck** — information flows through it.
+    **What it measures**: How often a node lies on the shortest path between other pairs.
 
-    - **Strengths**: Identifies bridges and gatekeepers
-    - **Weaknesses**: Expensive to compute (\(\mathcal{O}(VE)\) or \(\mathcal{O}(V^3)\))
+    **How it works**: For every pair of nodes (s, t), compute shortest paths. Count how many go through v. Sum up. Normalize.
 
-    > 🧠 **Analogy**: The person who connects different friend groups — if they stop showing up, information stops flowing.
+    **When to use**: Finding bridges, gatekeepers, bottlenecks. "Who connects different groups?"
+
+    > **Strengths**: Captures structural importance — the "if this person leaves, information stops flowing" factor.
+    > **Weaknesses**: Expensive to compute — O(VE) for unweighted, O(V³) for weighted.
+
+    **Analogy**: The person who connects different friend groups at a party — without them, news from group A never reaches group B.
     """)
     return
 
@@ -191,7 +197,7 @@ def _(mo):
 def _(btw_cent, mo, plt):
     sorted_by_btw = sorted(btw_cent.items(), key=lambda x: x[1], reverse=True)
 
-    fig_btw, ax_btw = plt.subplots(figsize=(12, 4))
+    _fig_btw, ax_btw = plt.subplots(figsize=(12, 4))
     nodes_str_btw = [str(n) for n, _ in sorted_by_btw]
     vals_btw = [v for _, v in sorted_by_btw]
     colors_btw = ["#e03131" if n == 5 else "#ffa94d" for n, _ in sorted_by_btw]
@@ -208,18 +214,22 @@ def _(btw_cent, mo, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## Deep Dive: Closeness Centrality
+    ## Topic 5: Closeness Centrality
 
     **Formula**: $$\text{Closeness}(v) = \frac{n - 1}{\sum_{u \neq v} d(v, u)}$$
 
-    where \(d(v, u)\) is the shortest path distance between \(v\) and \(u\).
+    where \(d(v, u)\) is the shortest path distance between v and u.
 
-    A node with high closeness can reach everyone quickly — it's **centrally located**.
+    **What it measures**: How quickly a node can reach everyone else.
 
-    - **Strengths**: Measures information spread speed
-    - **Weaknesses**: Sensitive to disconnected components
+    **How it works**: Compute shortest paths from v to all other nodes. Sum the distances. Divide (n-1) by that sum.
 
-    > 🧠 **Analogy**: The person who can get a message to everyone in the fewest handshakes.
+    **When to use**: Measuring information spread speed, efficiency of a node's location. "Who can get a message to everyone fastest?"
+
+    > **Strengths**: Captures geographic centrality — centrally located nodes are close to everyone.
+    > **Weaknesses**: Fails in disconnected graphs (infinite distance). Biased toward nodes in dense regions.
+
+    **Analogy**: A cafe at a central intersection vs one in a remote suburb. The central cafe is "closer" to all possible customers on average.
     """)
     return
 
@@ -228,7 +238,7 @@ def _(mo):
 def _(clo_cent, mo, plt):
     sorted_by_clo = sorted(clo_cent.items(), key=lambda x: x[1], reverse=True)
 
-    fig_clo, ax_clo = plt.subplots(figsize=(12, 4))
+    _fig_clo, ax_clo = plt.subplots(figsize=(12, 4))
     nodes_str_clo = [str(n) for n, _ in sorted_by_clo]
     vals_clo = [v for _, v in sorted_by_clo]
     colors_clo = ["#e03131" if n == 5 else "#b197fc" for n, _ in sorted_by_clo]
@@ -245,59 +255,32 @@ def _(clo_cent, mo, plt):
 @app.cell
 def _(mo):
     mo.md(r"""
-    ## Deep Dive: Eigenvector Centrality (PageRank's Cousin)
+    ## Topic 6: Eigenvector Centrality & PageRank
 
-    Eigenvector centrality doesn't just count your connections — it measures **who you're connected to**.
+    **Eigenvector centrality** doesn't just count your connections — it measures **who you're connected to**.
 
-    **Intuition**: A node is important if it's connected to other important nodes.
+    **Formula**: $$x_v = \frac{1}{\lambda} \sum_{t \in N(v)} x_t$$
 
-    $$
-    x_v = \frac{1}{\lambda} \sum_{t \in N(v)} x_t
-    $$
+    **What it measures**: A node is important if it's connected to other important nodes.
 
-    This is the mathematical foundation of **Google's PageRank** algorithm (PageRank adds a damping factor for random jumps).
+    **How it works**: Solve for the principal eigenvector of the adjacency matrix. The centrality of each node is proportional to the sum of the centralities of its neighbors. This is a self-consistent definition — it's solved iteratively.
 
-    - **Strengths**: Captures "influence" and "prestige" — not just quantity but quality of connections
-    - **Weaknesses**: Can be dominated by a few high-degree nodes
+    **When to use**: Measuring influence, prestige, or "importance by association." "Who knows the most influential people?"
 
-    > 🧠 **Analogy**: You might not know many people, but if those people are the CEO, the mayor, and the president — you're influential.
-    """)
-    return
+    **Analogy**: You might not know many people, but if those people are the CEO, the mayor, and the president — you're influential.
 
+    ### PageRank: Eigenvector for the Web
 
-@app.cell
-def _(eig_cent, mo, plt):
-    sorted_by_eig = sorted(eig_cent.items(), key=lambda x: x[1], reverse=True)
+    Google's PageRank adapts eigenvector centrality for the directed web graph:
 
-    fig_eig, ax_eig = plt.subplots(figsize=(12, 4))
-    nodes_str_eig = [str(n) for n, _ in sorted_by_eig]
-    vals_eig = [v for _, v in sorted_by_eig]
-    colors_eig = ["#e03131" if n == 5 else "#2f9e44" for n, _ in sorted_by_eig]
-    ax_eig.bar(nodes_str_eig, vals_eig, color=colors_eig)
-    ax_eig.set_xlabel("Node")
-    ax_eig.set_ylabel("Eigenvector Centrality")
-    ax_eig.set_title("Eigenvector Centrality — Nodes in dense cliques score higher")
-    ax_eig.tick_params(axis="x", rotation=45)
-    plt.tight_layout()
-    mo.mpl.interactive(plt.gcf())
-    return
+    $$\text{PR}(v) = \frac{1 - d}{n} + d \sum_{u \in N_{in}(v)} \frac{\text{PR}(u)}{\text{deg}_{\text{out}}(u)}$$
 
+    **Key differences from eigenvector centrality**:
+    1. **Directed edges** — links from page u to page v, not symmetric
+    2. **Damping factor** (d ≈ 0.85) — simulates random surfing; with probability 1-d, jump to a random page instead of following a link
+    3. **Degree normalization** — a page's vote is divided by its out-degree (pages with many links spread their influence thinner)
 
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## PageRank: From Eigenvector to Web Search
-
-    **PageRank** extends eigenvector centrality by:
-    1. Allowing edges to have direction (important for the web)
-    2. Adding a **damping factor** (\(d \approx 0.85\)) — simulating random surfing
-
-    $$
-    \text{PR}(v) = \frac{1 - d}{n} + d \sum_{u \in N_{in}(v)} \frac{\text{PR}(u)}{\text{deg}_{\text{out}}(u)}
-    $$
-
-    The idea: a random surfer clicks links at random, and occasionally jumps to a random page (probability \(1-d\)).
-    PageRank is the probability distribution of where the surfer ends up.
+    > **The insight**: PageRank is the probability distribution of where a random surfer ends up after clicking forever, occasionally jumping to a random page.
     """)
     return
 
@@ -305,24 +288,43 @@ def _(mo):
 @app.cell
 def _(mo, np, nx, plt):
     G_pagerank = nx.DiGraph()
-    G_pagerank.add_edges_from([
-        ("A", "B"), ("A", "C"), ("B", "C"), ("C", "A"),
-        ("D", "C"), ("D", "E"), ("E", "C"), ("F", "C"),
-        ("G", "A"), ("G", "D"), ("G", "E"), ("G", "F"),
-        ("H", "A"), ("H", "D"), ("H", "E"), ("H", "F"),
-        ("I", "A"), ("I", "D"), ("I", "E"), ("I", "F"),
-    ])
+    G_pagerank.add_edges_from(
+        [
+            ("A", "B"),
+            ("A", "C"),
+            ("B", "C"),
+            ("C", "A"),
+            ("D", "C"),
+            ("D", "E"),
+            ("E", "C"),
+            ("F", "C"),
+            ("G", "A"),
+            ("G", "D"),
+            ("G", "E"),
+            ("G", "F"),
+            ("H", "A"),
+            ("H", "D"),
+            ("H", "E"),
+            ("H", "F"),
+            ("I", "A"),
+            ("I", "D"),
+            ("I", "E"),
+            ("I", "F"),
+        ]
+    )
 
     pr = nx.pagerank(G_pagerank, alpha=0.85)
     pr_sorted = sorted(pr.items(), key=lambda x: x[1], reverse=True)
 
-    fig_pr, (ax_pr1, ax_pr2) = plt.subplots(1, 2, figsize=(16, 6))
+    _fig_pr, (ax_pr1, ax_pr2) = plt.subplots(1, 2, figsize=(16, 6))
 
     pos_pr = nx.spring_layout(G_pagerank, seed=42, k=2)
     pr_vals = np.array(list(pr.values()))
     pr_colors = plt.cm.YlOrRd((pr_vals - pr_vals.min()) / (pr_vals.max() - pr_vals.min() + 1e-10))
     nx.draw_networkx_nodes(G_pagerank, pos_pr, node_color=pr_colors, node_size=1200, ax=ax_pr1)
-    nx.draw_networkx_edges(G_pagerank, pos_pr, width=1.5, alpha=0.5, ax=ax_pr1, arrows=True, arrowsize=20, connectionstyle="arc3,rad=0.1")
+    nx.draw_networkx_edges(
+        G_pagerank, pos_pr, width=1.5, alpha=0.5, ax=ax_pr1, arrows=True, arrowsize=20, connectionstyle="arc3,rad=0.1"
+    )
     nx.draw_networkx_labels(G_pagerank, pos_pr, font_size=12, font_weight="bold", ax=ax_pr1)
     ax_pr1.set_title("PageRank Scores (node color = importance)", fontsize=14)
     ax_pr1.axis("off")
@@ -341,9 +343,9 @@ def _(mo, np, nx, plt):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Interactive: Explore Centrality on a Real Network
+    ## Topic 7: Interactive Explorer — Karate Club
 
-    Let's apply all four measures to Zachary's Karate Club and see who the key players are.
+    Apply all four measures (plus PageRank) to Zachary's Karate Club. See how each measure highlights **different** nodes as important.
     """)
     return
 
@@ -383,7 +385,7 @@ def _(centrality_choice, mo, np, nx, plt):
     norm_kc = (vals_kc - vals_kc.min()) / (vals_kc.max() - vals_kc.min() + 1e-10)
     colors_kc = plt.cm.get_cmap(cmap_name)(norm_kc)
 
-    fig_kc, (ax_kc1, ax_kc2) = plt.subplots(1, 2, figsize=(18, 6))
+    _fig_kc, (ax_kc1, ax_kc2) = plt.subplots(1, 2, figsize=(18, 6))
     pos_kc = nx.spring_layout(G_kc, seed=42)
 
     nx.draw_networkx_nodes(G_kc, pos_kc, node_color=colors_kc, node_size=500, ax=ax_kc1)
@@ -413,9 +415,9 @@ def _(centrality_choice, mo, sorted_kc):
     mo.md(f"""
     **Top 5 nodes by {centrality_choice.value} Centrality:**
 
-    {', '.join(f'Node {n} ({v:.3f})' for n, v in sorted_kc[:5])}
+    {", ".join(f"Node {n} ({v:.3f})" for n, v in sorted_kc[:5])}
 
-    Notice how different measures highlight **different** nodes as important:
+    **Why different measures give different answers:**
     - **Degree** favors nodes with many friends (popularity)
     - **Betweenness** favors bridges between groups
     - **Closeness** favors centrally located nodes
@@ -429,25 +431,18 @@ def _(mo):
     mo.md("""
     ## Summary
 
-    ✅ **Degree Centrality**: Count of direct connections — simple but local
-    ✅ **Betweenness Centrality**: Bridge between groups — identifies gatekeepers
-    ✅ **Closeness Centrality**: Distance to all others — measures information spread speed
-    ✅ **Eigenvector Centrality**: Quality of connections — captures influence
-    ✅ **PageRank**: The algorithm that powered Google Search
-    ✅ Different measures reveal different aspects of importance — use the right one for your question
+    | # | You've Learned | When to Use |
+    |---|---------------|-------------|
+    | 1 | **Degree Centrality** | Quick popularity check — "most friends" |
+    | 2 | **Betweenness Centrality** | Finding bridges and gatekeepers |
+    | 3 | **Closeness Centrality** | Information spread speed |
+    | 4 | **Eigenvector Centrality** | Influence and prestige |
+    | 5 | **PageRank** | Web search and directed graphs |
 
-    **Next up:** How do we find communities and clusters in a network?
+    > **Key insight**: There's no single "most important node." Each measure answers a different question about importance.
+
+    **Next up:** [05 — Communities & Clustering](./05_communities.py) — finding groups, detecting communities, and modularity.
     """)
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 

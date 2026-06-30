@@ -48,8 +48,8 @@ update:
     @just run uv sync --upgrade
 
 # Start Neo4j via Docker Compose
-neo4j-up:
-    docker compose up -d neo4j
+neo4j:
+    docker compose up neo4j
     @echo "Neo4j started on bolt://localhost:7687"
 
 # Stop Neo4j

@@ -5,7 +5,7 @@
 
 import marimo
 
-__generated_with = "0.23.9"
+__generated_with = "0.23.10"
 app = marimo.App(width="full")
 
 
@@ -27,15 +27,12 @@ def _(mo):
     mo.md(r"""
     # Mapping New Zealand's Corporate Network
 
-    **New Zealand's Companies Register holds over 1.8 million companies, from
-    the corner dairy to multinational subsidiaries. This notebook maps the raw
+    **[New Zealand's Companies Office](https://www.companiesoffice.govt.nz/) holds over 1.8 million companies, from
+    the corner dairy to multinational subsidiaries.
+    This notebook maps the raw
     landscape before we dive into who owns what, and who sits on which board.**
 
-    We'll start with the simple counts: how many companies, shareholders,
-    directors, addresses, and insolvencies are recorded, then look at who holds the
-    most positions and which companies attract the most investors.
-
-    *All data from the NZ Companies Office bulk CSV export (June 2026).*
+    *NZ Companies Office data (June 2026).*
     """)
     return
 
