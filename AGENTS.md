@@ -33,7 +33,7 @@ just run mypy src/                  # typecheck
 
 ## Architecture
 
-- Source: `src/nz_companies_office/`. Currently a scaffold (no real code yet).
+- Source: `src/nz_companies_office/`.
 - Data dirs (`data/raw/`, `data/processed/`, `data/staging/`, `data/model_features/`) are git-ignored inside (track only `.gitignore`). Use DVC to version data files.
 - `pyproject.toml` defines a CLI entrypoint: `nz-companies-office = "nz-companies-office.main:run"` (module not yet created).
 

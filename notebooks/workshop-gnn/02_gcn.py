@@ -11,17 +11,20 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import warnings
+
+    import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import marimo as mo
-    from torch_geometric.nn import GCNConv
     from torch_geometric.datasets import Planetoid
-    from torch_geometric.utils import to_networkx, degree
-    import warnings
+    from torch_geometric.nn import GCNConv
+    from torch_geometric.utils import degree
+    from torch_geometric.utils import to_networkx
+
     warnings.filterwarnings("ignore")
     return F, GCNConv, Planetoid, mo, nn, np, nx, plt, to_networkx, torch
 
@@ -166,7 +169,9 @@ def _(GCN, data, mo, torch):
     model_gcn = GCN(in_dim, hidden_dim, out_dim)
     optimizer_gcn = torch.optim.Adam(model_gcn.parameters(), lr=0.01, weight_decay=5e-4)
 
-    mo.md(f"**Model**: {in_dim} → {hidden_dim} → {out_dim} (GCN with {sum(p.numel() for p in model_gcn.parameters())} parameters)")
+    mo.md(
+        f"**Model**: {in_dim} → {hidden_dim} → {out_dim} (GCN with {sum(p.numel() for p in model_gcn.parameters())} parameters)"
+    )
     return model_gcn, optimizer_gcn
 
 
@@ -176,7 +181,7 @@ def _(data, mo, model_gcn):
     pred_init = out_gcn.argmax(dim=1)
     acc_init = (pred_init[data.test_mask] == data.y[data.test_mask]).float().mean()
 
-    mo.md(f"**Random initialization test accuracy**: {acc_init:.1%} (should be ~{1/7:.1%} for 7 classes)")
+    mo.md(f"**Random initialization test accuracy**: {acc_init:.1%} (should be ~{1 / 7:.1%} for 7 classes)")
     return
 
 
@@ -203,7 +208,11 @@ def _(F, data, mo, model_gcn, optimizer_gcn, torch):
         acc_history.append(train_acc.item())
 
         if (epoch + 1) % 50 == 0:
-            mo.output.append(mo.md(f"Epoch {epoch + 1:3d}/200 | Loss: {loss.item():.4f} | Train Acc: {train_acc:.3f} | Val Acc: {val_acc:.3f}"))
+            mo.output.append(
+                mo.md(
+                    f"Epoch {epoch + 1:3d}/200 | Loss: {loss.item():.4f} | Train Acc: {train_acc:.3f} | Val Acc: {val_acc:.3f}"
+                )
+            )
 
     mo.md("Training complete!")
     return acc_history, loss_history

@@ -11,16 +11,19 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import warnings
+
+    import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import marimo as mo
     from torch_geometric.nn import GCNConv
-    from torch_geometric.utils import train_test_split_edges, negative_sampling
-    import warnings
+    from torch_geometric.utils import negative_sampling
+    from torch_geometric.utils import train_test_split_edges
+
     warnings.filterwarnings("ignore")
     return F, GCNConv, mo, negative_sampling, nn, torch, train_test_split_edges
 

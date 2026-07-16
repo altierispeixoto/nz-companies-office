@@ -41,6 +41,7 @@ coverage.xml
 # Build and docs folder/files
 build/*
 dist/*
+app/dist/*
 sdist/*
 docs/api/*
 docs/_rst/*
@@ -60,3 +61,7 @@ MANIFEST
 .cursor
 opencode.json
 notebooks/application/__marimo__/session/*
+
+# Generated data files
+*.parquet
+node_modules/

@@ -74,7 +74,6 @@ def _create_address_node(tx: Transaction, company_number: str, address: Address)
     """Create or merge an Address node and link to its company."""
     query = """
     MERGE (a:Address {
-        address_type: $address_type,
         street: $street,
         city: COALESCE($city, ''),
         country: COALESCE($country, '')
@@ -83,7 +82,8 @@ def _create_address_node(tx: Transaction, company_number: str, address: Address)
         a.postcode = $postcode
     WITH a
     MATCH (c:Company {company_number: $company_number})
-    MERGE (c)-[:HAS_ADDRESS]->(a)
+    MERGE (c)-[r:HAS_ADDRESS]->(a)
+    SET r.address_type = $address_type
     """
     tx.run(
         query,
@@ -141,11 +141,11 @@ def _query_company_node(tx: Transaction, company_number: str) -> Company | None:
     MATCH (c:Company {company_number: $company_number})
     OPTIONAL MATCH (d:Director)-[:DIRECTS]->(c)
     OPTIONAL MATCH (s:Shareholder)-[:HOLDS_SHARES_IN]->(c)
-    OPTIONAL MATCH (c)-[:HAS_ADDRESS]->(a:Address)
+    OPTIONAL MATCH (c)-[r:HAS_ADDRESS]->(a:Address)
     RETURN c,
            collect(DISTINCT d) AS directors,
            collect(DISTINCT s) AS shareholders,
-           collect(DISTINCT a) AS addresses
+           collect(DISTINCT {address: a, address_type: r.address_type}) AS addresses
     """
     result = tx.run(query, company_number=company_number)
     record = result.single()
@@ -155,7 +155,7 @@ def _query_company_node(tx: Transaction, company_number: str) -> Company | None:
     node = record["c"]
     directors = [_parse_director_node(n) for n in record["directors"] if n is not None]
     shareholders = [_parse_shareholder_node(n) for n in record["shareholders"] if n is not None]
-    addresses = [_parse_address_node(n) for n in record["addresses"] if n is not None]
+    addresses = [_parse_address_entry(entry) for entry in record["addresses"] if entry is not None]
 
     return Company(
         company_number=node["company_number"],
@@ -186,9 +186,10 @@ def _parse_shareholder_node(node: dict) -> Shareholder:
     )
 
 
-def _parse_address_node(node: dict) -> Address:
+def _parse_address_entry(entry: dict) -> Address:
+    node = entry["address"]
     return Address(
-        address_type=node.get("address_type", ""),
+        address_type=entry.get("address_type", ""),
         street=node.get("street", ""),
         suburb=node.get("suburb"),
         city=node.get("city"),

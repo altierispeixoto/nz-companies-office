@@ -11,16 +11,19 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import warnings
+
+    import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import marimo as mo
-    from torch_geometric.nn import GATConv, GCNConv
     from torch_geometric.datasets import Planetoid
-    import warnings
+    from torch_geometric.nn import GATConv
+    from torch_geometric.nn import GCNConv
+
     warnings.filterwarnings("ignore")
     return F, GATConv, GCNConv, Planetoid, mo, nn, nx, plt, torch
 
@@ -147,12 +150,18 @@ def _(F, data_cora, mo, model_gat, optimizer_gat, torch):
         gat_acc_hist.append(train_acc_gat.item())
 
         if (_ep + 1) % 50 == 0:
-            mo.output.append(mo.md(f"Epoch {_ep + 1:3d}/200 | Loss: {l_gat.item():.4f} | Train Acc: {train_acc_gat:.3f} | Val Acc: {val_acc_gat:.3f}"))
+            mo.output.append(
+                mo.md(
+                    f"Epoch {_ep + 1:3d}/200 | Loss: {l_gat.item():.4f} | Train Acc: {train_acc_gat:.3f} | Val Acc: {val_acc_gat:.3f}"
+                )
+            )
 
     model_gat.eval()
     with torch.no_grad():
         out_gat_final = model_gat(data_cora.x, data_cora.edge_index)
-        test_acc_gat = (out_gat_final.argmax(dim=1)[data_cora.test_mask] == data_cora.y[data_cora.test_mask]).float().mean()
+        test_acc_gat = (
+            (out_gat_final.argmax(dim=1)[data_cora.test_mask] == data_cora.y[data_cora.test_mask]).float().mean()
+        )
     return gat_acc_hist, test_acc_gat
 
 
@@ -195,10 +204,14 @@ def _(F, data_cora, mo, model_gat, nx, plt, torch):
         e_list, e_weights = zip(*edges_subset)
         edge_colors = list(e_weights)
         nx.draw_networkx_edges(
-            G_plot, pos_attn, edgelist=e_list,
+            G_plot,
+            pos_attn,
+            edgelist=e_list,
             width=[w * 10 for w in e_weights],
-            edge_color=edge_colors, edge_cmap=plt.cm.YlOrRd,
-            alpha=0.6, ax=ax_attn,
+            edge_color=edge_colors,
+            edge_cmap=plt.cm.YlOrRd,
+            alpha=0.6,
+            ax=ax_attn,
         )
 
     ax_attn.set_title("GAT Attention Weights (thicker = more attention)", fontsize=14)
@@ -300,7 +313,14 @@ def _(F, GCNConv, data_cora, gat_acc_hist, mo, nn, plt, test_acc_gat, torch):
 
     gcn_comp_model.eval()
     with torch.no_grad():
-        gcn_test = (gcn_comp_model(data_cora.x, data_cora.edge_index).argmax(dim=1)[data_cora.test_mask] == data_cora.y[data_cora.test_mask]).float().mean()
+        gcn_test = (
+            (
+                gcn_comp_model(data_cora.x, data_cora.edge_index).argmax(dim=1)[data_cora.test_mask]
+                == data_cora.y[data_cora.test_mask]
+            )
+            .float()
+            .mean()
+        )
 
     fig_comp, ax_comp = plt.subplots(figsize=(10, 6))
     ax_comp.plot(gcn_acc_hist, label=f"GCN (test: {gcn_test:.2%})", color="#339af0", linewidth=2)

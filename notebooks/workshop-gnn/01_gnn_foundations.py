@@ -11,15 +11,15 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
     import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
+    import torch
+    import torch.nn.functional as f
+    from torch import nn
     from torch_geometric.data import Data
-    from torch_geometric.utils import to_networkx, degree
+    from torch_geometric.utils import to_networkx
 
     return Data, F, mo, nn, np, nx, plt, to_networkx, torch
 
@@ -67,19 +67,24 @@ def _(mo):
 
 @app.cell
 def _(Data, mo, np, nx, plt, to_networkx, torch):
-    edge_index = torch.tensor([
-        [0, 0, 1, 2, 3, 3, 4],
-        [1, 3, 2, 3, 4, 5, 5],
-    ], dtype=torch.long)
+    edge_index = torch.tensor(
+        [
+            [0, 0, 1, 2, 3, 3, 4],
+            [1, 3, 2, 3, 4, 5, 5],
+        ],
+        dtype=torch.long,
+    )
 
-    x = torch.tensor([
-        [1.0, 0.0],
-        [0.0, 1.0],
-        [0.5, 0.5],
-        [0.8, 0.2],
-        [0.1, 0.9],
-        [0.3, 0.7],
-    ])
+    x = torch.tensor(
+        [
+            [1.0, 0.0],
+            [0.0, 1.0],
+            [0.5, 0.5],
+            [0.8, 0.2],
+            [0.1, 0.9],
+            [0.3, 0.7],
+        ]
+    )
 
     data = Data(x=x, edge_index=edge_index)
     G_mp = to_networkx(data)
@@ -98,8 +103,14 @@ def _(Data, mo, np, nx, plt, to_networkx, torch):
     edge_index_np = edge_index.numpy()
     for u, v in zip(edge_index_np[0], edge_index_np[1]):
         mid = ((pos_mp[u][0] + pos_mp[v][0]) / 2, (pos_mp[u][1] + pos_mp[v][1]) / 2)
-        ax_before.annotate("", xy=pos_mp[v], xytext=pos_mp[u], fontsize=8, ha="center",
-                          arrowprops=dict(arrowstyle="->", color="gray", lw=1.5, connectionstyle="arc3,rad=0.2"))
+        ax_before.annotate(
+            "",
+            xy=pos_mp[v],
+            xytext=pos_mp[u],
+            fontsize=8,
+            ha="center",
+            arrowprops=(color="gray", lw=1.5, connectionstyle="arc3,rad=0.2",arrowstyle="->"),
+        )
 
     nx.draw_networkx_nodes(G_mp, pos_mp, node_color=colors_mp, node_size=600, ax=ax_after, edgecolors="black")
     nx.draw_networkx_edges(G_mp, pos_mp, width=2, alpha=0.5, ax=ax_after)
@@ -110,10 +121,21 @@ def _(Data, mo, np, nx, plt, to_networkx, torch):
         angle = np.arctan2(pos_mp[v][1] - pos_mp[u][1], pos_mp[v][0] - pos_mp[u][0])
         offset = 0.06
         mid2 = (mid[0] + offset * np.sin(angle), mid[1] - offset * np.cos(angle))
-        ax_after.annotate(f"msg: {u}→{v}", xy=mid2, fontsize=7, ha="center",
-                         bbox=dict(boxstyle="round,pad=0.2", facecolor="lightyellow", edgecolor="none", alpha=0.8))
-        ax_after.annotate("", xy=pos_mp[v], xytext=pos_mp[u], fontsize=8, ha="center",
-                         arrowprops=dict(arrowstyle="->", color="orange", lw=2, connectionstyle="arc3,rad=0.2"))
+        ax_after.annotate(
+            f"msg: {u}→{v}",
+            xy=mid2,
+            fontsize=7,
+            ha="center",
+            bbox=dict(boxstyle="round,pad=0.2", facecolor="lightyellow", edgecolor="none", alpha=0.8),
+        )
+        ax_after.annotate(
+            "",
+            xy=pos_mp[v],
+            xytext=pos_mp[u],
+            fontsize=8,
+            ha="center",
+            arrowprops=dict(arrowstyle="->", color="orange", lw=2, connectionstyle="arc3,rad=0.2"),
+        )
 
     ax_after.set_title("Messages Flowing Along Edges", fontsize=13)
     ax_after.axis("off")
@@ -167,7 +189,7 @@ def _(F, edge_index, nn, torch, x):
 @app.cell
 def _(mo, mp_out, x):
     mo.md(f"""
-    **Input shape**: {tuple(x.shape)} (6 nodes, 2 features each)  
+    **Input shape**: {tuple(x.shape)} (6 nodes, 2 features each)
     **Output shape**: {tuple(mp_out.shape)} (6 nodes, 4 features each)
 
     Each node now has a 4-dimensional feature vector that incorporates information from its neighbors!
