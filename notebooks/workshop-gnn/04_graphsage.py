@@ -11,17 +11,19 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import warnings
+
+    import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import marimo as mo
-    from torch_geometric.nn import SAGEConv
     from torch_geometric.datasets import Planetoid
+    from torch_geometric.nn import SAGEConv
     from torch_geometric.utils import to_networkx
-    import warnings
+
     warnings.filterwarnings("ignore")
     return F, Planetoid, SAGEConv, mo, nn, torch
 
@@ -100,7 +102,11 @@ def _(F, data, mo, model_sage, opt_sage, torch):
         sage_acc_hist.append(train_acc_sage.item())
 
         if (_ep_sage + 1) % 50 == 0:
-            mo.output.append(mo.md(f"Epoch {_ep_sage + 1:3d}/200 | Loss: {loss_sage.item():.4f} | Train Acc: {train_acc_sage:.3f} | Val Acc: {val_acc_sage:.3f}"))
+            mo.output.append(
+                mo.md(
+                    f"Epoch {_ep_sage + 1:3d}/200 | Loss: {loss_sage.item():.4f} | Train Acc: {train_acc_sage:.3f} | Val Acc: {val_acc_sage:.3f}"
+                )
+            )
 
     model_sage.eval()
     with torch.no_grad():
@@ -178,8 +184,8 @@ def _(F, SAGEConv, data, mo, nn, torch):
 
     indices_ind = torch.randperm(n_nodes_ind)
     train_idx_ind = indices_ind[:n_train_ind]
-    val_idx_ind = indices_ind[n_train_ind:n_train_ind + n_val_ind]
-    test_idx_ind = indices_ind[n_train_ind + n_val_ind:]
+    val_idx_ind = indices_ind[n_train_ind : n_train_ind + n_val_ind]
+    test_idx_ind = indices_ind[n_train_ind + n_val_ind :]
 
     inductive_mask = torch.zeros(n_nodes_ind, dtype=torch.bool)
     inductive_mask[train_idx_ind] = True

@@ -11,17 +11,22 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
+    import warnings
+
+    import marimo as mo
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
-    import networkx as nx
-    import matplotlib.pyplot as plt
-    import marimo as mo
-    from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool, global_add_pool
-    from torch_geometric.datasets import TUDataset
     from torch_geometric.data import DataLoader
-    import warnings
+    from torch_geometric.datasets import TUDataset
+    from torch_geometric.nn import GCNConv
+    from torch_geometric.nn import global_add_pool
+    from torch_geometric.nn import global_max_pool
+    from torch_geometric.nn import global_mean_pool
+
     warnings.filterwarnings("ignore")
     return (
         DataLoader,
@@ -194,7 +199,9 @@ def _(F, mo, model_gc, opt_gc, test_loader, torch, train_loader):
         test_accs.append(correct_gc / total_gc)
 
         if (_ep_gc + 1) % 20 == 0:
-            mo.output.append(mo.md(f"Epoch {_ep_gc + 1:3d}/100 | Loss: {train_losses[-1]:.4f} | Test Acc: {test_accs[-1]:.2%}"))
+            mo.output.append(
+                mo.md(f"Epoch {_ep_gc + 1:3d}/100 | Loss: {train_losses[-1]:.4f} | Test Acc: {test_accs[-1]:.2%}")
+            )
 
     mo.md(f"**Final Test Accuracy**: {test_accs[-1]:.2%}")
     return test_accs, train_losses
@@ -298,7 +305,9 @@ def _(mo, plt, results_pool):
     ax_pool.set_title("Pooling Strategy Comparison")
     ax_pool.set_ylim(0, 1)
     for bar, score in zip(bars, scores):
-        ax_pool.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01, f"{score:.1%}", ha="center", fontweight="bold")
+        ax_pool.text(
+            bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01, f"{score:.1%}", ha="center", fontweight="bold"
+        )
     ax_pool.grid(alpha=0.3, axis="y")
     plt.tight_layout()
     mo.mpl.interactive(plt.gcf())

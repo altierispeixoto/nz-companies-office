@@ -410,8 +410,8 @@ def _(mo):
 def _(nh):
     nh.mo_table(
         """
-        MATCH (c:Company)-[:HAS_ADDRESS]->(a:Address)
-        WHERE toLower(a.street) CONTAINS '18 maniapoto' AND a.address_type = 'REGISTERED_OFFICE'
+        MATCH (c:Company)-[r:HAS_ADDRESS]->(a:Address)
+        WHERE toLower(a.street) CONTAINS '18 maniapoto' AND r.address_type = 'REGISTERED_OFFICE'
         WITH a, count(DISTINCT c) AS companies
         RETURN a.street AS address, a.city AS city, companies
         ORDER BY companies DESC

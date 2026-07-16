@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NZ Companies — Shareholder Graph</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏢</text></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="sidebar">
+        <h2>NZ Companies</h2>
+        <p class="subtitle">Shareholder → Company Graph</p>
+        <div id="totals"></div>
+        <div id="stats"></div>
+        <div id="legend-container"></div>
+        <div id="search-container"></div>
+        <div class="filter-group">
+          <label for="status-filter">Company Status</label>
+          <select id="status-filter">
+            <option value="">All</option>
+            <option value="REGISTERED">Registered</option>
+            <option value="REMOVED">Removed</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="industry-filter">Industry Classification</label>
+          <input id="industry-filter" list="industry-list" placeholder="All industries..." />
+          <datalist id="industry-list"></datalist>
+        </div>
+        <div class="filter-group">
+          <label for="limit-slider">Companies Shown: <span id="limit-value">2,000</span></label>
+          <input type="range" id="limit-slider" min="500" max="2000000" step="500" value="2000" />
+        </div>
+        <div class="filter-group">
+          <label for="min-connections">Min Shareholder Connections</label>
+          <select id="min-connections">
+            <option value="1">1+</option>
+            <option value="5">5+</option>
+            <option value="10">10+</option>
+            <option value="50">50+</option>
+          </select>
+        </div>
+        <button id="refresh-btn">⟳ Update Graph</button>
+        <p id="status-msg"></p>
+        <p class="footer">
+          Powered by <a href="https://cosmograph.app" target="_blank">Cosmograph</a>
+          &amp; Neo4j
+        </p>
+      </div>
+      <div id="graph-container"></div>
+      <div id="detail-panel">
+        <div class="panel-header">
+          <div class="panel-header-start">
+            <button id="panel-back" style="display:none">&larr;</button>
+            <h3 id="panel-title"></h3>
+          </div>
+          <button id="panel-close">&times;</button>
+        </div>
+        <div id="panel-content"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
