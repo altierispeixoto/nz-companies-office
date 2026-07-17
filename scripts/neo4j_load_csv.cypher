@@ -103,6 +103,8 @@ CALL (row) {
             WHEN trim(city_4) <> "" THEN trim(city_4)
             ELSE null
         END AS city
+    WITH s, c, row, city
+    WHERE coalesce(row.SH_ADDRESS_1, "") <> "" OR city IS NOT NULL OR coalesce(row.SH_ADDRESS_COUNTRY, "") <> ""
     MERGE (a:Address {
         street: coalesce(row.SH_ADDRESS_1, ""),
         city: coalesce(city, ""),
@@ -149,6 +151,8 @@ CALL (row) {
             WHEN trim(city_4) <> "" THEN trim(city_4)
             ELSE null
         END AS city
+    WITH c, row, city
+    WHERE coalesce(row.REGISTERED_OFFICE_ADDRESS_1, "") <> "" OR city IS NOT NULL OR coalesce(row.REGISTERED_OFFICE_ADDRESS_COUNTRY, "") <> ""
     MERGE (a:Address {
         street: coalesce(row.REGISTERED_OFFICE_ADDRESS_1, ""),
         city: coalesce(city, ""),
@@ -183,6 +187,8 @@ CALL (row) {
             WHEN trim(city_4) <> "" THEN trim(city_4)
             ELSE null
         END AS city
+    WITH c, row, city
+    WHERE coalesce(row.ADDRESS_FOR_SERVICE_1, "") <> "" OR city IS NOT NULL OR coalesce(row.ADDRESS_FOR_SERVICE_COUNTRY, "") <> ""
     MERGE (a:Address {
         street: coalesce(row.ADDRESS_FOR_SERVICE_1, ""),
         city: coalesce(city, ""),
@@ -321,6 +327,8 @@ CALL (row) {
             WHEN trim(city_4) <> "" THEN trim(city_4)
             ELSE null
         END AS city
+    WITH c, row, city
+    WHERE coalesce(row.ADDRESS_1, "") <> "" OR city IS NOT NULL OR coalesce(row.ADDRESS_COUNTRY, "") <> ""
     MERGE (a:Address {
         street: coalesce(row.ADDRESS_1, ""),
         city: coalesce(city, ""),

@@ -5,6 +5,9 @@ from __future__ import annotations
 import logging
 import time
 from typing import TYPE_CHECKING
+from typing import LiteralString
+
+from neo4j import Query
 
 from nz_companies_office.db.connection import get_driver
 
@@ -61,7 +64,7 @@ def compute_share_percentages(driver: Driver | None = None) -> int:
     return updated
 
 
-def _run_query(driver: Driver, query: str) -> list[dict]:
+def _run_query(driver: Driver, query: LiteralString | Query) -> list[dict]:
     """Execute a Cypher query and return the results as a list of dicts."""
     with driver.session() as session:
         return session.run(query).data()

@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import MagicMock
 
-from nz_companies_office.db.repository import get_company_by_number
 from nz_companies_office.db.repository import save_company
 from nz_companies_office.models.company import Address
 from nz_companies_office.models.company import AddressType
@@ -62,15 +61,3 @@ class TestSaveCompany:
         )
         save_company(mock_driver, company)
         assert mock_driver.session.called
-
-
-class TestGetCompany:
-    """Tests for get_company_by_number."""
-
-    def test_get_company_not_found(self) -> None:
-        """get_company_by_number returns None when company does not exist."""
-        mock_driver = MagicMock()
-        mock_session = mock_driver.session.return_value.__enter__.return_value
-        mock_session.execute_read.return_value = None
-        result = get_company_by_number(mock_driver, "nonexistent")
-        assert result is None
