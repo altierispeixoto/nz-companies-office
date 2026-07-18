@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import os
-
 from neo4j import Driver
 from neo4j import GraphDatabase
+
+from nz_companies_office.config import SETTINGS
 
 
 class _Neo4jConnection:
@@ -16,10 +16,10 @@ class _Neo4jConnection:
     def get_driver(self) -> Driver:
         """Return the Neo4j driver, creating it if needed."""
         if self._driver is None:
-            uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
-            user = os.environ.get("NEO4J_USER", "neo4j")
-            password = os.environ.get("NEO4J_PASSWORD", "password")
-            self._driver = GraphDatabase.driver(uri, auth=(user, password))
+            self._driver = GraphDatabase.driver(
+                SETTINGS.neo4j_uri,
+                auth=(SETTINGS.neo4j_user, SETTINGS.neo4j_password),
+            )
         return self._driver
 
     def close_driver(self) -> None:

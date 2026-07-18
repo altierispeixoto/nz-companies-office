@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from datetime import date
 
-from nz_companies_office.models.company import Address
-from nz_companies_office.models.company import AddressType
-from nz_companies_office.models.company import Company
-from nz_companies_office.models.company import CompanyStatus
-from nz_companies_office.models.company import Director
-from nz_companies_office.models.company import Shareholder
+from nz_companies_office.domain.models import Address
+from nz_companies_office.domain.models import AddressType
+from nz_companies_office.domain.models import Company
+from nz_companies_office.domain.models import CompanyStatus
+from nz_companies_office.domain.models import Director
+from nz_companies_office.domain.models import Shareholder
 
 
 def test_company_defaults() -> None:

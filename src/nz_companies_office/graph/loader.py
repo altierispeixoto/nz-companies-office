@@ -3,20 +3,19 @@
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 import time
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nz_companies_office.db.connection import get_driver
-
 if TYPE_CHECKING:
-    from neo4j import Driver
+    from pathlib import Path
+
+from nz_companies_office.config import SETTINGS
+from nz_companies_office.db.connection import get_driver
+from nz_companies_office.db.repository import Neo4jRepository
+from nz_companies_office.exceptions import Neo4jConnectionError
 
 logger = logging.getLogger(__name__)
-
-_ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
 
 INDEXES = [
     "CREATE INDEX company_nzbn IF NOT EXISTS FOR (c:Company) ON (c.nzbn)",
@@ -70,16 +69,10 @@ _VERIFY_QUERY = """
 """
 
 
-def _run_query(driver: Driver, query: str) -> list[dict]:
-    """Execute a Cypher query and return the results as a list of dicts."""
-    with driver.session() as session:
-        return session.run(query).data()
-
-
-def _log_graph_summary(driver: Driver, *, label: str = "Graph summary") -> None:
+def _log_graph_summary(repo: Neo4jRepository, *, label: str = "Graph summary") -> None:
     """Log node and edge counts broken down by label/type."""
-    node_rows = _run_query(driver, _NODE_COUNT_QUERY)
-    edge_rows = _run_query(driver, _EDGE_COUNT_QUERY)
+    node_rows = repo.run_query(_NODE_COUNT_QUERY)
+    edge_rows = repo.run_query(_EDGE_COUNT_QUERY)
     total_nodes = sum(r["cnt"] for r in node_rows)
     total_edges = sum(r["cnt"] for r in edge_rows)
 
@@ -98,35 +91,11 @@ def _log_graph_summary(driver: Driver, *, label: str = "Graph summary") -> None:
             logger.info("    %-30s %10d", row["type"], row["cnt"])
 
 
-def check_connectivity(driver: Driver) -> bool:
-    """Test that Neo4j is reachable.
-
-    Returns:
-        True if connected, False otherwise.
-
-    """
-    t0 = time.perf_counter()
-    try:
-        _run_query(driver, "RETURN 1 AS ok")
-    except Exception:
-        logger.exception("Cannot connect to Neo4j")
-        return False
-    else:
-        elapsed = time.perf_counter() - t0
-        logger.info(
-            "Neo4j reachable at %s (%.2f ms)",
-            os.environ.get("NEO4J_URI", "bolt://localhost:7687"),
-            elapsed * 1000,
-        )
-        return True
-
-
-def drop_gds_graphs(driver: Driver) -> None:
+def drop_gds_graphs(repo: Neo4jRepository) -> None:
     """Drop all GDS in-memory graphs."""
     t0 = time.perf_counter()
     try:
-        rows = _run_query(
-            driver,
+        rows = repo.run_query(
             """
             CALL gds.graph.list() YIELD graphName
             WITH graphName
@@ -143,13 +112,12 @@ def drop_gds_graphs(driver: Driver) -> None:
         logger.info("Dropped %d GDS graph(s) (%.2f s)", dropped, elapsed)
 
 
-def delete_all_nodes(driver: Driver) -> None:
+def delete_all_nodes(repo: Neo4jRepository) -> None:
     """Delete all nodes and relationships from the database."""
-    _log_graph_summary(driver, label="Before delete")
+    _log_graph_summary(repo, label="Before delete")
 
     t0 = time.perf_counter()
-    _run_query(
-        driver,
+    repo.run_query(
         """
         CALL apoc.periodic.iterate(
             'MATCH (n) RETURN n',
@@ -160,15 +128,15 @@ def delete_all_nodes(driver: Driver) -> None:
     )
     elapsed = time.perf_counter() - t0
 
-    _log_graph_summary(driver, label="After delete")
+    _log_graph_summary(repo, label="After delete")
     logger.info("Delete completed in %.2f s", elapsed)
 
 
-def create_indexes(driver: Driver) -> None:
+def create_indexes(repo: Neo4jRepository) -> None:
     """Create all required indexes."""
     t0 = time.perf_counter()
     for idx in INDEXES:
-        _run_query(driver, idx)
+        repo.run_query(idx)
     elapsed = time.perf_counter() - t0
     logger.info("Created %d indexes (%.2f s)", len(INDEXES), elapsed)
 
@@ -184,14 +152,14 @@ def load_csv(root_dir: Path | None = None, *, timeout: int = 12000) -> int:
         The cypher-shell exit code.
 
     """
-    root = root_dir or _ROOT_DIR
+    root = root_dir or SETTINGS.project_root
     script_path = root / "scripts" / "neo4j_load_csv.cypher"
     if not script_path.exists():
         logger.error("Script not found: %s", script_path)
         return 1
 
-    user = os.environ.get("NEO4J_USER", "neo4j")
-    password = os.environ.get("NEO4J_PASSWORD", "password")
+    user = SETTINGS.neo4j_user
+    password = SETTINGS.neo4j_password
 
     logger.info("Executing cypher-shell with %s", script_path.name)
     t0 = time.perf_counter()
@@ -226,14 +194,14 @@ def load_csv(root_dir: Path | None = None, *, timeout: int = 12000) -> int:
     return result.returncode
 
 
-def verify_import(driver: Driver) -> list[dict]:
+def verify_import(repo: Neo4jRepository) -> list[dict]:
     """Verify the import by counting nodes and relationships.
 
     Returns:
         List of dicts with 'label' and 'cnt' keys.
 
     """
-    rows = _run_query(driver, _VERIFY_QUERY)
+    rows = repo.run_query(_VERIFY_QUERY)
     logger.info("--- Import verification ---")
     for row in rows:
         logger.info("  %-30s %10d", row["label"], row["cnt"])
@@ -252,24 +220,24 @@ def load_database(*, skip_load: bool = False, root_dir: Path | None = None) -> N
 
     """
     pipeline_start = time.perf_counter()
-    driver = get_driver()
+    repo = Neo4jRepository(get_driver())
 
-    if not check_connectivity(driver):
+    if not repo.check_connectivity():
         msg = "Cannot connect to Neo4j"
-        raise RuntimeError(msg)
+        raise Neo4jConnectionError(msg)
 
-    drop_gds_graphs(driver)
-    delete_all_nodes(driver)
-    create_indexes(driver)
+    drop_gds_graphs(repo)
+    delete_all_nodes(repo)
+    create_indexes(repo)
 
     if not skip_load:
         rc = load_csv(root_dir=root_dir)
         if rc != 0:
             msg = f"cypher-shell exited with code {rc}"
-            raise RuntimeError(msg)
+            raise Neo4jConnectionError(msg)
 
-    verify_import(driver)
-    _log_graph_summary(driver, label="Final state")
+    verify_import(repo)
+    _log_graph_summary(repo, label="Final state")
 
     total_elapsed = time.perf_counter() - pipeline_start
     logger.info("Pipeline completed in %.2f s", total_elapsed)

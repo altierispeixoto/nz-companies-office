@@ -76,6 +76,14 @@ entity-resolution:
 enrich:
     @just run nz-companies-office enrich
 
+# Transform LINZ shapefile into a cached CSV
+prepare-linz *ARGS:
+    @just run nz-companies-office prepare-linz {{ ARGS }}
+
+# Reverse geocode Address nodes using LINZ NZ Addresses
+geocode *ARGS:
+    @just run nz-companies-office geocode {{ ARGS }}
+
 # Clean up the virtual environment
 clean:
     @echo "Removing virtual environment..."

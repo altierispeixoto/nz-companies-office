@@ -56,25 +56,25 @@ VERIFY_QUERY = """
 """
 
 
-def run_query(driver: GraphDatabase.driver, q: str) -> list[dict]:  # noqa: D103
+def run_query(driver: GraphDatabase.driver, q: str) -> list[dict]:
     with driver.session() as s:
         return s.run(q).data()
 
 
-def step1_check_connectivity(driver: GraphDatabase.driver) -> bool:  # noqa: D103
-    print("Step 1: Check Neo4j connectivity")  # noqa: T201
+def step1_check_connectivity(driver: GraphDatabase.driver) -> bool:
+    print("Step 1: Check Neo4j connectivity")
     try:
         run_query(driver, "RETURN 1 AS ok")
     except Exception as e:  # noqa: BLE001
-        print(f"  ✗ Cannot connect to Neo4j: {e}")  # noqa: T201
+        print(f"  ✗ Cannot connect to Neo4j: {e}")
         return False
     else:
-        print(f"  ✓ Neo4j reachable at {URI}")  # noqa: T201
+        print(f"  ✓ Neo4j reachable at {URI}")
         return True
 
 
-def step2_drop_gds_graphs(driver: GraphDatabase.driver) -> None:  # noqa: D103
-    print("Step 2: Drop GDS in-memory graphs")  # noqa: T201
+def step2_drop_gds_graphs(driver: GraphDatabase.driver) -> None:
+    print("Step 2: Drop GDS in-memory graphs")
     try:
         r = run_query(
             driver,
@@ -86,14 +86,14 @@ def step2_drop_gds_graphs(driver: GraphDatabase.driver) -> None:  # noqa: D103
             """,
         )
     except Exception as e:  # noqa: BLE001
-        print(f"  ⚠ Could not drop GDS graphs: {e}")  # noqa: T201
+        print(f"  ⚠ Could not drop GDS graphs: {e}")
     else:
         dropped = r[0]["graphs_dropped"] if r else 0
-        print(f"  ✓ Dropped {dropped} GDS graph(s)")  # noqa: T201
+        print(f"  ✓ Dropped {dropped} GDS graph(s)")
 
 
-def step3_delete_all_nodes(driver: GraphDatabase.driver) -> None:  # noqa: D103
-    print("Step 3: Delete all nodes")  # noqa: T201
+def step3_delete_all_nodes(driver: GraphDatabase.driver) -> None:
+    print("Step 3: Delete all nodes")
     run_query(
         driver,
         """
@@ -105,21 +105,21 @@ def step3_delete_all_nodes(driver: GraphDatabase.driver) -> None:  # noqa: D103
         """,
     )
     remaining = run_query(driver, "MATCH (n) RETURN count(*) AS c")[0]["c"]
-    print(f"  ✓ Database cleaned. Remaining nodes: {remaining}")  # noqa: T201
+    print(f"  ✓ Database cleaned. Remaining nodes: {remaining}")
 
 
-def step4_create_indexes(driver: GraphDatabase.driver) -> None:  # noqa: D103
-    print("Step 4: Create indexes")  # noqa: T201
+def step4_create_indexes(driver: GraphDatabase.driver) -> None:
+    print("Step 4: Create indexes")
     for idx in INDEXES:
         run_query(driver, idx)
-    print(f"  ✓ All {len(INDEXES)} indexes created")  # noqa: T201
+    print(f"  ✓ All {len(INDEXES)} indexes created")
 
 
-def step5_load_csv() -> int:  # noqa: D103
-    print("Step 5: Load CSV data")  # noqa: T201
+def step5_load_csv() -> int:
+    print("Step 5: Load CSV data")
     script_path = ROOT_DIR / "scripts" / "neo4j_load_csv.cypher"
     if not script_path.exists():
-        print(f"  ✗ Script not found: {script_path}")  # noqa: T201
+        print(f"  ✗ Script not found: {script_path}")
         return 1
 
     with script_path.open() as f:
@@ -145,23 +145,23 @@ def step5_load_csv() -> int:  # noqa: D103
         )
 
     if result.stdout.strip():
-        print("  stdout:", result.stdout[:2000])  # noqa: T201
+        print("  stdout:", result.stdout[:2000])
     if result.stderr.strip():
-        print("  stderr:", result.stderr[:2000])  # noqa: T201
-    print(f"  Exit code: {result.returncode}")  # noqa: T201
+        print("  stderr:", result.stderr[:2000])
+    print(f"  Exit code: {result.returncode}")
     return result.returncode
 
 
-def step6_verify(driver: GraphDatabase.driver) -> None:  # noqa: D103
-    print("Step 6: Verify import")  # noqa: T201
+def step6_verify(driver: GraphDatabase.driver) -> None:
+    print("Step 6: Verify import")
     rows = run_query(driver, VERIFY_QUERY)
-    print(f"  {'Label':<30} {'Count':>10}")  # noqa: T201
-    print("  " + "-" * 42)  # noqa: T201
+    print(f"  {'Label':<30} {'Count':>10}")
+    print("  " + "-" * 42)
     for row in rows:
-        print(f"  {row['label']:<30} {row['cnt']:>10,}")  # noqa: T201
+        print(f"  {row['label']:<30} {row['cnt']:>10,}")
 
 
-def main() -> None:  # noqa: D103
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-load", action="store_true", help="skip the CSV load step")
     args = parser.parse_args()
@@ -182,7 +182,7 @@ def main() -> None:  # noqa: D103
 
     step6_verify(driver)
     driver.close()
-    print("\nDone.")  # noqa: T201
+    print("\nDone.")
 
 
 if __name__ == "__main__":

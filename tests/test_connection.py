@@ -24,13 +24,15 @@ def reset_driver() -> None:
     close_driver()
 
 
-def test_get_driver_uses_env_vars() -> None:
-    """get_driver reads URI, user, password from environment."""
+def test_get_driver_uses_settings() -> None:
+    """get_driver reads URI, user, password from SETTINGS."""
     with (
-        patch("nz_companies_office.db.connection.os.environ.get") as mock_get,
+        patch("nz_companies_office.db.connection.SETTINGS") as mock_settings,
         patch("nz_companies_office.db.connection.GraphDatabase.driver") as mock_driver,
     ):
-        mock_get.side_effect = ["bolt://custom:7687", "custom_user", "custom_pass"]
+        mock_settings.neo4j_uri = "bolt://custom:7687"
+        mock_settings.neo4j_user = "custom_user"
+        mock_settings.neo4j_password = "custom_pass"  # noqa: S105
         driver = get_driver()
         mock_driver.assert_called_once_with(
             "bolt://custom:7687",
@@ -42,10 +44,8 @@ def test_get_driver_uses_env_vars() -> None:
 def test_get_driver_singleton() -> None:
     """Multiple calls to get_driver return the same instance."""
     with (
-        patch("nz_companies_office.db.connection.os.environ.get") as mock_get,
         patch("nz_companies_office.db.connection.GraphDatabase.driver") as mock_driver,
     ):
-        mock_get.return_value = None
         first = get_driver()
         second = get_driver()
         mock_driver.assert_called_once()
@@ -55,22 +55,22 @@ def test_get_driver_singleton() -> None:
 def test_close_driver() -> None:
     """close_driver closes the underlying Neo4j driver."""
     with (
-        patch("nz_companies_office.db.connection.os.environ.get") as mock_get,
         patch("nz_companies_office.db.connection.GraphDatabase.driver") as mock_driver,
     ):
-        mock_get.return_value = None
         get_driver()
         close_driver()
         mock_driver.return_value.close.assert_called_once()
 
 
 def test_get_driver_defaults() -> None:
-    """get_driver falls back to localhost defaults when env vars are not set."""
+    """get_driver falls back to SETTINGS defaults."""
     with (
-        patch("nz_companies_office.db.connection.os.environ.get") as mock_get,
+        patch("nz_companies_office.db.connection.SETTINGS") as mock_settings,
         patch("nz_companies_office.db.connection.GraphDatabase.driver") as mock_driver,
     ):
-        mock_get.side_effect = lambda _key, default=None: default
+        mock_settings.neo4j_uri = "bolt://localhost:7687"
+        mock_settings.neo4j_user = "neo4j"
+        mock_settings.neo4j_password = "password"  # noqa: S105
         get_driver()
         mock_driver.assert_called_once_with(
             "bolt://localhost:7687",
@@ -81,10 +81,8 @@ def test_get_driver_defaults() -> None:
 def test_close_driver_resets_singleton() -> None:
     """After close_driver, the next get_driver creates a fresh instance."""
     with (
-        patch("nz_companies_office.db.connection.os.environ.get") as mock_get,
         patch("nz_companies_office.db.connection.GraphDatabase.driver") as mock_driver,
     ):
-        mock_get.side_effect = lambda _key, default=None: default
         mock_driver.side_effect = _make_mock_driver
         first = get_driver()
         close_driver()

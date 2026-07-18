@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
-from pathlib import Path
 
 import torch
+
+from nz_companies_office.config import SETTINGS
 
 try:
     from neo4j import GraphDatabase as _GraphDatabase
@@ -75,26 +75,25 @@ class GraphExtractor:
 
     """
 
-    CACHE_PATH = Path("data/processed/nz_companies.pt")
+    CACHE_PATH = SETTINGS.project_root / "data" / "processed" / "nz_companies.pt"
 
     def __init__(
         self,
-        uri: str = "bolt://localhost:7687",
-        user: str = "neo4j",
+        uri: str | None = None,
+        user: str | None = None,
         password: str | None = None,
     ) -> None:
         """Initialise the extractor with Neo4j connection parameters.
 
         Args:
-            uri: Bolt URI for the Neo4j instance.
-            user: Neo4j username.
-            password: Neo4j password. Falls back to ``NEO4J_PASSWORD`` env var
-                or ``"password"``.
+            uri: Bolt URI for the Neo4j instance.  Defaults to ``SETTINGS.neo4j_uri``.
+            user: Neo4j username.  Defaults to ``SETTINGS.neo4j_user``.
+            password: Neo4j password.  Defaults to ``SETTINGS.neo4j_password``.
 
         """
-        self.uri = uri
-        self.user = user
-        self.password = password or os.environ.get("NEO4J_PASSWORD", "password")
+        self.uri = uri or SETTINGS.neo4j_uri
+        self.user = user or SETTINGS.neo4j_user
+        self.password = password or SETTINGS.neo4j_password
 
     def extract(self, *, use_cache: bool = True) -> ExtractedGraph:
         """Extract the graph, trying cache first then fall back to Neo4j.
@@ -287,9 +286,9 @@ class GraphExtractor:
             comp_types=comp_types,
             industry_codes=industry_codes,
             industry_descriptions=industry_descriptions,
-            dir_edge_index=dir_edge_index,
-            share_edge_index=share_edge_index,
-            ind_edge_index=ind_edge_index,
+            dir_edge_index=torch.LongTensor(dir_edge_index),
+            share_edge_index=torch.LongTensor(share_edge_index),
+            ind_edge_index=torch.LongTensor(ind_edge_index),
         )
 
 
@@ -333,7 +332,7 @@ def filter_removed_companies(graph: ExtractedGraph) -> ExtractedGraph:
         comp_types=[t for i, t in enumerate(graph.comp_types) if kept_mask[i]],
         industry_codes=list(graph.industry_codes),
         industry_descriptions=list(graph.industry_descriptions),
-        dir_edge_index=dir_edge_index,
-        share_edge_index=share_edge_index,
-        ind_edge_index=ind_edge_index,
+        dir_edge_index=torch.LongTensor(dir_edge_index),
+        share_edge_index=torch.LongTensor(share_edge_index),
+        ind_edge_index=torch.LongTensor(ind_edge_index),
     )

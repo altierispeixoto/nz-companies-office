@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-from pathlib import Path
 
 import torch
 
-_CACHE_DIR = Path("data/processed/industry_embeddings")
+from nz_companies_office.config import SETTINGS
+
+_CACHE_DIR = SETTINGS.data_dir / "processed" / "industry_embeddings"
 
 
 def embed_industry_descriptions(

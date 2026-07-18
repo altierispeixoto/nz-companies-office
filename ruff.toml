@@ -72,10 +72,14 @@ target-version = "py312"
 "tests/**/*" = ["S101", "TID252"]
 # CLI output uses print
 "src/nz_companies_office/cli/*" = ["T201"]
+# App server and utility scripts
+"app/*.py" = ["D103", "INP001", "PLW0603", "S104", "TC003"]
+"scripts/*.py" = ["ANN001", "COM812", "D103", "INP001", "PERF401", "PTH103", "PTH118", "PTH123", "T201", "TC003"]
 # Marimo notebook format requires cell functions named __, imports inside cells,
 # omits type annotations, and uses unicode characters in markdown strings
-"notebooks/*.py" = ["ANN001", "ANN202", "ARG001", "B018", "BLE001", "COM812", "COM818", "ERA001", "INP001", "N803", "N806", "N807", "N999", "PLC0415", "PLR1711", "PLR2004", "RET505", "RUF001", "SLF001", "TID252"]
+"notebooks/*.py" = ["ANN001", "ANN202", "ARG001", "B018", "BLE001", "COM812", "COM818", "ERA001", "F841", "INP001", "N803", "N806", "N807", "N999", "PLC0415", "PLR1711", "PLR2004", "RET505", "RUF001", "SLF001", "T201", "TID252"]
 "notebooks/template.ipynb" = ["ERA001", "NPY002"]
+"notebooks/workshop-gnn/*.py" = ["ANN001", "ANN202", "ANN204", "ARG001", "B018", "BLE001", "C408", "COM812", "COM818", "ERA001", "INP001", "N801", "N803", "N806", "N807", "N812", "N999", "NPY002", "PLC0415", "PLR0402", "PLR1711", "PLR2004", "RET504", "RET505", "RUF001", "RUF059", "SLF001", "S104", "S108", "TID252", "B905"]
 
 [lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.

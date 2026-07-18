@@ -39,15 +39,17 @@ def export_companies(driver: GraphDatabase.driver, out_path: str) -> None:
                c.removal_date AS removal_date
         ORDER BY c.company_number
     """
-    schema = pa.schema([
-        ("company_number", pa.string()),
-        ("name", pa.string()),
-        ("status", pa.string()),
-        ("nzbn", pa.string()),
-        ("entity_type", pa.string()),
-        ("incorporation_date", pa.date32()),
-        ("removal_date", pa.date32()),
-    ])
+    schema = pa.schema(
+        [
+            ("company_number", pa.string()),
+            ("name", pa.string()),
+            ("status", pa.string()),
+            ("nzbn", pa.string()),
+            ("entity_type", pa.string()),
+            ("incorporation_date", pa.date32()),
+            ("removal_date", pa.date32()),
+        ]
+    )
     _export_table(driver, query, schema, out_path, "companies.parquet", _convert_company_row)
     print("  companies.parquet done")
 
@@ -61,12 +63,14 @@ def export_shareholders(driver: GraphDatabase.driver, out_path: str) -> None:
                s.first_initial AS first_initial
         ORDER BY s.name
     """
-    schema = pa.schema([
-        ("name", pa.string()),
-        ("sh_type", pa.string()),
-        ("surname", pa.string()),
-        ("first_initial", pa.string()),
-    ])
+    schema = pa.schema(
+        [
+            ("name", pa.string()),
+            ("sh_type", pa.string()),
+            ("surname", pa.string()),
+            ("first_initial", pa.string()),
+        ]
+    )
     _export_table(driver, query, schema, out_path, "shareholders.parquet")
     print("  shareholders.parquet done")
 
@@ -82,14 +86,16 @@ def export_holdings(driver: GraphDatabase.driver, out_path: str) -> None:
                r.sh_status AS sh_status
         ORDER BY s.name, c.company_number
     """
-    schema = pa.schema([
-        ("shareholder_name", pa.string()),
-        ("company_number", pa.string()),
-        ("shares", pa.int64()),
-        ("extensive_shareholding", pa.bool_()),
-        ("start_date", pa.date32()),
-        ("sh_status", pa.string()),
-    ])
+    schema = pa.schema(
+        [
+            ("shareholder_name", pa.string()),
+            ("company_number", pa.string()),
+            ("shares", pa.int64()),
+            ("extensive_shareholding", pa.bool_()),
+            ("start_date", pa.date32()),
+            ("sh_status", pa.string()),
+        ]
+    )
     _export_table(driver, query, schema, out_path, "holdings.parquet", _convert_holding_row)
     print("  holdings.parquet done")
 
@@ -162,11 +168,13 @@ def export_industries(driver: GraphDatabase.driver, out_path: str) -> None:
                ind.description AS industry_description
         ORDER BY c.company_number
     """
-    schema = pa.schema([
-        ("company_number", pa.string()),
-        ("industry_code", pa.string()),
-        ("industry_description", pa.string()),
-    ])
+    schema = pa.schema(
+        [
+            ("company_number", pa.string()),
+            ("industry_code", pa.string()),
+            ("industry_description", pa.string()),
+        ]
+    )
     _export_table(driver, query, schema, out_path, "industry.parquet")
     print("  industry.parquet done")
 
@@ -178,10 +186,12 @@ def export_industry_codes(driver: GraphDatabase.driver, out_path: str) -> None:
                ind.description AS description
         ORDER BY ind.description
     """
-    schema = pa.schema([
-        ("code", pa.string()),
-        ("description", pa.string()),
-    ])
+    schema = pa.schema(
+        [
+            ("code", pa.string()),
+            ("description", pa.string()),
+        ]
+    )
     _export_table(driver, query, schema, out_path, "industry_codes.parquet")
     print("  industry_codes.parquet done")
 

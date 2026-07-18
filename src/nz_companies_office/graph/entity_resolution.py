@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
 
 from nz_companies_office.db.connection import get_driver
-
-if TYPE_CHECKING:
-    from neo4j import Driver
+from nz_companies_office.db.repository import Neo4jRepository
 
 logger = logging.getLogger(__name__)
 
@@ -132,12 +129,6 @@ _COMPANY_COUNT_QUERY = """
 """
 
 
-def _run_query(driver: Driver, query: str, **params: object) -> list[dict]:
-    """Execute a Cypher query and return the results as a list of dicts."""
-    with driver.session() as session:
-        return session.run(query, **params).data()
-
-
 def _trigram_jaccard(a: str, b: str) -> float:
     """Compute Jaccard similarity between the trigram sets of two strings."""
 
@@ -152,7 +143,7 @@ def _trigram_jaccard(a: str, b: str) -> float:
     return inter / union if union > 0 else 0.0
 
 
-def normalize_names(driver: Driver) -> int:
+def normalize_names(repo: Neo4jRepository) -> int:
     """Set normalized_name, name_key, is_person on all Shareholder and Director nodes.
 
     Returns:
@@ -160,23 +151,23 @@ def normalize_names(driver: Driver) -> int:
 
     """
     t0 = time.perf_counter()
-    _run_query(driver, _NORMALISE_QUERY)
-    _run_query(driver, _NORMALISE_DIRECTOR_QUERY)
-    _run_query(driver, _PERSON_ID_QUERY)
-    _run_query(driver, _PERSON_ID_DIRECTOR_QUERY)
-    _run_query(driver, _INDEX_NORM_QUERY)
-    _run_query(driver, _INDEX_NORM_DIR_QUERY)
-    _run_query(driver, _NAME_KEY_QUERY)
-    _run_query(driver, _NAME_KEY_DIRECTOR_QUERY)
-    _run_query(driver, _INDEX_KEY_QUERY)
-    _run_query(driver, _INDEX_KEY_DIR_QUERY)
+    repo.run_query(_NORMALISE_QUERY)
+    repo.run_query(_NORMALISE_DIRECTOR_QUERY)
+    repo.run_query(_PERSON_ID_QUERY)
+    repo.run_query(_PERSON_ID_DIRECTOR_QUERY)
+    repo.run_query(_INDEX_NORM_QUERY)
+    repo.run_query(_INDEX_NORM_DIR_QUERY)
+    repo.run_query(_NAME_KEY_QUERY)
+    repo.run_query(_NAME_KEY_DIRECTOR_QUERY)
+    repo.run_query(_INDEX_KEY_QUERY)
+    repo.run_query(_INDEX_KEY_DIR_QUERY)
     elapsed = time.perf_counter() - t0
-    count = _run_query(driver, "MATCH (n:Shareholder) WHERE n.is_person IS NOT NULL RETURN count(*) AS c")[0]["c"]
+    count = repo.run_query("MATCH (n:Shareholder) WHERE n.is_person IS NOT NULL RETURN count(*) AS c")[0]["c"]
     logger.info("Normalized %d nodes (%.2f s)", count, elapsed)
     return count
 
 
-def compute_trigrams(driver: Driver) -> int:
+def compute_trigrams(repo: Neo4jRepository) -> int:
     """Compute trigram arrays on all Shareholder and Director nodes.
 
     Returns:
@@ -184,14 +175,14 @@ def compute_trigrams(driver: Driver) -> int:
 
     """
     t0 = time.perf_counter()
-    _run_query(driver, _TRIGRAM_QUERY)
+    repo.run_query(_TRIGRAM_QUERY)
     elapsed = time.perf_counter() - t0
-    count = _run_query(driver, "MATCH (n) WHERE n.trigrams IS NOT NULL RETURN count(*) AS c")[0]["c"]
+    count = repo.run_query("MATCH (n) WHERE n.trigrams IS NOT NULL RETURN count(*) AS c")[0]["c"]
     logger.info("Computed trigrams on %d nodes (%.2f s)", count, elapsed)
     return count
 
 
-def compute_company_counts(driver: Driver) -> int:
+def compute_company_counts(repo: Neo4jRepository) -> int:
     """Set company_count on all Shareholder nodes.
 
     Returns:
@@ -199,14 +190,14 @@ def compute_company_counts(driver: Driver) -> int:
 
     """
     t0 = time.perf_counter()
-    _run_query(driver, _COMPANY_COUNT_QUERY)
+    repo.run_query(_COMPANY_COUNT_QUERY)
     elapsed = time.perf_counter() - t0
-    count = _run_query(driver, "MATCH (s:Shareholder) WHERE s.company_count IS NOT NULL RETURN count(*) AS c")[0]["c"]
+    count = repo.run_query("MATCH (s:Shareholder) WHERE s.company_count IS NOT NULL RETURN count(*) AS c")[0]["c"]
     logger.info("Computed company_count on %d shareholders (%.2f s)", count, elapsed)
     return count
 
 
-def exact_match(driver: Driver) -> int:
+def exact_match(repo: Neo4jRepository) -> int:
     """Create Person + SAME_AS for exact normalized_name matches.
 
     Returns:
@@ -214,14 +205,14 @@ def exact_match(driver: Driver) -> int:
 
     """
     t0 = time.perf_counter()
-    result = _run_query(driver, _EXACT_MATCH_QUERY)
+    result = repo.run_query(_EXACT_MATCH_QUERY)
     elapsed = time.perf_counter() - t0
     created = result[0]["created"] if result else 0
     logger.info("Exact matches: %d SAME_AS created (%.2f s)", created, elapsed)
     return created
 
 
-def fuzzy_match_candidates(driver: Driver) -> list[dict]:
+def fuzzy_match_candidates(repo: Neo4jRepository) -> list[dict]:
     """Find candidate pairs via name_key blocking + trigram Jaccard.
 
     Returns:
@@ -229,8 +220,7 @@ def fuzzy_match_candidates(driver: Driver) -> list[dict]:
 
     """
     t0 = time.perf_counter()
-    rows = _run_query(
-        driver,
+    rows = repo.run_query(
         _FUZZY_CANDIDATES_QUERY,
         min_company_count=MIN_COMPANY_COUNT,
         min_score=TRIGRAM_MIN_SCORE,
@@ -240,11 +230,11 @@ def fuzzy_match_candidates(driver: Driver) -> list[dict]:
     return rows
 
 
-def verify_candidates(driver: Driver, candidates: list[dict]) -> list[dict]:
+def verify_candidates(repo: Neo4jRepository, candidates: list[dict]) -> list[dict]:
     """Score candidates with company_overlap + address_overlap via batched queries.
 
     Args:
-        driver: Neo4j driver instance.
+        repo: Neo4j repository instance.
         candidates: List of dicts from fuzzy_match_candidates.
 
     Returns:
@@ -260,7 +250,7 @@ def verify_candidates(driver: Driver, candidates: list[dict]) -> list[dict]:
 
     for i in range(0, len(candidates), batch_size):
         batch = [{"sh_name": c["sh_name"], "dir_name": c["dir_name"]} for c in candidates[i : i + batch_size]]
-        rows = _run_query(driver, _OVERLAP_QUERY, pairs=batch)
+        rows = repo.run_query(_OVERLAP_QUERY, pairs=batch)
         overlap_map = {(r["sh"], r["dir"]): r for r in rows}
 
         for c in candidates[i : i + batch_size]:
@@ -285,11 +275,11 @@ def verify_candidates(driver: Driver, candidates: list[dict]) -> list[dict]:
     return enriched
 
 
-def write_matches(driver: Driver, candidates: list[dict]) -> tuple[int, int]:
+def write_matches(repo: Neo4jRepository, candidates: list[dict]) -> tuple[int, int]:
     """Create Person nodes + SAME_AS relationships for scored candidates.
 
     Args:
-        driver: Neo4j driver instance.
+        repo: Neo4j repository instance.
         candidates: Verified candidates with trigram_score, company_overlap,
             address_overlap fields.
 
@@ -324,17 +314,17 @@ def write_matches(driver: Driver, candidates: list[dict]) -> tuple[int, int]:
     # Collect unique person IDs
     person_ids = list({r["person_id"] for r in to_write})
     for i in range(0, len(person_ids), 500):
-        _run_query(driver, _WRITE_PERSONS_QUERY, names=person_ids[i : i + 500])
+        repo.run_query(_WRITE_PERSONS_QUERY, names=person_ids[i : i + 500])
 
     # Write SAME_AS relationships in batches
     rels_created = 0
     for i in range(0, len(to_write), 500):
         batch = to_write[i : i + 500]
-        result = _run_query(driver, _WRITE_SAME_AS_QUERY, rels=batch)
+        result = repo.run_query(_WRITE_SAME_AS_QUERY, rels=batch)
         rels_created += result[0]["created"] if result else 0
 
     elapsed = time.perf_counter() - t0
-    person_count = _run_query(driver, PERSON_COUNT_QUERY)[0]["c"]
+    person_count = repo.run_query(PERSON_COUNT_QUERY)[0]["c"]
     logger.info(
         "Wrote %d Person nodes, %d SAME_AS rels (%.2f s)",
         person_count,
@@ -344,7 +334,7 @@ def write_matches(driver: Driver, candidates: list[dict]) -> tuple[int, int]:
     return person_count, rels_created
 
 
-def link_investor_directors(driver: Driver) -> int:
+def link_investor_directors(repo: Neo4jRepository) -> int:
     """Create IS_INVESTOR_DIRECTOR for verified same-company pairs.
 
     Returns:
@@ -352,7 +342,7 @@ def link_investor_directors(driver: Driver) -> int:
 
     """
     t0 = time.perf_counter()
-    result = _run_query(driver, _LINK_INVESTOR_DIRECTORS_QUERY)
+    result = repo.run_query(_LINK_INVESTOR_DIRECTORS_QUERY)
     elapsed = time.perf_counter() - t0
     created = result[0]["created"] if result else 0
     logger.info("IS_INVESTOR_DIRECTOR: %d relationships created (%.2f s)", created, elapsed)
@@ -371,37 +361,30 @@ def entity_resolution() -> None:
 
     """
     pipeline_start = time.perf_counter()
-    driver = get_driver()
-
-    # Connectivity check
-    try:
-        _run_query(driver, "RETURN 1 AS ok")
-    except Exception as exc:
-        logger.exception("Cannot connect to Neo4j")
-        msg = "Cannot connect to Neo4j"
-        raise RuntimeError(msg) from exc
+    repo = Neo4jRepository(get_driver())
+    repo.ensure_connected()
 
     # Wipe existing Person nodes
     t0 = time.perf_counter()
-    _run_query(driver, WIPE_QUERY)
+    repo.run_query(WIPE_QUERY)
     elapsed = time.perf_counter() - t0
     logger.info("Wiped existing Person nodes (%.2f s)", elapsed)
 
     # Pipeline stages
-    normalize_names(driver)
-    compute_company_counts(driver)
-    compute_trigrams(driver)
-    exact_match(driver)
+    normalize_names(repo)
+    compute_company_counts(repo)
+    compute_trigrams(repo)
+    exact_match(repo)
 
-    candidates = fuzzy_match_candidates(driver)
-    candidates = verify_candidates(driver, candidates)
-    write_matches(driver, candidates)
-    link_investor_directors(driver)
+    candidates = fuzzy_match_candidates(repo)
+    candidates = verify_candidates(repo, candidates)
+    write_matches(repo, candidates)
+    link_investor_directors(repo)
 
     # Final summary
-    person_count = _run_query(driver, PERSON_COUNT_QUERY)[0]["c"]
-    same_as_count = _run_query(driver, SAME_AS_COUNT_QUERY)[0]["c"]
-    iid_count = _run_query(driver, IID_COUNT_QUERY)[0]["c"]
+    person_count = repo.run_query(PERSON_COUNT_QUERY)[0]["c"]
+    same_as_count = repo.run_query(SAME_AS_COUNT_QUERY)[0]["c"]
+    iid_count = repo.run_query(IID_COUNT_QUERY)[0]["c"]
 
     total_elapsed = time.perf_counter() - pipeline_start
     logger.info("--- Entity Resolution Summary ---")

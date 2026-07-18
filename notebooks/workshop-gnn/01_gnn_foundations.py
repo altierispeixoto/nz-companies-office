@@ -16,8 +16,8 @@ def _():
     import networkx as nx
     import numpy as np
     import torch
-    import torch.nn.functional as f
     from torch import nn
+    from torch.nn import functional as F
     from torch_geometric.data import Data
     from torch_geometric.utils import to_networkx
 
@@ -109,7 +109,7 @@ def _(Data, mo, np, nx, plt, to_networkx, torch):
             xytext=pos_mp[u],
             fontsize=8,
             ha="center",
-            arrowprops=(color="gray", lw=1.5, connectionstyle="arc3,rad=0.2",arrowstyle="->"),
+            arrowprops=dict(color="gray", lw=1.5, connectionstyle="arc3,rad=0.2", arrowstyle="->"),
         )
 
     nx.draw_networkx_nodes(G_mp, pos_mp, node_color=colors_mp, node_size=600, ax=ax_after, edgecolors="black")
