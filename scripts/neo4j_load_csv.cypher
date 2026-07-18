@@ -1,18 +1,5 @@
-// Step 0: Drop GDS in-memory graphs (if GDS plugin is installed) + delete all data
-// GDS in-memory graphs persist across restarts and must be dropped explicitly
-CALL dbms.listProcedures() YIELD name WHERE name STARTS WITH 'gds.graph.list'
-WITH count(*) AS hasGDS
-CALL apoc.do.when(
-    hasGDS > 0,
-    'CALL gds.graph.list() YIELD graphName
-     WITH graphName
-     CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
-     RETURN count(dropped) AS graphs_dropped',
-    'RETURN 0 AS graphs_dropped',
-    {}
-) YIELD value
-RETURN value.graphs_dropped AS graphs_dropped;
-
+// Step 0: Delete all nodes and relationships.
+// GDS in-memory graph cleanup is handled by the Python loader before this script runs.
 CALL apoc.periodic.iterate(
     "MATCH (n) RETURN n",
     "DETACH DELETE n",

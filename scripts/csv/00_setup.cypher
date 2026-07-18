@@ -1,16 +1,3 @@
-CALL dbms.listProcedures() YIELD name WHERE name STARTS WITH 'gds.graph.list'
-WITH count(*) AS hasGDS
-CALL apoc.do.when(
-    hasGDS > 0,
-    'CALL gds.graph.list() YIELD graphName
-     WITH graphName
-     CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
-     RETURN count(dropped) AS graphs_dropped',
-    'RETURN 0 AS graphs_dropped',
-    {}
-) YIELD value
-RETURN value.graphs_dropped AS graphs_dropped;
-
 CALL apoc.periodic.iterate(
     "MATCH (n) RETURN n",
     "DETACH DELETE n",

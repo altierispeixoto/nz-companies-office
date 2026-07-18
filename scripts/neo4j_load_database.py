@@ -77,7 +77,7 @@ def step2_drop_gds_graphs(driver: GraphDatabase.driver) -> None:
     print("Step 2: Drop GDS in-memory graphs")
     has_gds = run_query(
         driver,
-        "CALL dbms.listProcedures() YIELD name WHERE name STARTS WITH 'gds.graph' RETURN count(*) AS cnt",
+        "SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'gds.graph' RETURN count(*) AS cnt",
     )[0]["cnt"]
     if has_gds == 0:
         print("  ⏭ GDS plugin not installed — skipping")
