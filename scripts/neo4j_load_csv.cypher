@@ -27,6 +27,11 @@ CREATE INDEX company_name_idx IF NOT EXISTS FOR (c:Company) ON (c.name);
 CREATE INDEX shareholder_surname_idx IF NOT EXISTS FOR (s:Shareholder) ON (s.surname);
 CREATE INDEX director_last_name_idx IF NOT EXISTS FOR (d:Director) ON (d.last_name);
 
+CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.normalized_name);
+CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.normalized_name);
+CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.name_key);
+CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.name_key);
+
 // Step 1: Load Company nodes (1.81M rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_core_data.csv" AS row
 CALL (row) {
@@ -55,6 +60,7 @@ CALL (row) {
         END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 2: Load Director nodes + :DIRECTS relationships (1.17M rows)
 //         Appointment date + ASIC flag stored on the relationship (edge attributes)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_director.csv" AS row
@@ -69,6 +75,10 @@ CALL (row) {
     WITH row, c, raw_name,
         CASE WHEN raw_name <> "" THEN raw_name ELSE row.ENTITY_NAME END AS director_name
     MERGE (d:Director {name: director_name})
+    SET d.normalized_name = trim(apoc.text.replace(d.name, '\\s+', ' '))
+    SET d.person_id = d.normalized_name,
+        d.is_person = CASE WHEN d.normalized_name =~ '.*[a-z].*' THEN true ELSE false END,
+        d.name_key = toUpper(split(d.normalized_name, ' ')[0]) + toUpper(split(d.normalized_name, ' ')[-1])
     WITH d, c, row
     MERGE (d)-[r:DIRECTS]->(c)
     SET r.appointed_on = CASE
@@ -83,6 +93,7 @@ CALL (row) {
         r.asic_dir_yn = CASE WHEN trim(row.ASIC_DIR_YN) = "Y" THEN true ELSE false END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 3: Load Shareholder nodes + :HOLDS_SHARES_IN relationships (1.58M rows)
 //         Share count, extensive shareholding, start date, status, parcel/assignment IDs on the edge;
 //         type on the node; address stored as Address node
@@ -94,6 +105,10 @@ CALL (row) {
             WHEN trim(coalesce(row.SH_TYPE, "")) <> "" THEN trim(row.SH_TYPE)
             ELSE null
         END
+    SET s.normalized_name = trim(apoc.text.replace(s.name, '\\s+', ' '))
+    SET s.person_id = s.normalized_name,
+        s.is_person = CASE WHEN s.normalized_name =~ '.*[a-z].*' THEN true ELSE false END,
+        s.name_key = toUpper(split(s.normalized_name, ' ')[0]) + toUpper(split(s.normalized_name, ' ')[-1])
     WITH s, c, row,
         coalesce(row.SH_ADDRESS_3, "") AS city_3,
         coalesce(row.SH_ADDRESS_4, "") AS city_4
@@ -138,6 +153,7 @@ CALL (row) {
         r.assignment_id = CASE WHEN coalesce(row.ASSIGNMENT_IDENTIFIER, "") <> "" THEN row.ASSIGNMENT_IDENTIFIER ELSE null END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 4a: Load Registered Office Address nodes (755K rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_registered_office_address.csv" AS row
 CALL (row) {
@@ -173,6 +189,7 @@ CALL (row) {
             ELSE null
         END
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 // Step 4b: Load Address for Service nodes (755K rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_address_for_service.csv" AS row
@@ -210,6 +227,7 @@ CALL (row) {
         END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 5: Load Industry nodes + :HAS_INDUSTRY relationships (664K rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_business_industry_classification.csv" AS row
 CALL (row) {
@@ -219,6 +237,7 @@ CALL (row) {
     WITH ind, c
     MERGE (c)-[:HAS_INDUSTRY]->(ind)
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 // Step 6: Load TradingName nodes + :TRADES_AS relationships (346K rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_trading_name.csv" AS row
@@ -237,6 +256,7 @@ CALL (row) {
     WITH t, c
     MERGE (c)-[:TRADES_AS]->(t)
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 // Step 7: Load Insolvency nodes + :HAS_INSOLVENCY relationships (108K rows)
 //         Appointment/vacated dates stored on the relationship (edge attributes)
@@ -280,6 +300,7 @@ CALL (row) {
         END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 8: Add properties from remaining CSVs (website, GST, ABN, Maori business)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_website.csv" AS row
 CALL (row) {
@@ -287,11 +308,13 @@ CALL (row) {
     SET c.website = row.WEBSITE
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_gst.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.gst_number = row.GST_NUMBER
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_abn.csv" AS row
 CALL (row) {
@@ -299,11 +322,13 @@ CALL (row) {
     SET c.abn = row.ABN
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 LOAD CSV WITH HEADERS FROM "file:///companies/maori_business_identifier.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.maori_business_identifier = row.IDENTIFYING_FACTOR
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 // Step 9: Load TradingArea nodes + :TRADES_IN relationships
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_trading_area.csv" AS row
@@ -313,6 +338,7 @@ CALL (row) {
     WITH ta, c
     MERGE (c)-[:TRADES_IN]->(ta)
 } IN TRANSACTIONS OF 5000 ROWS;
+
 
 // Step 4c: Load Public Address nodes (320K rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_public_address.csv" AS row
@@ -354,6 +380,7 @@ CALL (row) {
         END
 } IN TRANSACTIONS OF 5000 ROWS;
 
+
 // Step 10: Link corporate shareholders to their Company nodes
 // Shareholder sh_type = "Shareholder Company" means this shareholder
 // IS a known company on the register. Connect them via name match.
@@ -366,3 +393,5 @@ CALL apoc.periodic.iterate(
      MERGE (s)-[:IS]->(c)',
     {batchSize: 5000, parallel: false, retries: 0}
 );
+
+

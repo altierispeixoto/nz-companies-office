@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
+
+import colorlog
 
 from nz_companies_office.config import SETTINGS
 from nz_companies_office.db.connection import close_driver
@@ -64,7 +67,20 @@ def _add_data_dir_arg(parser: argparse.ArgumentParser) -> None:
 
 def run() -> None:
     """Main CLI entry point."""
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    handler = colorlog.StreamHandler(stream=sys.stdout)
+    handler.setFormatter(
+        colorlog.ColoredFormatter(
+            fmt="%(log_color)s%(message)s%(reset)s",
+            log_colors={
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+        ),
+    )
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
 
     parser = argparse.ArgumentParser(description="NZ Companies Office tools")
     subparsers = parser.add_subparsers(dest="command", required=True)
