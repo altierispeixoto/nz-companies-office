@@ -1,18 +1,26 @@
-// Step 0: Drop GDS in-memory graphs + ML models + all data, then create indexes
+// Step 0: Drop GDS in-memory graphs (if GDS plugin is installed) + delete all data
 // GDS in-memory graphs persist across restarts and must be dropped explicitly
-CALL gds.graph.list() YIELD graphName
-WITH graphName
-CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
-RETURN count(dropped) AS graphs_dropped;
+CALL dbms.listProcedures() YIELD name WHERE name STARTS WITH 'gds.graph.list'
+WITH count(*) AS hasGDS
+CALL apoc.do.when(
+    hasGDS > 0,
+    'CALL gds.graph.list() YIELD graphName
+     WITH graphName
+     CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
+     RETURN count(dropped) AS graphs_dropped',
+    'RETURN 0 AS graphs_dropped',
+    {}
+) YIELD value
+RETURN value.graphs_dropped AS graphs_dropped;
 
 CALL apoc.periodic.iterate(
     "MATCH (n) RETURN n",
     "DETACH DELETE n",
-    {batchSize: 50000, parallel: false, retries: 0}
+    {batchSize: 100000, parallel: false, retries: 0}
 );
 
-// Create all MERGE-key indexes upfront so each MERGE uses an index lookup
-// (without indexes, MERGE does a full node scan that gets slower with every row)
+// Create only MERGE-key indexes upfront so each MERGE uses an index lookup
+// (non-essential indexes like normalized_name/name_key are deferred to after load)
 
 CREATE INDEX company_nzbn IF NOT EXISTS FOR (c:Company) ON (c.nzbn);
 CREATE INDEX company_number_idx IF NOT EXISTS FOR (c:Company) ON (c.company_number);
@@ -23,14 +31,6 @@ CREATE INDEX industry_code_idx IF NOT EXISTS FOR (ind:Industry) ON (ind.code);
 CREATE INDEX trading_name_idx IF NOT EXISTS FOR (t:TradingName) ON (t.name);
 CREATE INDEX insolvency_idx IF NOT EXISTS FOR (i:Insolvency) ON (i.type, i.appointment_type, i.appointee);
 CREATE INDEX trading_area_idx IF NOT EXISTS FOR (ta:TradingArea) ON (ta.name);
-CREATE INDEX company_name_idx IF NOT EXISTS FOR (c:Company) ON (c.name);
-CREATE INDEX shareholder_surname_idx IF NOT EXISTS FOR (s:Shareholder) ON (s.surname);
-CREATE INDEX director_last_name_idx IF NOT EXISTS FOR (d:Director) ON (d.last_name);
-
-CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.normalized_name);
-CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.normalized_name);
-CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.name_key);
-CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.name_key);
 
 // Step 1: Load Company nodes (1.81M rows)
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_core_data.csv" AS row
@@ -58,7 +58,7 @@ CALL (row) {
             )
             ELSE null
         END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 2: Load Director nodes + :DIRECTS relationships (1.17M rows)
@@ -91,7 +91,7 @@ CALL (row) {
             ELSE null
         END,
         r.asic_dir_yn = CASE WHEN trim(row.ASIC_DIR_YN) = "Y" THEN true ELSE false END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 3: Load Shareholder nodes + :HOLDS_SHARES_IN relationships (1.58M rows)
@@ -151,7 +151,7 @@ CALL (row) {
         r.sh_status = CASE WHEN trim(coalesce(row.SH_STATUS, "")) <> "" THEN trim(row.SH_STATUS) ELSE null END,
         r.parcel_id = CASE WHEN coalesce(row.PARCEL_IDENTIFIER, "") <> "" THEN row.PARCEL_IDENTIFIER ELSE null END,
         r.assignment_id = CASE WHEN coalesce(row.ASSIGNMENT_IDENTIFIER, "") <> "" THEN row.ASSIGNMENT_IDENTIFIER ELSE null END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 4a: Load Registered Office Address nodes (755K rows)
@@ -188,7 +188,7 @@ CALL (row) {
             )
             ELSE null
         END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 4b: Load Address for Service nodes (755K rows)
@@ -225,7 +225,7 @@ CALL (row) {
             )
             ELSE null
         END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 5: Load Industry nodes + :HAS_INDUSTRY relationships (664K rows)
@@ -236,7 +236,7 @@ CALL (row) {
     SET ind.description = row.INDUSTRY_CLASSIFICATION_DESCRIPTION
     WITH ind, c
     MERGE (c)-[:HAS_INDUSTRY]->(ind)
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 6: Load TradingName nodes + :TRADES_AS relationships (346K rows)
@@ -255,7 +255,7 @@ CALL (row) {
         END
     WITH t, c
     MERGE (c)-[:TRADES_AS]->(t)
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 7: Load Insolvency nodes + :HAS_INSOLVENCY relationships (108K rows)
@@ -298,7 +298,7 @@ CALL (row) {
             THEN trim(row.RESSOLUTION_OF_SOLVENCY)
             ELSE null
         END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 8: Add properties from remaining CSVs (website, GST, ABN, Maori business)
@@ -306,28 +306,28 @@ LOAD CSV WITH HEADERS FROM "file:///companies/companies_website.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.website = row.WEBSITE
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_gst.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.gst_number = row.GST_NUMBER
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 LOAD CSV WITH HEADERS FROM "file:///companies/companies_abn.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.abn = row.ABN
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 LOAD CSV WITH HEADERS FROM "file:///companies/maori_business_identifier.csv" AS row
 CALL (row) {
     MATCH (c:Company {nzbn: row.NZBN})
     SET c.maori_business_identifier = row.IDENTIFYING_FACTOR
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 9: Load TradingArea nodes + :TRADES_IN relationships
@@ -337,7 +337,7 @@ CALL (row) {
     MERGE (ta:TradingArea {name: trim(row.TRADING_AREA)})
     WITH ta, c
     MERGE (c)-[:TRADES_IN]->(ta)
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 4c: Load Public Address nodes (320K rows)
@@ -378,7 +378,7 @@ CALL (row) {
             )
             ELSE null
         END
-} IN TRANSACTIONS OF 5000 ROWS;
+} IN TRANSACTIONS OF 10000 ROWS;
 
 
 // Step 10: Link corporate shareholders to their Company nodes
@@ -394,4 +394,13 @@ CALL apoc.periodic.iterate(
     {batchSize: 5000, parallel: false, retries: 0}
 );
 
+// Post-load indexes: supplementary fields used by entity resolution and queries
+// (deferred to avoid write overhead during the main CSV load)
 
+CREATE INDEX company_name_idx IF NOT EXISTS FOR (c:Company) ON (c.name);
+CREATE INDEX shareholder_surname_idx IF NOT EXISTS FOR (s:Shareholder) ON (s.surname);
+CREATE INDEX director_last_name_idx IF NOT EXISTS FOR (d:Director) ON (d.last_name);
+CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.normalized_name);
+CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.normalized_name);
+CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.name_key);
+CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.name_key);

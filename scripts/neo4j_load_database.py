@@ -75,21 +75,24 @@ def step1_check_connectivity(driver: GraphDatabase.driver) -> bool:
 
 def step2_drop_gds_graphs(driver: GraphDatabase.driver) -> None:
     print("Step 2: Drop GDS in-memory graphs")
-    try:
-        r = run_query(
-            driver,
-            """
-            CALL gds.graph.list() YIELD graphName
-            WITH graphName
-            CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
-            RETURN count(dropped) AS graphs_dropped
-            """,
-        )
-    except Exception as e:  # noqa: BLE001
-        print(f"  ⚠ Could not drop GDS graphs: {e}")
-    else:
-        dropped = r[0]["graphs_dropped"] if r else 0
-        print(f"  ✓ Dropped {dropped} GDS graph(s)")
+    has_gds = run_query(
+        driver,
+        "CALL dbms.listProcedures() YIELD name WHERE name STARTS WITH 'gds.graph' RETURN count(*) AS cnt",
+    )[0]["cnt"]
+    if has_gds == 0:
+        print("  ⏭ GDS plugin not installed — skipping")
+        return
+    r = run_query(
+        driver,
+        """
+        CALL gds.graph.list() YIELD graphName
+        WITH graphName
+        CALL gds.graph.drop(graphName, false) YIELD graphName AS dropped
+        RETURN count(dropped) AS graphs_dropped
+        """,
+    )
+    dropped = r[0]["graphs_dropped"] if r else 0
+    print(f"  ✓ Dropped {dropped} GDS graph(s)")
 
 
 def step3_delete_all_nodes(driver: GraphDatabase.driver) -> None:
@@ -100,7 +103,7 @@ def step3_delete_all_nodes(driver: GraphDatabase.driver) -> None:
         CALL apoc.periodic.iterate(
             'MATCH (n) RETURN n',
             'DETACH DELETE n',
-            {batchSize: 50000, parallel: false, retries: 0}
+            {batchSize: 100000, parallel: false, retries: 0}
         )
         """,
     )

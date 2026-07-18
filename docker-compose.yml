@@ -6,15 +6,23 @@ services:
       - "7474:7474"
     environment:
       NEO4J_AUTH: neo4j/password
-      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
-      NEO4J_server_memory_heap_max__size: 24G
-      NEO4J_server_memory_heap_initial__size: 8G
-      NEO4J_server_memory_pagecache_size: 4G
-      NEO4J_dbms_memory_transaction_total_max: 16G
+      # Only enable plugins you need. GDS is memory-heavy; comment out if unused.
+      NEO4J_PLUGINS: '["apoc"]'
+      # Dev-friendly memory settings (adjust if working with the full 2M-row dataset)
+      NEO4J_server_memory_heap_max__size: 2G
+      NEO4J_server_memory_heap_initial__size: 1G
+      NEO4J_server_memory_pagecache_size: 1G
+      NEO4J_dbms_memory_transaction_total_max: 2G
     volumes:
       - neo4j_data:/data
+      # Logs are ephemeral in dev — survive restarts but not container removal
       - neo4j_logs:/logs
-      - ./data/raw/202606:/var/lib/neo4j/import/companies
+      # Override with env var when your data dir changes:
+      - ${NZ_CO_DATA_DIR:-./data/raw/202606}:/var/lib/neo4j/import/companies
+    deploy:
+      resources:
+        limits:
+          memory: 6G
 
 volumes:
   neo4j_data:
