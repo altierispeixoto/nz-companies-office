@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from neo4j import Driver
 from neo4j import GraphDatabase
+from neo4j import NotificationSeverity
 
 from nz_companies_office.config import SETTINGS
 
@@ -19,6 +20,7 @@ class _Neo4jConnection:
             self._driver = GraphDatabase.driver(
                 SETTINGS.neo4j_uri,
                 auth=(SETTINGS.neo4j_user, SETTINGS.neo4j_password),
+                notifications_min_severity=NotificationSeverity.WARNING,
             )
         return self._driver
 

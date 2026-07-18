@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
+from neo4j import NotificationSeverity
 
 from nz_companies_office.db.connection import close_driver
 from nz_companies_office.db.connection import get_driver
@@ -37,6 +38,7 @@ def test_get_driver_uses_settings() -> None:
         mock_driver.assert_called_once_with(
             "bolt://custom:7687",
             auth=("custom_user", "custom_pass"),
+            notifications_min_severity=NotificationSeverity.WARNING,
         )
         assert driver == mock_driver.return_value
 
@@ -75,6 +77,7 @@ def test_get_driver_defaults() -> None:
         mock_driver.assert_called_once_with(
             "bolt://localhost:7687",
             auth=("neo4j", "password"),
+            notifications_min_severity=NotificationSeverity.WARNING,
         )
 
 

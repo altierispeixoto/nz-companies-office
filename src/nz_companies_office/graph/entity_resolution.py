@@ -14,34 +14,7 @@ TRIGRAM_MIN_SCORE = 0.55
 TRIGRAM_HIGH_CONFIDENCE = 0.65
 MIN_COMPANY_COUNT = 3
 
-_NORMALISE_QUERY = """
-    MATCH (s:Shareholder)
-    SET s.normalized_name = trim(apoc.text.replace(s.name, '\\\\s+', ' '))
-"""
-_NORMALISE_DIRECTOR_QUERY = """
-    MATCH (d:Director)
-    SET d.normalized_name = trim(apoc.text.replace(d.name, '\\\\s+', ' '))
-"""
-_PERSON_ID_QUERY = """
-    MATCH (s:Shareholder)
-    SET s.person_id = s.normalized_name,
-        s.is_person = CASE WHEN s.normalized_name =~ '.*[a-z].*' THEN true ELSE false END
-"""
-_PERSON_ID_DIRECTOR_QUERY = """
-    MATCH (d:Director)
-    SET d.person_id = d.normalized_name,
-        d.is_person = CASE WHEN d.normalized_name =~ '.*[a-z].*' THEN true ELSE false END
-"""
-_NAME_KEY_QUERY = """
-    MATCH (s:Shareholder)
-    SET s.name_key = toUpper(split(s.normalized_name, ' ')[0])
-                    + toUpper(split(s.normalized_name, ' ')[-1])
-"""
-_NAME_KEY_DIRECTOR_QUERY = """
-    MATCH (d:Director)
-    SET d.name_key = toUpper(split(d.normalized_name, ' ')[0])
-                    + toUpper(split(d.normalized_name, ' ')[-1])
-"""
+
 _TRIGRAM_QUERY = """
     MATCH (n)
     WHERE (n:Shareholder OR n:Director) AND n.normalized_name IS NOT NULL
@@ -49,10 +22,6 @@ _TRIGRAM_QUERY = """
     WITH n, '  ' + clean + ' ' AS padded
     SET n.trigrams = [i IN range(0, size(padded) - 3) | substring(padded, i, 3)]
 """
-_INDEX_NORM_QUERY = "CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.normalized_name)"
-_INDEX_NORM_DIR_QUERY = "CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.normalized_name)"
-_INDEX_KEY_QUERY = "CREATE INDEX IF NOT EXISTS FOR (s:Shareholder) ON (s.name_key)"
-_INDEX_KEY_DIR_QUERY = "CREATE INDEX IF NOT EXISTS FOR (d:Director) ON (d.name_key)"
 _EXACT_MATCH_QUERY = """
     MATCH (s:Shareholder {is_person: true})
     MATCH (d:Director {normalized_name: s.normalized_name, is_person: true})
@@ -141,30 +110,6 @@ def _trigram_jaccard(a: str, b: str) -> float:
     inter = len(a_tri & b_tri)
     union = len(a_tri | b_tri)
     return inter / union if union > 0 else 0.0
-
-
-def normalize_names(repo: Neo4jRepository) -> int:
-    """Set normalized_name, name_key, is_person on all Shareholder and Director nodes.
-
-    Returns:
-        Count of nodes updated.
-
-    """
-    t0 = time.perf_counter()
-    repo.run_query(_NORMALISE_QUERY)
-    repo.run_query(_NORMALISE_DIRECTOR_QUERY)
-    repo.run_query(_PERSON_ID_QUERY)
-    repo.run_query(_PERSON_ID_DIRECTOR_QUERY)
-    repo.run_query(_INDEX_NORM_QUERY)
-    repo.run_query(_INDEX_NORM_DIR_QUERY)
-    repo.run_query(_NAME_KEY_QUERY)
-    repo.run_query(_NAME_KEY_DIRECTOR_QUERY)
-    repo.run_query(_INDEX_KEY_QUERY)
-    repo.run_query(_INDEX_KEY_DIR_QUERY)
-    elapsed = time.perf_counter() - t0
-    count = repo.run_query("MATCH (n:Shareholder) WHERE n.is_person IS NOT NULL RETURN count(*) AS c")[0]["c"]
-    logger.info("Normalized %d nodes (%.2f s)", count, elapsed)
-    return count
 
 
 def compute_trigrams(repo: Neo4jRepository) -> int:
@@ -353,7 +298,7 @@ def entity_resolution() -> None:
     """Full entity resolution pipeline.
 
     Wipes existing Person/SAME_AS nodes, then runs all stages:
-    normalize → trigrams → company_counts → exact_match → fuzzy_match
+    trigrams → company_counts → exact_match → fuzzy_match
     → verify → write → link_investor_directors.
 
     Raises:
@@ -371,7 +316,6 @@ def entity_resolution() -> None:
     logger.info("Wiped existing Person nodes (%.2f s)", elapsed)
 
     # Pipeline stages
-    normalize_names(repo)
     compute_company_counts(repo)
     compute_trigrams(repo)
     exact_match(repo)

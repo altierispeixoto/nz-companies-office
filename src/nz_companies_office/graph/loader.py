@@ -141,57 +141,159 @@ def create_indexes(repo: Neo4jRepository) -> None:
     logger.info("Created %d indexes (%.2f s)", len(INDEXES), elapsed)
 
 
-def load_csv(root_dir: Path | None = None, *, timeout: int = 12000) -> int:
+_LOAD_STEP_SCRIPTS = [
+    "00_setup",
+    "01_companies",
+    "02_directors",
+    "03_shareholders",
+    "04a_address_reg_office",
+    "04b_address_service",
+    "05_industries",
+    "06_trading_names",
+    "07_insolvencies",
+    "08_properties",
+    "09_trading_areas",
+    "10_address_public",
+    "11_corporate_links",
+]
+
+_STEP_COUNT_QUERIES: dict[str, str | None] = {
+    "00_setup": None,
+    "01_companies": "MATCH (c:Company) RETURN count(*) AS cnt",
+    "02_directors": "MATCH ()-[r:DIRECTS]->() RETURN count(*) AS cnt",
+    "03_shareholders": "MATCH ()-[r:HOLDS_SHARES_IN]->() RETURN count(*) AS cnt",
+    "04a_address_reg_office": (
+        "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'REGISTERED_OFFICE' RETURN count(*) AS cnt"
+    ),
+    "04b_address_service": "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'SERVICE' RETURN count(*) AS cnt",
+    "05_industries": "MATCH (ind:Industry) RETURN count(*) AS cnt",
+    "06_trading_names": "MATCH (t:TradingName) RETURN count(*) AS cnt",
+    "07_insolvencies": "MATCH (i:Insolvency) RETURN count(*) AS cnt",
+    "08_properties": None,
+    "09_trading_areas": "MATCH (ta:TradingArea) RETURN count(*) AS cnt",
+    "10_address_public": "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'PUBLIC' RETURN count(*) AS cnt",
+    "11_corporate_links": "MATCH ()-[r:IS]->() RETURN count(*) AS cnt",
+}
+
+
+def _cypher_shell_args(password: str, user: str) -> list[str]:
+    """Build cypher-shell argument list for docker compose exec."""
+    return [
+        "docker",
+        "compose",
+        "exec",
+        "-T",
+        "neo4j",
+        "cypher-shell",
+        "-u",
+        user,
+        "-p",
+        password,
+    ]
+
+
+def _format_count(n: int) -> str:
+    """Format a count with comma separators."""
+    return f"{n:,}"
+
+
+def load_csv(
+    root_dir: Path | None = None,
+    *,
+    timeout: int = 12000,
+    repo: Neo4jRepository | None = None,
+) -> int:
     """Load CSV data via cypher-shell through docker compose.
+
+    Runs each per-step .cypher file sequentially, logging step-level timing
+    and row counts.
 
     Args:
         root_dir: Project root directory.  Defaults to auto-detected repo root.
-        timeout: Subprocess timeout in seconds.
+        timeout: Subprocess timeout in seconds per step.
+        repo: Neo4j repository for pre/post count queries.  If provided, row
+            counts are logged.
 
     Returns:
-        The cypher-shell exit code.
+        0 on success, non-zero if any step fails.
 
     """
     root = root_dir or SETTINGS.project_root
-    script_path = root / "scripts" / "neo4j_load_csv.cypher"
-    if not script_path.exists():
-        logger.error("Script not found: %s", script_path)
+    scripts_dir = root / "scripts" / "csv"
+    if not scripts_dir.is_dir():
+        logger.error("Scripts directory not found: %s", scripts_dir)
         return 1
 
     user = SETTINGS.neo4j_user
     password = SETTINGS.neo4j_password
 
-    logger.info("Executing cypher-shell with %s", script_path.name)
-    t0 = time.perf_counter()
-    with script_path.open() as fh:
+    total_t0 = time.perf_counter()
+    total_rows = 0
+    for step_name in _LOAD_STEP_SCRIPTS:
+        step_file = scripts_dir / f"{step_name}.cypher"
+        if not step_file.exists():
+            logger.error("Step file not found: %s", step_file)
+            return 1
+
+        count_query = _STEP_COUNT_QUERIES.get(step_name)
+        before = 0
+        if repo is not None and count_query is not None:
+            result = repo.run_query(count_query)
+            before = result[0]["cnt"] if result else 0
+
+        logger.info(
+            "  %s %s",
+            step_name.replace("_", " ").title(),
+            "." * max(1, 40 - len(step_name)),
+        )
+        t0 = time.perf_counter()
         result = subprocess.run(  # noqa: S603
-            [  # noqa: S607
-                "docker",
-                "compose",
-                "exec",
-                "-T",
-                "neo4j",
-                "cypher-shell",
-                "-u",
-                user,
-                "-p",
-                password,
-            ],
-            stdin=fh,
+            _cypher_shell_args(password, user),
+            stdin=step_file.open(),
             capture_output=True,
             text=True,
-            timeout=timeout,
             cwd=str(root),
+            timeout=timeout,
             check=False,
         )
-    elapsed = time.perf_counter() - t0
+        elapsed = time.perf_counter() - t0
 
-    if result.stdout.strip():
-        logger.info("stdout: %s", result.stdout[:2000])
-    if result.stderr.strip():
-        logger.info("stderr: %s", result.stderr[:2000])
-    logger.info("cypher-shell finished with exit code %d (%.2f s)", result.returncode, elapsed)
-    return result.returncode
+        if result.stderr.strip():
+            for line in result.stderr.strip().splitlines():
+                if "Received notification from DBMS server" in line:
+                    logger.debug("Neo4j notification: %s", line[:200])
+                else:
+                    logger.info("    stderr: %s", line)
+
+        if result.returncode != 0:
+            logger.error(
+                "  %s FAILED after %.1f s (rc=%d)",
+                step_name.replace("_", " ").title(),
+                elapsed,
+                result.returncode,
+            )
+            return result.returncode
+
+        if repo is not None and count_query is not None:
+            result = repo.run_query(count_query)
+            after = result[0]["cnt"] if result else 0
+            delta = after - before
+            total_rows += delta
+            logger.info(
+                "  \u2514\u2500 %s rows in %.1f s",
+                _format_count(delta),
+                elapsed,
+            )
+        else:
+            logger.info("  \u2514\u2500 done in %.1f s", elapsed)
+
+    total_elapsed = time.perf_counter() - total_t0
+    logger.info(
+        "\u250c\u2500\u2500 %s total rows loaded \u2500\u2500 %.1f s \u2500\u2500\u2510",
+        _format_count(total_rows),
+        total_elapsed,
+    )
+    return 0
 
 
 def verify_import(repo: Neo4jRepository) -> list[dict]:
@@ -231,7 +333,7 @@ def load_database(*, skip_load: bool = False, root_dir: Path | None = None) -> N
     create_indexes(repo)
 
     if not skip_load:
-        rc = load_csv(root_dir=root_dir)
+        rc = load_csv(root_dir=root_dir, repo=repo)
         if rc != 0:
             msg = f"cypher-shell exited with code {rc}"
             raise Neo4jConnectionError(msg)
