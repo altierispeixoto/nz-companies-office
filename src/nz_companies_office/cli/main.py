@@ -6,12 +6,13 @@ import argparse
 import logging
 from pathlib import Path
 
+from nz_companies_office.config import SETTINGS
 from nz_companies_office.db.connection import close_driver
 from nz_companies_office.graph.enrichment import compute_share_percentages
 from nz_companies_office.graph.entity_resolution import entity_resolution
+from nz_companies_office.graph.geocode import geocode as run_geocode_pipeline
+from nz_companies_office.graph.geocode import prepare_linz_cache
 from nz_companies_office.graph.loader import load_database
-
-DEFAULT_DATA_DIR = Path("data/raw/202606")
 
 
 def load_db(*, skip_load: bool = False, root_dir: Path | None = None) -> None:
@@ -26,6 +27,26 @@ def run_er() -> None:
     close_driver()
 
 
+def run_geocode(
+    *,
+    export_path: Path | None = None,
+    result_path: Path | None = None,
+    shp_path: Path | None = None,
+    cache_path: Path | None = None,
+    data_dir: Path | None = None,
+    sample: int | None = None,
+) -> None:
+    """Run the reverse geocoding pipeline."""
+    run_geocode_pipeline(
+        export_path=export_path,
+        result_path=result_path,
+        shp_path=shp_path,
+        cache_path=cache_path,
+        data_dir=data_dir,
+        sample=sample,
+    )
+
+
 def run_enrich() -> None:
     """Run post-load enrichment (share percentages)."""
     compute_share_percentages()
@@ -36,8 +57,8 @@ def _add_data_dir_arg(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=DEFAULT_DATA_DIR,
-        help=f"Path to CSV export directory (default: {DEFAULT_DATA_DIR})",
+        default=None,
+        help=f"Path to CSV export directory (default: {SETTINGS.raw_data_dir})",
     )
 
 
@@ -67,6 +88,23 @@ def run() -> None:
     subparsers.add_parser("er", help="Run entity resolution pipeline")
     subparsers.add_parser("enrich", help="Post-load enrichment (share percentages)")
 
+    prepare_linz_parser = subparsers.add_parser("prepare-linz", help="Transform LINZ shapefile into a cached CSV")
+    prepare_linz_parser.add_argument("--shp-path", type=Path, default=None, help="Path to LINZ shapefile (.shp)")
+    prepare_linz_parser.add_argument("--cache-path", type=Path, default=None, help="Output path for cached CSV")
+
+    geocode_parser = subparsers.add_parser("geocode", help="Reverse geocode Address nodes using LINZ NZ Addresses")
+    geocode_parser.add_argument("--export-path", type=Path, default=None, help="Path to write extracted addresses CSV")
+    geocode_parser.add_argument("--result-path", type=Path, default=None, help="Path to write geocoded results CSV")
+    geocode_parser.add_argument("--shp-path", type=Path, default=None, help="Path to LINZ shapefile (.shp)")
+    geocode_parser.add_argument("--cache-path", type=Path, default=None, help="Path to LINZ cache")
+    geocode_parser.add_argument("--data-dir", type=Path, default=None, help="Path to raw CSV data directory")
+    geocode_parser.add_argument(
+        "--sample",
+        type=int,
+        default=None,
+        help="Run on a random sample of N addresses (test mode)",
+    )
+
     args = parser.parse_args()
 
     if args.command == "load-db":
@@ -75,3 +113,14 @@ def run() -> None:
         run_er()
     elif args.command == "enrich":
         run_enrich()
+    elif args.command == "prepare-linz":
+        prepare_linz_cache(shp_path=args.shp_path, cache_path=args.cache_path)
+    elif args.command == "geocode":
+        run_geocode(
+            export_path=args.export_path,
+            result_path=args.result_path,
+            shp_path=args.shp_path,
+            cache_path=args.cache_path,
+            data_dir=args.data_dir,
+            sample=args.sample,
+        )

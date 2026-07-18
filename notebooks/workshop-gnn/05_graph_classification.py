@@ -16,7 +16,6 @@ def _():
     import marimo as mo
     import matplotlib.pyplot as plt
     import networkx as nx
-    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F

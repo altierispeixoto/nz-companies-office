@@ -14,15 +14,11 @@ def _():
     import warnings
 
     import marimo as mo
-    import matplotlib.pyplot as plt
-    import networkx as nx
-    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
     from torch_geometric.datasets import Planetoid
     from torch_geometric.nn import SAGEConv
-    from torch_geometric.utils import to_networkx
 
     warnings.filterwarnings("ignore")
     return F, Planetoid, SAGEConv, mo, nn, torch

@@ -65,3 +65,5 @@ notebooks/application/__marimo__/session/*
 # Generated data files
 *.parquet
 node_modules/
+.env
+.zed/

@@ -12,6 +12,8 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import roc_auc_score
 from torch_geometric.utils import negative_sampling
 
+from nz_companies_office.config import SETTINGS
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -78,7 +80,7 @@ class LinkPredictorTrainer:
         training_edges: torch.LongTensor,
         validation_edges: torch.LongTensor,
         validation_negatives: torch.LongTensor,
-        checkpoint_directory: str | Path = "data/processed",
+        checkpoint_directory: Path | None = None,
     ) -> None:
         """Initialise the trainer with model, optimiser, and per-phase graph objects.
 
@@ -105,8 +107,8 @@ class LinkPredictorTrainer:
         self.training_edges = training_edges
         self.validation_edges = validation_edges
         self.validation_negatives = validation_negatives
-        self.checkpoint_directory = Path(checkpoint_directory)
-        self.checkpoint_directory.mkdir(parents=True, exist_ok=True)
+        self.checkpoint_directory = checkpoint_directory or (SETTINGS.data_dir / "processed")
+        Path(self.checkpoint_directory).mkdir(parents=True, exist_ok=True)
 
     def train(
         self,

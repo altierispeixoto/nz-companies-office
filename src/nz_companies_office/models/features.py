@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 from torch_geometric.utils import degree
 
-from nz_companies_office.graph.embeddings import embed_industry_descriptions
+from nz_companies_office.models.embeddings import embed_industry_descriptions
 
 
 def build_node_features(

@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from nz_companies_office.domain.models import AddressType
+from nz_companies_office.domain.models import CompanyStatus
 from nz_companies_office.loaders.csv_loader import CsvCompanyLoader
-from nz_companies_office.models.company import AddressType
-from nz_companies_office.models.company import CompanyStatus
 
 if TYPE_CHECKING:
     from pathlib import Path
