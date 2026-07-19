@@ -41,6 +41,8 @@ dependencies = [
     "datasketch>=2.0.0",
     "colorlog>=6.11.0",
     "xlrd>=2.0.2",
+    "embedding-atlas>=0.10.0",
+    "anywidget>=0.11.0",
 ]
 
 [project.optional-dependencies]
