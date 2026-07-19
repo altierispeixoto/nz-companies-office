@@ -66,7 +66,6 @@ def _():
         mo,
         np,
         pathlib,
-        pathlib,
         sample_negative_edges,
         split_share_edges,
         torch,
@@ -457,15 +456,17 @@ def _(
     sample_statuses,
     sample_types,
 ):
-    industry_division_map = {}
-    for i in sample_idx:
-        divs = set()
-        for j in range(graph.ind_edge_index.shape[1]):
-            if graph.ind_edge_index[0, j].item() == i:
-                code = graph.industry_codes[graph.ind_edge_index[1, j].item()]
-                if code:
-                    divs.add(code[0])
-        industry_division_map[i] = "|".join(sorted(divs)) if divs else "None"
+    company_to_divisions: dict[int, set[str]] = {}
+    ind_src = graph.ind_edge_index[0].numpy()
+    ind_dst = graph.ind_edge_index[1].numpy()
+    for src, dst in zip(ind_src, ind_dst, strict=False):
+        code = graph.industry_codes[dst]
+        if code:
+            company_to_divisions.setdefault(int(src), set()).add(code[0])
+    industry_division_map = {
+        i: "|".join(sorted(company_to_divisions.get(int(i), set()))) or "None"
+        for i in sample_idx
+    }
 
     metadata = []
     for idx_in_sample, orig_idx in enumerate(sample_idx):
