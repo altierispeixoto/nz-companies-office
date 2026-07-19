@@ -126,3 +126,141 @@ def build_node_features(
         x_industry,
         n_industry_feats,
     )
+
+
+def build_exploration_features(
+    comp_types: list[str],
+    incorporation_dates: list[str | None],
+    dir_edge_index: torch.LongTensor,
+    n_director: int,
+    n_company: int,
+    n_shareholder: int,
+    share_edge_index: torch.LongTensor,
+    ind_edge_index: torch.LongTensor | None = None,
+    n_industry: int = 0,
+    industry_descriptions: list[str] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int, int, int, torch.Tensor | None, int]:
+    """Build exploration features excluding status (reserved for Atlas metadata).
+
+    Company features: entity-type one-hot + normalized incorporation year +
+    log-normalized director degree + log-normalized shareholder degree.
+    Industry features are reused from :func:`build_node_features`.
+
+    Args:
+        comp_types: Company entity type strings.
+        incorporation_dates: ISO date strings or None per company.
+        dir_edge_index: 2xE tensor of director->company edges.
+        n_director: Number of director nodes.
+        n_company: Number of company nodes.
+        n_shareholder: Number of shareholder nodes.
+        share_edge_index: 2xE tensor of shareholder->company edges.
+        ind_edge_index: 2xE tensor of company->industry edges (optional).
+        n_industry: Number of industry nodes (optional).
+        industry_descriptions: Human-readable description strings for each
+            industry node (used to compute dense embeddings).
+
+    Returns:
+        Tuple of (x_company, x_director, x_shareholder,
+                  n_company_feats, n_director_feats, n_shareholder_feats,
+                  x_industry, n_industry_feats).
+
+    """
+    num_types = len(set(comp_types))
+    type_map = {t: i for i, t in enumerate(set(comp_types))}
+    x_type = F.one_hot(
+        torch.tensor([type_map[t] for t in comp_types]),
+        num_classes=num_types,
+    ).float()
+
+    # Incorporation year: extract year, normalize to [0, 1], missing → 0.0
+    years: list[float] = []
+    for d in incorporation_dates:
+        if d is not None and len(d) >= 4:  # noqa: PLR2004
+            try:
+                years.append(float(d[:4]))
+            except ValueError:
+                years.append(0.0)
+        else:
+            years.append(0.0)
+    year_tensor = torch.tensor(years).unsqueeze(1)
+    y_min, y_max = year_tensor.min(), year_tensor.max()
+    year_tensor = (year_tensor - y_min) / (y_max - y_min) if y_max > y_min else torch.zeros_like(year_tensor)
+
+    dir_deg = degree(dir_edge_index[0], num_nodes=n_director).float().unsqueeze(1)
+    comp_dir_deg = degree(dir_edge_index[1], num_nodes=n_company).float().unsqueeze(1)
+    share_deg = (
+        degree(share_edge_index[0], num_nodes=n_shareholder).float().unsqueeze(1)
+        if share_edge_index.shape[1] > 0
+        else torch.zeros(n_shareholder, 1)
+    )
+    comp_share_deg = (
+        degree(share_edge_index[1], num_nodes=n_company).float().unsqueeze(1)
+        if share_edge_index.shape[1] > 0
+        else torch.zeros(n_company, 1)
+    )
+
+    def _log_norm(t: torch.Tensor) -> torch.Tensor:
+        return torch.log(t + 1) / torch.log(t + 1).max() if t.numel() > 0 and (t + 1).max() > 0 else t
+
+    x_company = torch.cat(
+        [
+            x_type,
+            year_tensor,
+            _log_norm(comp_dir_deg),
+            _log_norm(comp_share_deg),
+        ],
+        dim=1,
+    )
+
+    x_director = torch.cat(
+        [
+            _log_norm(dir_deg),
+            torch.randn(n_director, num_types) * 0.1,
+        ],
+        dim=1,
+    )
+
+    x_shareholder = torch.cat(
+        [
+            _log_norm(share_deg),
+            torch.randn(n_shareholder, num_types) * 0.1,
+        ],
+        dim=1,
+    )
+
+    n_company_feats = x_company.shape[1]
+    n_director_feats = x_director.shape[1]
+    n_shareholder_feats = x_shareholder.shape[1]
+
+    if ind_edge_index is not None and n_industry > 0:
+        ind_deg = (
+            degree(ind_edge_index[1], num_nodes=n_industry).float().unsqueeze(1)
+            if ind_edge_index.shape[1] > 0
+            else torch.zeros(n_industry, 1)
+        )
+        if industry_descriptions:
+            ind_embs = embed_industry_descriptions(industry_descriptions)
+        else:
+            ind_embs = torch.randn(n_industry, num_types) * 0.1
+        x_industry = torch.cat(
+            [
+                _log_norm(ind_deg),
+                ind_embs,
+            ],
+            dim=1,
+        )
+        n_industry_feats = x_industry.shape[1]
+    else:
+        x_industry = None
+        n_industry_feats = 0
+
+    return (
+        x_company,
+        x_director,
+        x_shareholder,
+        n_company_feats,
+        n_director_feats,
+        n_shareholder_feats,
+        x_industry,
+        n_industry_feats,
+    )

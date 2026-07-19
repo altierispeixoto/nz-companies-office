@@ -22,10 +22,12 @@ class ExtractedGraph:
 
     Attributes:
         comp_names: Human-readable company names.
+        comp_numbers: Company number (primary key) strings.
         dir_names: Human-readable director names.
         share_names: Human-readable shareholder names.
         comp_statuses: Company status strings (e.g. "Registered").
         comp_types: Company entity type strings (e.g. "NZ Limited").
+        incorporation_dates: ISO date strings (or None) per company.
         industry_codes: Industry classification codes (e.g. "A011101").
         industry_descriptions: Human-readable descriptions of industry classes.
         dir_edge_index: 2xE director->company edge index.
@@ -35,10 +37,12 @@ class ExtractedGraph:
     """
 
     comp_names: list[str]
+    comp_numbers: list[str]
     dir_names: list[str]
     share_names: list[str]
     comp_statuses: list[str]
     comp_types: list[str]
+    incorporation_dates: list[str | None]
     industry_codes: list[str]
     industry_descriptions: list[str]
     dir_edge_index: torch.LongTensor
@@ -129,10 +133,12 @@ class GraphExtractor:
         torch.save(
             {
                 "comp_names": graph.comp_names,
+                "comp_numbers": graph.comp_numbers,
                 "dir_names": graph.dir_names,
                 "share_names": graph.share_names,
                 "comp_statuses": graph.comp_statuses,
                 "comp_types": graph.comp_types,
+                "incorporation_dates": graph.incorporation_dates,
                 "industry_codes": graph.industry_codes,
                 "industry_descriptions": graph.industry_descriptions,
                 "dir_edge_index": graph.dir_edge_index,
@@ -175,10 +181,12 @@ class GraphExtractor:
         )
         return ExtractedGraph(
             comp_names=cached["comp_names"],
+            comp_numbers=cached.get("comp_numbers", [str(i) for i in range(len(cached["comp_names"]))]),
             dir_names=dir_names,
             share_names=share_names,
             comp_statuses=cached["comp_statuses"],
             comp_types=cached["comp_types"],
+            incorporation_dates=cached.get("incorporation_dates", [None] * len(cached["comp_names"])),
             industry_codes=industry_codes,
             industry_descriptions=industry_descriptions,
             dir_edge_index=cached["dir_edge_index"],
@@ -201,7 +209,8 @@ class GraphExtractor:
         # --- fetch node records -----------------------------------------------
         company_records = _query(
             "MATCH (c:Company) RETURN c.company_number AS id, c.name AS name, "
-            "c.status AS status, c.entity_type AS entity_type",
+            "c.status AS status, c.entity_type AS entity_type, "
+            "c.incorporation_date AS incorporation_date",
         )
         director_records = _query("MATCH (d:Director) RETURN d.name AS id, d.name AS name")
         shareholder_records = _query("MATCH (s:Shareholder) RETURN s.name AS id, s.name AS name")
@@ -223,8 +232,12 @@ class GraphExtractor:
 
         # --- extract scalar fields --------------------------------------------
         comp_names = [r["name"] for r in company_records]
+        comp_numbers = [r["id"] for r in company_records]
         comp_statuses = [r["status"] for r in company_records]
         comp_types = [r["entity_type"] for r in company_records]
+        incorporation_dates = [
+            str(r["incorporation_date"]) if r["incorporation_date"] is not None else None for r in company_records
+        ]
         dir_names = [r["name"] for r in director_records]
         share_names = [r["name"] for r in shareholder_records]
         industry_codes = [r["id"] for r in industry_records]
@@ -280,10 +293,12 @@ class GraphExtractor:
 
         return ExtractedGraph(
             comp_names=comp_names,
+            comp_numbers=comp_numbers,
             dir_names=dir_names,
             share_names=share_names,
             comp_statuses=comp_statuses,
             comp_types=comp_types,
+            incorporation_dates=incorporation_dates,
             industry_codes=industry_codes,
             industry_descriptions=industry_descriptions,
             dir_edge_index=torch.LongTensor(dir_edge_index),
