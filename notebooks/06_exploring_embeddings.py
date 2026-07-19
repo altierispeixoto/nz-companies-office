@@ -14,8 +14,8 @@ def _():
     import contextlib
     import json
     import logging
+    import pathlib
     import warnings
-    from pathlib import Path
 
     import marimo as mo
     import numpy as np
@@ -65,6 +65,8 @@ def _():
         logger,
         mo,
         np,
+        pathlib,
+        pathlib,
         sample_negative_edges,
         split_share_edges,
         torch,
@@ -364,9 +366,10 @@ def _(mo):
 
 @app.cell
 def _(PCA, sample_features):
-    pca = PCA(n_components=16, random_state=42)
+    n_pca = min(16, sample_features.shape[1])
+    pca = PCA(n_components=n_pca, random_state=42)
     sample_emb_pca = pca.fit_transform(sample_features)
-    print(f"PCA embeddings: {sample_emb_pca.shape}  (explained var: {pca.explained_variance_ratio_.sum():.3f})")
+    print(f"PCA embeddings: {sample_emb_pca.shape}  (explained var: {pca.explained_variance_ratio_.sum():.3f}, n_feats={sample_features.shape[1]})")
     return (sample_emb_pca,)
 
 
