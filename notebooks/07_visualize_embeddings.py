@@ -36,6 +36,12 @@ def _(mo):
 
 
 @app.cell
+def _(pathlib):
+    output_dir = pathlib.Path("data/processed")
+    return (output_dir,)
+
+
+@app.cell
 def _(mo):
     mo.md("""
     ## A: PCA Baseline — Raw Features
@@ -44,9 +50,7 @@ def _(mo):
 
 
 @app.cell
-def _(EmbeddingAtlasWidget, json, np, pathlib, pd, umap):
-    output_dir = pathlib.Path("data/processed")
-
+def _(EmbeddingAtlasWidget, json, mo, np, output_dir, pd, umap):
     pca_path = output_dir / "embeddings_pca.json"
     with pca_path.open() as pca_fh:
         pca_raw = json.load(pca_fh)
@@ -60,7 +64,8 @@ def _(EmbeddingAtlasWidget, json, np, pathlib, pd, umap):
     pca_df["projection_y"] = pca_xy[:, 1]
 
     pca_widget = EmbeddingAtlasWidget(pca_df, row_id="id", x="projection_x", y="projection_y", point_size=3.0)
-    return (output_dir,)
+    mo.output.append(mo.ui.anywidget(pca_widget))
+    return
 
 
 @app.cell
@@ -72,7 +77,7 @@ def _(mo):
 
 
 @app.cell
-def _(EmbeddingAtlasWidget, json, np, output_dir, pd, umap):
+def _(EmbeddingAtlasWidget, json, mo, np, output_dir, pd, umap):
     random_path = output_dir / "embeddings_random.json"
     with random_path.open() as random_fh:
         random_raw = json.load(random_fh)
@@ -86,6 +91,7 @@ def _(EmbeddingAtlasWidget, json, np, output_dir, pd, umap):
     random_df["projection_y"] = random_xy[:, 1]
 
     random_widget = EmbeddingAtlasWidget(random_df, row_id="id", x="projection_x", y="projection_y", point_size=3.0)
+    mo.output.append(mo.ui.anywidget(random_widget))
     return
 
 
@@ -98,7 +104,7 @@ def _(mo):
 
 
 @app.cell
-def _(EmbeddingAtlasWidget, json, np, output_dir, pd, umap):
+def _(EmbeddingAtlasWidget, json, mo, np, output_dir, pd, umap):
     gnn_path = output_dir / "embeddings_gnn.json"
     with gnn_path.open() as gnn_fh:
         gnn_raw = json.load(gnn_fh)
@@ -112,6 +118,7 @@ def _(EmbeddingAtlasWidget, json, np, output_dir, pd, umap):
     gnn_df["projection_y"] = gnn_xy[:, 1]
 
     gnn_widget = EmbeddingAtlasWidget(gnn_df, row_id="id", x="projection_x", y="projection_y", point_size=3.0)
+    mo.output.append(mo.ui.anywidget(gnn_widget))
     return
 
 
