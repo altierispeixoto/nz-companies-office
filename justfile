@@ -76,6 +76,10 @@ entity-resolution:
 enrich:
     @just run nz-companies-office enrich
 
+# Set descriptions on Industry ancestor nodes from ANZSIC reference
+enrich-industry-descriptions:
+    @just run nz-companies-office enrich-industry-descriptions
+
 # Transform LINZ shapefile into a cached CSV
 prepare-linz *ARGS:
     @just run nz-companies-office prepare-linz {{ ARGS }}

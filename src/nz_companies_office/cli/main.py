@@ -15,6 +15,7 @@ from nz_companies_office.graph.enrichment import compute_share_percentages
 from nz_companies_office.graph.entity_resolution import entity_resolution
 from nz_companies_office.graph.geocode import geocode as run_geocode_pipeline
 from nz_companies_office.graph.geocode import prepare_linz_cache
+from nz_companies_office.graph.industry_descriptions import enrich_industry_descriptions
 from nz_companies_office.graph.loader import load_database
 
 
@@ -53,6 +54,12 @@ def run_geocode(
 def run_enrich() -> None:
     """Run post-load enrichment (share percentages)."""
     compute_share_percentages()
+    close_driver()
+
+
+def run_enrich_industry_descriptions() -> None:
+    """Set descriptions on Industry ancestor nodes from ANZSIC reference."""
+    enrich_industry_descriptions()
     close_driver()
 
 
@@ -103,6 +110,10 @@ def run() -> None:
 
     subparsers.add_parser("er", help="Run entity resolution pipeline")
     subparsers.add_parser("enrich", help="Post-load enrichment (share percentages)")
+    subparsers.add_parser(
+        "enrich-industry-descriptions",
+        help="Set descriptions on Industry ancestor nodes from ANZSIC reference",
+    )
 
     prepare_linz_parser = subparsers.add_parser("prepare-linz", help="Transform LINZ shapefile into a cached CSV")
     prepare_linz_parser.add_argument("--shp-path", type=Path, default=None, help="Path to LINZ shapefile (.shp)")
@@ -129,6 +140,8 @@ def run() -> None:
         run_er()
     elif args.command == "enrich":
         run_enrich()
+    elif args.command == "enrich-industry-descriptions":
+        run_enrich_industry_descriptions()
     elif args.command == "prepare-linz":
         prepare_linz_cache(shp_path=args.shp_path, cache_path=args.cache_path)
     elif args.command == "geocode":

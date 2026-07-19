@@ -24,6 +24,7 @@ INDEXES = [
     "CREATE INDEX shareholder_name_idx IF NOT EXISTS FOR (s:Shareholder) ON (s.name)",
     "CREATE INDEX address_physical_idx IF NOT EXISTS FOR (a:Address) ON (a.street, a.city, a.country)",
     "CREATE INDEX industry_code_idx IF NOT EXISTS FOR (ind:Industry) ON (ind.code)",
+    "CREATE INDEX industry_level_idx IF NOT EXISTS FOR (ind:Industry) ON (ind.level)",
     "CREATE INDEX trading_name_idx IF NOT EXISTS FOR (t:TradingName) ON (t.name)",
     "CREATE INDEX insolvency_idx IF NOT EXISTS FOR (i:Insolvency) ON (i.type, i.appointment_type, i.appointee)",
     "CREATE INDEX trading_area_idx IF NOT EXISTS FOR (ta:TradingArea) ON (ta.name)",
@@ -66,6 +67,8 @@ _VERIFY_QUERY = """
     MATCH ()-[r:RELATED_TO]->() RETURN 'RELATED_TO relationships' AS label, count(*) AS cnt
     UNION ALL
     MATCH ()-[r:IS_INVESTOR_DIRECTOR]->() RETURN 'IS_INVESTOR_DIRECTOR relationships' AS label, count(*) AS cnt
+    UNION ALL
+    MATCH ()-[r:BELONGS_TO]->() RETURN 'BELONGS_TO relationships' AS label, count(*) AS cnt
 """
 
 
@@ -149,6 +152,7 @@ _LOAD_STEP_SCRIPTS = [
     "04a_address_reg_office",
     "04b_address_service",
     "05_industries",
+    "05a_industry_hierarchy",
     "06_trading_names",
     "07_insolvencies",
     "08_properties",
@@ -167,6 +171,7 @@ _STEP_COUNT_QUERIES: dict[str, str | None] = {
     ),
     "04b_address_service": "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'SERVICE' RETURN count(*) AS cnt",
     "05_industries": "MATCH (ind:Industry) RETURN count(*) AS cnt",
+    "05a_industry_hierarchy": "MATCH ()-[r:BELONGS_TO]->() RETURN count(*) AS cnt",
     "06_trading_names": "MATCH (t:TradingName) RETURN count(*) AS cnt",
     "07_insolvencies": "MATCH (i:Insolvency) RETURN count(*) AS cnt",
     "08_properties": None,
