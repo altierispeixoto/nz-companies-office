@@ -22,7 +22,6 @@ dependencies = [
     "numpy>=1.26.0",
     "pandas>=2.2.0",
     "scikit-learn>=1.4.0",
-    "dvc>=3.30.0",
     "neo4j>=6.2.0",
     "httpx>=0.28.1",
     "marimo>=0.23.9",
@@ -43,6 +42,10 @@ dependencies = [
     "xlrd>=2.0.2",
     "embedding-atlas>=0.10.0",
     "anywidget>=0.11.0",
+    "dagster>=1.13.29",
+    "dagster-webserver>=1.13.29",
+    "dagster-duckdb>=0.29.29",
+    "duckdb>=1.5.4",
 ]
 
 [project.optional-dependencies]
