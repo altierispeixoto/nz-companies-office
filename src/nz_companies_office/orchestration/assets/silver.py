@@ -8,8 +8,10 @@ see ``@asset_check``s in this package for the reject-rate guardrail.
 from pathlib import Path
 
 import duckdb
+from dagster import AssetCheckResult
 from dagster import AssetExecutionContext
 from dagster import asset
+from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
 from nz_companies_office.config import SETTINGS
@@ -109,4 +111,45 @@ def silver_company(context: AssetExecutionContext, duckdb: DuckDBResource) -> No
             "reject_row_count": reject_count,
             "output_path": str(output_path),
         },
+    )
+
+
+REJECT_RATE_THRESHOLD = 0.001
+
+
+def compute_reject_rate(conn: duckdb.DuckDBPyConnection, output_path: Path, rejects_path: Path) -> float:
+    """Compute the fraction of rows quarantined to the rejects sidecar.
+
+    Args:
+        conn: Open DuckDB connection.
+        output_path: The silver_company main output Parquet file.
+        rejects_path: The silver_company rejects sidecar Parquet file.
+
+    Returns:
+        ``reject_count / (good_count + reject_count)``, or ``0.0`` if both are empty.
+
+    """
+    good_row = conn.execute(
+        "SELECT count(*) FROM read_parquet($path, hive_partitioning = false)",
+        {"path": str(output_path)},
+    ).fetchone()
+    reject_row = conn.execute(
+        "SELECT count(*) FROM read_parquet($path, hive_partitioning = false)",
+        {"path": str(rejects_path)},
+    ).fetchone()
+    good_count = int(good_row[0]) if good_row else 0
+    reject_count = int(reject_row[0]) if reject_row else 0
+    total = good_count + reject_count
+    return reject_count / total if total else 0.0
+
+
+@asset_check(asset=silver_company, partitions_def=snapshot_month_partitions)
+def silver_company_reject_rate_check(context: AssetExecutionContext, duckdb: DuckDBResource) -> AssetCheckResult:
+    """Fail only if the NZBN reject rate for this snapshot month exceeds the threshold."""
+    month = context.partition_key
+    with duckdb.get_connection() as conn:
+        rate = compute_reject_rate(conn, silver_company_output_path(month), silver_company_rejects_path(month))
+    return AssetCheckResult(
+        passed=rate <= REJECT_RATE_THRESHOLD,
+        metadata={"reject_rate": rate, "threshold": REJECT_RATE_THRESHOLD},
     )
