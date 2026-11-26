@@ -2,8 +2,8 @@
 # Setup
 #------------------------------------------------------------------------------#
 [sqlfluff]
-dialect = snowflake
-templater = dbt
+dialect = duckdb
+templater = raw
 exclude_rules = L034
 
 # Allow fix commands to run on files
@@ -12,27 +12,6 @@ fix_even_unparsable = True
 # Output message formats
 output_line_length = 120
 max_line_length = 120
-
-# Ignore certain file types
-ignore = templated_file_name,parsing
-ignore_templated_areas = True
-
-# Ignore specific paths
-exclude_path = target/,macros/,logs/
-
-[sqlfluff:templater:jinja]
-apply_dbt_builtins = True
-load_macros_from_path = macros
-
-[sqlfluff:templater:dbt]
-project_dir = .
-profiles_dir = ~/.dbt
-profile = default
-
-[sqlfluff:templater:dbt:context]
-DBT_ENVIRONMENT = QA
-schema = YOUR_SCHEMA  # Replace with your actual schema
-database = YOUR_DB    # Replace with your actual database
 
 #------------------------------------------------------------------------------#
 # Custom Settings

@@ -42,6 +42,11 @@ class Settings:
     # Raw company CSV directory
     raw_data_dir: Path = field(default_factory=lambda: _project_root() / "data" / "raw")
 
+    # Medallion architecture layers
+    bronze_dir: Path = field(default_factory=lambda: _project_root() / "data" / "bronze")
+    silver_dir: Path = field(default_factory=lambda: _project_root() / "data" / "silver")
+    gold_dir: Path = field(default_factory=lambda: _project_root() / "data" / "gold")
+
     # Entity resolution thresholds
     er_trigram_min_score: float = 0.55
     er_trigram_high_confidence: float = 0.65
