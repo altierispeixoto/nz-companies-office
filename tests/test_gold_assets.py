@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.gold import materialize_gold_company_dim
 from nz_companies_office.orchestration.assets.gold import materialize_gold_company_status_changes
+from nz_companies_office.orchestration.assets.gold import materialize_gold_table
 from nz_companies_office.orchestration.assets.gold import previous_partition_key
 from nz_companies_office.orchestration.sql import read_sql
 
@@ -42,6 +42,46 @@ def _write_silver_month(
     )
 
 
+def _write_empty_silver_lookup(
+    conn: duckdb.DuckDBPyConnection,
+    silver_dir: Path,
+    name: str,
+    month: str,
+    value_column: str,
+) -> str:
+    """Write an empty (zero-row, correctly-shaped) silver abn/gst/website/maori partition.
+
+    Returns the glob pattern matching this table's partitions, for use as a
+    gold_company_dim parameter -- read_parquet errors on a glob matching zero
+    files, so an empty-but-present file is needed even when there's no data.
+    """
+    partition_dir = silver_dir / name / f"snapshot_month={month}"
+    partition_dir.mkdir(parents=True, exist_ok=True)
+    conn.execute(
+        f"COPY (SELECT NULL::VARCHAR AS nzbn, NULL::VARCHAR AS {value_column}, "
+        f"NULL::VARCHAR AS snapshot_month WHERE false) TO $path (FORMAT PARQUET)",
+        {"path": str(partition_dir / "part-0.parquet")},
+    )
+    return str(silver_dir / name / "snapshot_month=*" / "part-0.parquet")
+
+
+def _company_dim_params(conn: duckdb.DuckDBPyConnection, tmp_path: Path, month: str) -> dict[str, str]:
+    """Build the full param set gold/dims/company_dim.sql needs, with empty abn/gst/website/maori."""
+    return {
+        "silver_glob": str(tmp_path / "company" / "snapshot_month=*" / "part-0.parquet"),
+        "abn_glob": _write_empty_silver_lookup(conn, tmp_path, "company_abn", month, "abn"),
+        "gst_glob": _write_empty_silver_lookup(conn, tmp_path, "company_gst", month, "gst_number"),
+        "website_glob": _write_empty_silver_lookup(conn, tmp_path, "company_website", month, "website"),
+        "maori_glob": _write_empty_silver_lookup(
+            conn,
+            tmp_path,
+            "maori_business_identifier",
+            month,
+            "maori_business_identifier",
+        ),
+    }
+
+
 class TestMaterializeGoldCompanyDim:
     """Tests for materialize_gold_company_dim using the real sql/gold/dims/company_dim.sql transform."""
 
@@ -62,9 +102,9 @@ class TestMaterializeGoldCompanyDim:
                 [("9429031075473", "3405451", "PARROT ANALYTICS LIMITED", "LTD", "Removed")],
             )
             select_sql = read_sql("gold", "dims", "company_dim")
-            silver_glob = str(tmp_path / "company" / "snapshot_month=*" / "part-0.parquet")
+            params = _company_dim_params(conn, tmp_path, "202611")
             output_path = tmp_path / "gold" / "company_dim" / "part-0.parquet"
-            row_count = materialize_gold_company_dim(conn, select_sql, silver_glob, output_path)
+            row_count = materialize_gold_table(conn, select_sql, output_path, params)
             rows = conn.execute(
                 "SELECT nzbn, entity_status, as_of_snapshot_month FROM read_parquet($p, hive_partitioning = false)",
                 {"p": str(output_path)},
@@ -89,9 +129,9 @@ class TestMaterializeGoldCompanyDim:
                 ],
             )
             select_sql = read_sql("gold", "dims", "company_dim")
-            silver_glob = str(tmp_path / "company" / "snapshot_month=*" / "part-0.parquet")
+            params = _company_dim_params(conn, tmp_path, "202611")
             output_path = tmp_path / "gold" / "company_dim" / "part-0.parquet"
-            row_count = materialize_gold_company_dim(conn, select_sql, silver_glob, output_path)
+            row_count = materialize_gold_table(conn, select_sql, output_path, params)
         finally:
             conn.close()
         assert row_count == _EXPECTED_DIM_ROW_COUNT
