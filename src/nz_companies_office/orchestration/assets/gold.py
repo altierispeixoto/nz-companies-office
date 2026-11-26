@@ -7,7 +7,6 @@ partition explicitly, rather than fighting Dagster's ``PartitionMapping``
 API for this non-time-window case.
 """
 
-import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -353,8 +352,8 @@ def materialize_gold_export_csv(
     return int(row[0]) if row else 0
 
 
-def gold_export_companies_csv_output_path(month: str) -> Path:
-    """Destination CSV path for the Neo4j-bound company export for one snapshot month.
+def export_output_path(month: str, filename: str) -> Path:
+    """Destination path for one Neo4j-bound export CSV for a snapshot month.
 
     Each month gets its own export directory (rather than a fixed ``latest/``) because the
     official Neo4j Docker image's entrypoint recursively chowns any bind-mounted directory to
@@ -362,70 +361,135 @@ def gold_export_companies_csv_output_path(month: str) -> Path:
     the host afterward -- see the comment in docker-compose.yml. Reusing a directory a Neo4j
     container has already mounted would fail on the next pipeline run.
     """
-    return SETTINGS.gold_dir / "_neo4j_export" / month / "companies_core_data.csv"
+    return SETTINGS.gold_dir / "_neo4j_export" / month / filename
 
 
-# Only companies_core_data.csv is sourced from gold so far (this increment). The other 13 files
-# scripts/csv/*.cypher reads haven't been migrated through the medallion pipeline yet (see
-# Increment 2 in .specs/features/medallion-architecture/tasks.md), so they're copied through
-# unchanged from the latest raw snapshot month to keep `just load-db` fully working in the
-# meantime -- the Docker mount now points at the export dir, not data/raw/, for all 14 steps.
-PASSTHROUGH_RAW_FILES = (
+def gold_export_companies_csv_output_path(month: str) -> Path:
+    """Destination CSV path for the Neo4j-bound company export for one snapshot month."""
+    return export_output_path(month, "companies_core_data.csv")
+
+
+def materialize_gold_export_csv_multi(
+    conn: duckdb.DuckDBPyConnection,
+    select_sql: str,
+    output_path: Path,
+    params: dict[str, str],
+) -> int:
+    """Like ``materialize_gold_export_csv``, for exports joining more than one gold table.
+
+    Args:
+        conn: Open DuckDB connection.
+        select_sql: A query that renames gold columns to the header the target
+            ``.cypher`` script expects.
+        output_path: Destination CSV file (with header).
+        params: Named parameters bound into ``select_sql`` (e.g. multiple ``$*_path`` globs).
+
+    Returns:
+        The number of data rows written.
+
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    conn.execute(
+        f"COPY ({select_sql}) TO $output_path (FORMAT CSV, HEADER)",
+        {**params, "output_path": str(output_path)},
+    )
+    row = conn.execute(
+        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true)",
+        {"path": str(output_path)},
+    ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def _make_gold_export_asset(name: str, csv_filename: str, gold_asset: AssetsDefinition) -> AssetsDefinition:
+    """Build a single-input export asset, named ``gold_export_<name>``.
+
+    The export SQL is read from ``sql/gold/export/<name>.sql`` and must accept an
+    ``$input_path`` parameter pointing at one gold dimension's Parquet file.
+    """
+
+    @asset(name=f"gold_export_{name}", group_name="gold_export", deps=[gold_asset])
+    def _gold_export_asset(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+        latest_month = max(snapshot_month_partitions.get_partition_keys())
+        select_sql = read_sql("gold", "export", name)
+        output_path = export_output_path(latest_month, csv_filename)
+        with duckdb.get_connection() as conn:
+            row_count = materialize_gold_export_csv(conn, select_sql, gold_dim_output_path(name), output_path)
+        context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+    return _gold_export_asset
+
+
+gold_export_companies_core_data = _make_gold_export_asset(
+    "companies_core_data",
+    "companies_core_data.csv",
+    gold_company_dim,
+)
+gold_export_companies_director = _make_gold_export_asset(
+    "companies_director",
     "companies_director.csv",
-    "companies_shareholder.csv",
-    "companies_registered_office_address.csv",
-    "companies_address_for_service.csv",
-    "companies_public_address.csv",
+    gold_director_dim,
+)
+gold_export_companies_business_industry_classification = _make_gold_export_asset(
+    "companies_business_industry_classification",
     "companies_business_industry_classification.csv",
+    gold_company_industry,
+)
+gold_export_companies_trading_name = _make_gold_export_asset(
+    "companies_trading_name",
     "companies_trading_name.csv",
+    gold_company_trading_name,
+)
+gold_export_companies_trading_area = _make_gold_export_asset(
+    "companies_trading_area",
     "companies_trading_area.csv",
+    gold_company_trading_area,
+)
+gold_export_companies_insolvency = _make_gold_export_asset(
+    "companies_insolvency",
     "companies_insolvency.csv",
-    "companies_abn.csv",
-    "companies_gst.csv",
-    "companies_website.csv",
-    "maori_business_identifier.csv",
+    gold_company_insolvency,
 )
 
 
-def copy_passthrough_raw_files(source_month_dir: Path, export_dir: Path) -> list[str]:
-    """Copy not-yet-migrated raw CSVs into the Neo4j export directory unchanged.
+@asset(group_name="gold_export", deps=[gold_shareholding])
+def gold_export_companies_shareholder(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+    """Flat CSV export of gold_shareholding, feeding scripts/csv/03_shareholders.cypher.
 
-    Args:
-        source_month_dir: Raw data directory for the month to copy from (typically the
-            latest available snapshot month).
-        export_dir: The Neo4j import directory to copy into.
-
-    Returns:
-        The filenames actually copied; a missing source file is skipped, not an error.
-
-    """
-    export_dir.mkdir(parents=True, exist_ok=True)
-    copied = []
-    for filename in PASSTHROUGH_RAW_FILES:
-        source = source_month_dir / filename
-        if source.exists():
-            shutil.copy(source, export_dir / filename)
-            copied.append(filename)
-    return copied
-
-
-@asset(group_name="gold_export", deps=[gold_company_dim])
-def gold_export_companies_csv(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
-    """Flat CSV export of gold_company_dim, feeding scripts/csv/01_companies.cypher.
-
-    Also copies the other 13 not-yet-migrated raw CSVs scripts/csv/*.cypher reads, from the
-    latest available snapshot month, so the full load-db pipeline keeps working end-to-end.
+    Joins back against the full silver_shareholder history to pick one representative
+    row per (nzbn, shareholder_name) for the per-parcel fields (start_date, sh_status,
+    parcel_id, assignment_id, address) that gold_shareholding's share-total aggregation
+    doesn't preserve -- see sql/gold/export/companies_shareholder.sql.
     """
     latest_month = max(snapshot_month_partitions.get_partition_keys())
-    select_sql = read_sql("gold", "export", "companies_core_data")
-    output_path = gold_export_companies_csv_output_path(latest_month)
+    select_sql = read_sql("gold", "export", "companies_shareholder")
+    output_path = export_output_path(latest_month, "companies_shareholder.csv")
     with duckdb.get_connection() as conn:
-        row_count = materialize_gold_export_csv(conn, select_sql, gold_company_dim_output_path(), output_path)
-    copied = copy_passthrough_raw_files(SETTINGS.raw_data_dir / latest_month, output_path.parent)
-    context.add_output_metadata(
-        {
-            "row_count": row_count,
-            "output_path": str(output_path),
-            "passthrough_files_copied": len(copied),
-        },
-    )
+        row_count = materialize_gold_export_csv_multi(
+            conn,
+            select_sql,
+            output_path,
+            {
+                "gold_path": str(gold_dim_output_path("shareholding")),
+                "silver_glob": silver_table_glob("shareholder"),
+            },
+        )
+    context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+
+@asset(group_name="gold_export", deps=[gold_company_address, gold_address_dim])
+def gold_export_company_address(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+    """Flat CSV export unioning all company address types, feeding scripts/csv/04_company_address.cypher."""
+    latest_month = max(snapshot_month_partitions.get_partition_keys())
+    select_sql = read_sql("gold", "export", "company_address")
+    output_path = export_output_path(latest_month, "companies_company_address.csv")
+    with duckdb.get_connection() as conn:
+        row_count = materialize_gold_export_csv_multi(
+            conn,
+            select_sql,
+            output_path,
+            {
+                "company_address_path": str(gold_dim_output_path("company_address")),
+                "address_dim_path": str(gold_dim_output_path("address_dim")),
+            },
+        )
+    context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
