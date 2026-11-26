@@ -14,39 +14,52 @@ from pathlib import Path
 import duckdb
 from dagster import AssetCheckResult
 from dagster import AssetExecutionContext
+from dagster import AssetsDefinition
 from dagster import asset
 from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
 from nz_companies_office.config import SETTINGS
 from nz_companies_office.orchestration.assets.silver import silver_company
+from nz_companies_office.orchestration.assets.silver import silver_company_abn
+from nz_companies_office.orchestration.assets.silver import silver_company_address
+from nz_companies_office.orchestration.assets.silver import silver_company_gst
+from nz_companies_office.orchestration.assets.silver import silver_company_industry
 from nz_companies_office.orchestration.assets.silver import silver_company_output_path
+from nz_companies_office.orchestration.assets.silver import silver_company_website
+from nz_companies_office.orchestration.assets.silver import silver_director
+from nz_companies_office.orchestration.assets.silver import silver_insolvency
+from nz_companies_office.orchestration.assets.silver import silver_maori_business_identifier
+from nz_companies_office.orchestration.assets.silver import silver_shareholder
+from nz_companies_office.orchestration.assets.silver import silver_table_output_path
+from nz_companies_office.orchestration.assets.silver import silver_trading_area
+from nz_companies_office.orchestration.assets.silver import silver_trading_name
 from nz_companies_office.orchestration.partitions import snapshot_month_partitions
 from nz_companies_office.orchestration.sql import read_sql
 
 
-def materialize_gold_company_dim(
+def materialize_gold_table(
     conn: duckdb.DuckDBPyConnection,
     select_sql: str,
-    silver_glob: str,
     output_path: Path,
+    params: dict[str, str],
 ) -> int:
-    """Recompute the current-state company dimension from all silver history.
+    """Run a gold SELECT (dimension or fact) and write the result to Parquet.
 
     Args:
         conn: Open DuckDB connection.
-        select_sql: The ``sql/gold/dims/company_dim.sql`` query text.
-        silver_glob: Glob pattern matching every ``silver_company`` partition's Parquet file.
-        output_path: Destination Parquet file (overwritten each run).
+        select_sql: A ``sql/gold/{dims,facts}/*.sql`` query text.
+        output_path: Destination Parquet file. Parent directories are created.
+        params: Named parameters bound into ``select_sql`` (e.g. ``$silver_glob``).
 
     Returns:
-        The number of rows written (one per distinct ``nzbn``).
+        The number of rows written.
 
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
     conn.execute(
         f"COPY ({select_sql}) TO $output_path (FORMAT PARQUET)",
-        {"silver_glob": silver_glob, "output_path": str(output_path)},
+        {**params, "output_path": str(output_path)},
     )
     row = conn.execute(
         "SELECT count(*) FROM read_parquet($path, hive_partitioning = false)",
@@ -55,24 +68,83 @@ def materialize_gold_company_dim(
     return int(row[0]) if row else 0
 
 
-def silver_company_glob() -> str:
-    """Glob pattern matching every existing silver_company partition."""
-    return str(SETTINGS.silver_dir / "company" / "snapshot_month=*" / "part-0.parquet")
+def silver_table_glob(name: str) -> str:
+    """Glob pattern matching every existing partition of one silver table."""
+    return str(SETTINGS.silver_dir / name / "snapshot_month=*" / "part-0.parquet")
+
+
+def gold_dim_output_path(name: str) -> Path:
+    """Destination Parquet path for one current-state gold dimension table."""
+    return SETTINGS.gold_dir / "dims" / name / "part-0.parquet"
 
 
 def gold_company_dim_output_path() -> Path:
     """Destination Parquet path for the current-state company dimension."""
-    return SETTINGS.gold_dir / "dims" / "company_dim" / "part-0.parquet"
+    return gold_dim_output_path("company_dim")
 
 
-@asset(group_name="gold_dims", deps=[silver_company])
+@asset(
+    group_name="gold_dims",
+    deps=[
+        silver_company,
+        silver_company_abn,
+        silver_company_gst,
+        silver_company_website,
+        silver_maori_business_identifier,
+    ],
+)
 def gold_company_dim(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
-    """Current-state company dimension: one row per nzbn, latest snapshot month wins."""
+    """Current-state company dimension: one row per nzbn, latest snapshot month wins.
+
+    Folds in abn/gst/website/maori_business_identifier as extra columns -- these were
+    simple per-company SET statements in scripts/csv/08_properties.cypher (no business
+    logic to migrate), so they don't need their own dimension table.
+    """
     select_sql = read_sql("gold", "dims", "company_dim")
     output_path = gold_company_dim_output_path()
+    params = {
+        "silver_glob": silver_table_glob("company"),
+        "abn_glob": silver_table_glob("company_abn"),
+        "gst_glob": silver_table_glob("company_gst"),
+        "website_glob": silver_table_glob("company_website"),
+        "maori_glob": silver_table_glob("maori_business_identifier"),
+    }
     with duckdb.get_connection() as conn:
-        row_count = materialize_gold_company_dim(conn, select_sql, silver_company_glob(), output_path)
+        row_count = materialize_gold_table(conn, select_sql, output_path, params)
     context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+
+def _make_gold_dim_asset(name: str, silver_table: str, silver_asset: AssetsDefinition) -> AssetsDefinition:
+    """Build a single-source, current-state gold dimension asset, named ``gold_<name>``.
+
+    The transform SQL is read from ``sql/gold/dims/<name>.sql`` and must accept a
+    ``$silver_glob`` parameter matching every partition of one silver table.
+    """
+
+    @asset(name=f"gold_{name}", group_name="gold_dims", deps=[silver_asset])
+    def _gold_dim_asset(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+        select_sql = read_sql("gold", "dims", name)
+        output_path = gold_dim_output_path(name)
+        with duckdb.get_connection() as conn:
+            row_count = materialize_gold_table(
+                conn,
+                select_sql,
+                output_path,
+                {"silver_glob": silver_table_glob(silver_table)},
+            )
+        context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+    return _gold_dim_asset
+
+
+gold_shareholding = _make_gold_dim_asset("shareholding", "shareholder", silver_shareholder)
+gold_director_dim = _make_gold_dim_asset("director_dim", "director", silver_director)
+gold_company_industry = _make_gold_dim_asset("company_industry", "company_industry", silver_company_industry)
+gold_company_trading_name = _make_gold_dim_asset("company_trading_name", "trading_name", silver_trading_name)
+gold_company_trading_area = _make_gold_dim_asset("company_trading_area", "trading_area", silver_trading_area)
+gold_company_insolvency = _make_gold_dim_asset("company_insolvency", "insolvency", silver_insolvency)
+gold_address_dim = _make_gold_dim_asset("address_dim", "company_address", silver_company_address)
+gold_company_address = _make_gold_dim_asset("company_address", "company_address", silver_company_address)
 
 
 def count_duplicate_nzbn(conn: duckdb.DuckDBPyConnection, path: Path) -> int:
@@ -194,6 +266,60 @@ def gold_company_status_changes(context: AssetExecutionContext, duckdb: DuckDBRe
             "previous_snapshot_month": previous_month or "",
         },
     )
+
+
+def gold_fact_output_path(name: str, month: str) -> Path:
+    """Destination Parquet path for one partition of a gold SCD2 fact table."""
+    return SETTINGS.gold_dir / "facts" / name / f"snapshot_month={month}" / "part-0.parquet"
+
+
+def _make_gold_fact_asset(name: str, silver_table: str, silver_asset: AssetsDefinition) -> AssetsDefinition:
+    """Build a month-over-month SCD2 change-fact asset, named ``gold_<name>``.
+
+    The transform SQL is read from ``sql/gold/facts/<name>.sql`` and must accept
+    ``$current_path``, ``$previous_path``, and ``$month`` parameters, matching the
+    convention used by ``company_status_changes.sql``. When no previous month exists
+    (the earliest partition), ``$previous_path`` equals ``$current_path`` -- comparing
+    a snapshot against itself always yields zero change rows.
+    """
+
+    @asset(
+        name=f"gold_{name}",
+        partitions_def=snapshot_month_partitions,
+        group_name="gold_facts",
+        deps=[silver_asset],
+    )
+    def _gold_fact_asset(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+        month = context.partition_key
+        current_path = silver_table_output_path(silver_table, month)
+        previous_month = previous_partition_key(month, snapshot_month_partitions.get_partition_keys())
+        previous_path = silver_table_output_path(silver_table, previous_month) if previous_month else current_path
+        output_path = gold_fact_output_path(name, month)
+        select_sql = read_sql("gold", "facts", name)
+        with duckdb.get_connection() as conn:
+            row_count = materialize_gold_table(
+                conn,
+                select_sql,
+                output_path,
+                {"current_path": str(current_path), "previous_path": str(previous_path), "month": month},
+            )
+        context.add_output_metadata(
+            {
+                "row_count": row_count,
+                "output_path": str(output_path),
+                "previous_snapshot_month": previous_month or "",
+            },
+        )
+
+    return _gold_fact_asset
+
+
+gold_shareholding_changes = _make_gold_fact_asset("shareholding_changes", "shareholder", silver_shareholder)
+gold_director_appointment_changes = _make_gold_fact_asset(
+    "director_appointment_changes",
+    "director",
+    silver_director,
+)
 
 
 def materialize_gold_export_csv(
