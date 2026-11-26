@@ -149,15 +149,12 @@ _LOAD_STEP_SCRIPTS = [
     "01_companies",
     "02_directors",
     "03_shareholders",
-    "04a_address_reg_office",
-    "04b_address_service",
+    "04_company_address",
     "05_industries",
     "05a_industry_hierarchy",
     "06_trading_names",
     "07_insolvencies",
-    "08_properties",
     "09_trading_areas",
-    "10_address_public",
     "11_corporate_links",
 ]
 
@@ -166,17 +163,12 @@ _STEP_COUNT_QUERIES: dict[str, str | None] = {
     "01_companies": "MATCH (c:Company) RETURN count(*) AS cnt",
     "02_directors": "MATCH ()-[r:DIRECTS]->() RETURN count(*) AS cnt",
     "03_shareholders": "MATCH ()-[r:HOLDS_SHARES_IN]->() RETURN count(*) AS cnt",
-    "04a_address_reg_office": (
-        "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'REGISTERED_OFFICE' RETURN count(*) AS cnt"
-    ),
-    "04b_address_service": "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'SERVICE' RETURN count(*) AS cnt",
+    "04_company_address": "MATCH ()-[r:HAS_ADDRESS]->() RETURN count(*) AS cnt",
     "05_industries": "MATCH (ind:Industry) RETURN count(*) AS cnt",
     "05a_industry_hierarchy": "MATCH ()-[r:BELONGS_TO]->() RETURN count(*) AS cnt",
     "06_trading_names": "MATCH (t:TradingName) RETURN count(*) AS cnt",
     "07_insolvencies": "MATCH (i:Insolvency) RETURN count(*) AS cnt",
-    "08_properties": None,
     "09_trading_areas": "MATCH (ta:TradingArea) RETURN count(*) AS cnt",
-    "10_address_public": "MATCH ()-[r:HAS_ADDRESS]->() WHERE r.address_type = 'PUBLIC' RETURN count(*) AS cnt",
     "11_corporate_links": "MATCH ()-[r:IS]->() RETURN count(*) AS cnt",
 }
 

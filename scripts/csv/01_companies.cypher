@@ -6,5 +6,9 @@ CALL (row) {
         c.entity_type = row.ENTITY_TYPE,
         c.status = row.ENTITY_STATUS,
         c.incorporation_date = CASE WHEN row.INCORPORATION_DATE <> "" THEN date(row.INCORPORATION_DATE) ELSE null END,
-        c.removal_date = CASE WHEN row.REMOVAL_DATE <> "" THEN date(row.REMOVAL_DATE) ELSE null END
+        c.removal_date = CASE WHEN row.REMOVAL_DATE <> "" THEN date(row.REMOVAL_DATE) ELSE null END,
+        c.abn = CASE WHEN row.ABN <> "" THEN row.ABN ELSE null END,
+        c.gst_number = CASE WHEN row.GST_NUMBER <> "" THEN row.GST_NUMBER ELSE null END,
+        c.website = CASE WHEN row.WEBSITE <> "" THEN row.WEBSITE ELSE null END,
+        c.maori_business_identifier = CASE WHEN row.MAORI_BUSINESS_IDENTIFIER <> "" THEN row.MAORI_BUSINESS_IDENTIFIER ELSE null END
 } IN TRANSACTIONS OF 5000 ROWS;

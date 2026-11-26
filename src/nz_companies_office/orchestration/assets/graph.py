@@ -5,10 +5,29 @@ from dagster import asset
 
 from nz_companies_office.config import SETTINGS
 from nz_companies_office.graph.loader import load_database
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_csv
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_business_industry_classification
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_core_data
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_director
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_insolvency
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_shareholder
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_trading_area
+from nz_companies_office.orchestration.assets.gold import gold_export_companies_trading_name
+from nz_companies_office.orchestration.assets.gold import gold_export_company_address
 
 
-@asset(group_name="graph", deps=[gold_export_companies_csv])
+@asset(
+    group_name="graph",
+    deps=[
+        gold_export_companies_core_data,
+        gold_export_companies_director,
+        gold_export_companies_shareholder,
+        gold_export_company_address,
+        gold_export_companies_business_industry_classification,
+        gold_export_companies_trading_name,
+        gold_export_companies_trading_area,
+        gold_export_companies_insolvency,
+    ],
+)
 def graph_load(context: AssetExecutionContext) -> None:
     """Drop and reload the Neo4j graph from the gold-exported CSVs.
 

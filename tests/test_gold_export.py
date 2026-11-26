@@ -1,4 +1,4 @@
-"""Tests for the gold-to-Neo4j CSV export asset."""
+"""Tests for the gold-to-Neo4j CSV export assets."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.gold import copy_passthrough_raw_files
 from nz_companies_office.orchestration.assets.gold import materialize_gold_export_csv
+from nz_companies_office.orchestration.assets.gold import materialize_gold_export_csv_multi
 from nz_companies_office.orchestration.sql import read_sql
 
 if TYPE_CHECKING:
@@ -22,6 +22,10 @@ _EXPECTED_HEADER = [
     "REMOVAL_DATE",
     "ENTITY_TYPE",
     "ENTITY_STATUS",
+    "ABN",
+    "GST_NUMBER",
+    "WEBSITE",
+    "MAORI_BUSINESS_IDENTIFIER",
 ]
 
 
@@ -31,9 +35,11 @@ def _write_gold_company_dim(conn: duckdb.DuckDBPyConnection, path: Path) -> None
         "COPY ("
         "SELECT * FROM (VALUES ("
         "'9429031075473', '3405451', 'PARROT ANALYTICS LIMITED', "
-        "DATE '2011-06-01', NULL, 'LTD', 'Registered', '202611'"
+        "DATE '2011-06-01', NULL::DATE, 'LTD', 'Registered', "
+        "NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR, NULL::VARCHAR, '202611'"
         ")) AS t(nzbn, company_number, entity_name, incorporation_date, removal_date, "
-        "entity_type, entity_status, as_of_snapshot_month)"
+        "entity_type, entity_status, abn, gst_number, website, maori_business_identifier, "
+        "as_of_snapshot_month)"
         ") TO $path (FORMAT PARQUET)",
         {"path": str(path)},
     )
@@ -72,33 +78,57 @@ class TestMaterializeGoldExportCsv:
         assert data_row[3] == datetime.date(2011, 6, 1).isoformat()
 
 
-class TestCopyPassthroughRawFiles:
-    """Tests for copy_passthrough_raw_files."""
+class TestMaterializeGoldExportCompanyAddress:
+    """Tests for the two-input company_address export (sql/gold/export/company_address.sql)."""
 
-    def test_copies_existing_passthrough_files(self, tmp_path: Path) -> None:
-        """A not-yet-migrated raw CSV present in the source month is copied into the export dir."""
-        source_month = tmp_path / "202611"
-        source_month.mkdir()
-        (source_month / "companies_director.csv").write_text("NZBN,ENTITY_NAME\n9429031075473,TEST\n")
-        export_dir = tmp_path / "export"
-        copied = copy_passthrough_raw_files(source_month, export_dir)
-        assert copied == ["companies_director.csv"]
-        assert (export_dir / "companies_director.csv").read_text() == "NZBN,ENTITY_NAME\n9429031075473,TEST\n"
-
-    def test_skips_missing_files_without_error(self, tmp_path: Path) -> None:
-        """A passthrough file absent from the source month is simply skipped, not an error."""
-        source_month = tmp_path / "202611"
-        source_month.mkdir()
-        export_dir = tmp_path / "export"
-        copied = copy_passthrough_raw_files(source_month, export_dir)
-        assert copied == []
-        assert export_dir.exists()
-
-    def test_does_not_copy_companies_core_data(self, tmp_path: Path) -> None:
-        """companies_core_data.csv is sourced from gold, not copied through from raw."""
-        source_month = tmp_path / "202611"
-        source_month.mkdir()
-        (source_month / "companies_core_data.csv").write_text("should not be copied")
-        export_dir = tmp_path / "export"
-        copy_passthrough_raw_files(source_month, export_dir)
-        assert not (export_dir / "companies_core_data.csv").exists()
+    def test_joins_dim_and_address_dim(self, tmp_path: Path) -> None:
+        """The export resolves address_key to its street/city/country via address_dim."""
+        conn = duckdb.connect(":memory:")
+        try:
+            company_address_path = tmp_path / "company_address.parquet"
+            address_dim_path = tmp_path / "address_dim.parquet"
+            conn.execute(
+                "COPY (SELECT * FROM (VALUES "
+                "('9429031075473', 'REGISTERED_OFFICE', 'KEY1', DATE '2020-01-01', '202611')"
+                ") AS t(nzbn, address_type, address_key, since, as_of_snapshot_month)) TO $path (FORMAT PARQUET)",
+                {"path": str(company_address_path)},
+            )
+            conn.execute(
+                "COPY (SELECT * FROM (VALUES "
+                "('KEY1', 'Suite 1', 'Auckland', 'NZ', 'CBD', '1010', NULL, NULL)"
+                ") AS t(address_key, street, city, country, suburb, postcode, care_of, paf_id)) "
+                "TO $path (FORMAT PARQUET)",
+                {"path": str(address_dim_path)},
+            )
+            select_sql = read_sql("gold", "export", "company_address")
+            output_path = tmp_path / "companies_company_address.csv"
+            row_count = materialize_gold_export_csv_multi(
+                conn,
+                select_sql,
+                output_path,
+                {"company_address_path": str(company_address_path), "address_dim_path": str(address_dim_path)},
+            )
+            rows = output_path.read_text().splitlines()
+        finally:
+            conn.close()
+        assert row_count == 1
+        assert rows[0].split(",") == [
+            "NZBN",
+            "ADDRESS_TYPE",
+            "START_DATE",
+            "STREET",
+            "SUBURB",
+            "CITY",
+            "POSTCODE",
+            "COUNTRY",
+        ]
+        assert rows[1].split(",") == [
+            "9429031075473",
+            "REGISTERED_OFFICE",
+            "2020-01-01",
+            "Suite 1",
+            "CBD",
+            "Auckland",
+            "1010",
+            "NZ",
+        ]
