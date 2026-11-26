@@ -11,6 +11,7 @@ from nz_companies_office.orchestration.assets.gold import gold_company_dim
 from nz_companies_office.orchestration.assets.gold import gold_company_dim_uniqueness_check
 from nz_companies_office.orchestration.assets.gold import gold_company_status_changes
 from nz_companies_office.orchestration.assets.gold import gold_export_companies_csv
+from nz_companies_office.orchestration.assets.graph import graph_load
 from nz_companies_office.orchestration.assets.silver import silver_company
 from nz_companies_office.orchestration.assets.silver import silver_company_reject_rate_check
 from nz_companies_office.orchestration.resources import duckdb_resource
@@ -22,6 +23,7 @@ defs = Definitions(
         gold_company_dim,
         gold_company_status_changes,
         gold_export_companies_csv,
+        graph_load,
     ],
     asset_checks=[
         silver_company_reject_rate_check,
