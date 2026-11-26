@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
+from nz_companies_office.orchestration.assets.gold import copy_passthrough_raw_files
 from nz_companies_office.orchestration.assets.gold import materialize_gold_export_csv
 from nz_companies_office.orchestration.sql import read_sql
 
@@ -69,3 +70,35 @@ class TestMaterializeGoldExportCsv:
         finally:
             conn.close()
         assert data_row[3] == datetime.date(2011, 6, 1).isoformat()
+
+
+class TestCopyPassthroughRawFiles:
+    """Tests for copy_passthrough_raw_files."""
+
+    def test_copies_existing_passthrough_files(self, tmp_path: Path) -> None:
+        """A not-yet-migrated raw CSV present in the source month is copied into the export dir."""
+        source_month = tmp_path / "202611"
+        source_month.mkdir()
+        (source_month / "companies_director.csv").write_text("NZBN,ENTITY_NAME\n9429031075473,TEST\n")
+        export_dir = tmp_path / "export"
+        copied = copy_passthrough_raw_files(source_month, export_dir)
+        assert copied == ["companies_director.csv"]
+        assert (export_dir / "companies_director.csv").read_text() == "NZBN,ENTITY_NAME\n9429031075473,TEST\n"
+
+    def test_skips_missing_files_without_error(self, tmp_path: Path) -> None:
+        """A passthrough file absent from the source month is simply skipped, not an error."""
+        source_month = tmp_path / "202611"
+        source_month.mkdir()
+        export_dir = tmp_path / "export"
+        copied = copy_passthrough_raw_files(source_month, export_dir)
+        assert copied == []
+        assert export_dir.exists()
+
+    def test_does_not_copy_companies_core_data(self, tmp_path: Path) -> None:
+        """companies_core_data.csv is sourced from gold, not copied through from raw."""
+        source_month = tmp_path / "202611"
+        source_month.mkdir()
+        (source_month / "companies_core_data.csv").write_text("should not be copied")
+        export_dir = tmp_path / "export"
+        copy_passthrough_raw_files(source_month, export_dir)
+        assert not (export_dir / "companies_core_data.csv").exists()

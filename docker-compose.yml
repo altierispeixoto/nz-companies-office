@@ -17,8 +17,16 @@ services:
       - neo4j_data:/data
       # Logs are ephemeral in dev — survive restarts but not container removal
       - neo4j_logs:/logs
-      # Override with env var when your data dir changes:
-      - ${NZ_CO_DATA_DIR:-./data/raw/202606}:/var/lib/neo4j/import/companies
+      # NZ_CO_DATA_DIR must be set explicitly (e.g. ./data/gold/_neo4j_export/202611,
+      # written by `just pipeline <month>` -- see .specs/features/medallion-architecture/).
+      # No default on purpose: a stale hardcoded month here previously caused Docker to
+      # auto-create and own an orphaned data/raw/202606 directory (see CONCERNS.md).
+      # Mounted at /import, NOT /var/lib/neo4j/import: the official image's entrypoint
+      # recursively chowns $NEO4J_HOME (/var/lib/neo4j) to the neo4j user on every start,
+      # which would make this directory unwritable from the host after the first run if
+      # mounted inside it. /import is the image's own supported external mount point and
+      # is only read, never chowned.
+      - ${NZ_CO_DATA_DIR}:/import/companies
     deploy:
       resources:
         limits:

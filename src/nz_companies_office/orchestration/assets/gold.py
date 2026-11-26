@@ -7,6 +7,7 @@ partition explicitly, rather than fighting Dagster's ``PartitionMapping``
 API for this non-time-window case.
 """
 
+import shutil
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -226,16 +227,79 @@ def materialize_gold_export_csv(
     return int(row[0]) if row else 0
 
 
-def gold_export_companies_csv_output_path() -> Path:
-    """Destination CSV path for the Neo4j-bound company export (the Docker bind-mount target)."""
-    return SETTINGS.gold_dir / "_neo4j_export" / "latest" / "companies_core_data.csv"
+def gold_export_companies_csv_output_path(month: str) -> Path:
+    """Destination CSV path for the Neo4j-bound company export for one snapshot month.
+
+    Each month gets its own export directory (rather than a fixed ``latest/``) because the
+    official Neo4j Docker image's entrypoint recursively chowns any bind-mounted directory to
+    its internal user the first time a container starts against it, making it unwritable from
+    the host afterward -- see the comment in docker-compose.yml. Reusing a directory a Neo4j
+    container has already mounted would fail on the next pipeline run.
+    """
+    return SETTINGS.gold_dir / "_neo4j_export" / month / "companies_core_data.csv"
+
+
+# Only companies_core_data.csv is sourced from gold so far (this increment). The other 13 files
+# scripts/csv/*.cypher reads haven't been migrated through the medallion pipeline yet (see
+# Increment 2 in .specs/features/medallion-architecture/tasks.md), so they're copied through
+# unchanged from the latest raw snapshot month to keep `just load-db` fully working in the
+# meantime -- the Docker mount now points at the export dir, not data/raw/, for all 14 steps.
+PASSTHROUGH_RAW_FILES = (
+    "companies_director.csv",
+    "companies_shareholder.csv",
+    "companies_registered_office_address.csv",
+    "companies_address_for_service.csv",
+    "companies_public_address.csv",
+    "companies_business_industry_classification.csv",
+    "companies_trading_name.csv",
+    "companies_trading_area.csv",
+    "companies_insolvency.csv",
+    "companies_abn.csv",
+    "companies_gst.csv",
+    "companies_website.csv",
+    "maori_business_identifier.csv",
+)
+
+
+def copy_passthrough_raw_files(source_month_dir: Path, export_dir: Path) -> list[str]:
+    """Copy not-yet-migrated raw CSVs into the Neo4j export directory unchanged.
+
+    Args:
+        source_month_dir: Raw data directory for the month to copy from (typically the
+            latest available snapshot month).
+        export_dir: The Neo4j import directory to copy into.
+
+    Returns:
+        The filenames actually copied; a missing source file is skipped, not an error.
+
+    """
+    export_dir.mkdir(parents=True, exist_ok=True)
+    copied = []
+    for filename in PASSTHROUGH_RAW_FILES:
+        source = source_month_dir / filename
+        if source.exists():
+            shutil.copy(source, export_dir / filename)
+            copied.append(filename)
+    return copied
 
 
 @asset(group_name="gold_export", deps=[gold_company_dim])
 def gold_export_companies_csv(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
-    """Flat CSV export of gold_company_dim, feeding scripts/csv/01_companies.cypher."""
+    """Flat CSV export of gold_company_dim, feeding scripts/csv/01_companies.cypher.
+
+    Also copies the other 13 not-yet-migrated raw CSVs scripts/csv/*.cypher reads, from the
+    latest available snapshot month, so the full load-db pipeline keeps working end-to-end.
+    """
+    latest_month = max(snapshot_month_partitions.get_partition_keys())
     select_sql = read_sql("gold", "export", "companies_core_data")
-    output_path = gold_export_companies_csv_output_path()
+    output_path = gold_export_companies_csv_output_path(latest_month)
     with duckdb.get_connection() as conn:
         row_count = materialize_gold_export_csv(conn, select_sql, gold_company_dim_output_path(), output_path)
-    context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+    copied = copy_passthrough_raw_files(SETTINGS.raw_data_dir / latest_month, output_path.parent)
+    context.add_output_metadata(
+        {
+            "row_count": row_count,
+            "output_path": str(output_path),
+            "passthrough_files_copied": len(copied),
+        },
+    )
