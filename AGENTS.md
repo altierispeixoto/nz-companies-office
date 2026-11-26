@@ -6,7 +6,8 @@
 - **Task runner**: `just`. See `justfile` for common commands (`just setup`, `just install`, `just run <cmd>`).
 - **Lint+format**: `ruff check .` and `ruff format .` (run both). Config: `ruff.toml`.
 - **Pre-commit**: hooks include pre-commit-hooks, ruff (lint), ruff-format, and mypy (`--disallow-untyped-defs`). Install with `pre-commit install` (see `.pre-commit-config.yaml`).
-- **SQL**: SQLFluff config exists at `sql/.sqlfluff` (Snowflake dialect). It is **not** currently wired into pre-commit; DVC/notebook/Gitleaks hooks are not configured.
+- **SQL**: SQLFluff config exists at `sql/.sqlfluff` (DuckDB dialect). It is **not** currently wired into pre-commit; notebook/Gitleaks hooks are not configured.
+- **Medallion pipeline**: `data/raw/` → `data/bronze/` → `data/silver/` → `data/gold/` → Neo4j, orchestrated by **Dagster** (`src/nz_companies_office/orchestration/`), transformed with **DuckDB** SQL (`sql/{bronze,silver,gold}/`). See `.specs/features/medallion-architecture/` for spec/design/tasks. Only `companies_core_data` is migrated so far (Increment 1); the other 18 source tables and `scripts/csv/02..11*.cypher` still read `data/raw/` directly (Increment 2, see `.specs/project/ROADMAP.md`).
 
 ## Commands
 
@@ -21,8 +22,10 @@ just geocode --sample 500           # test run on 500 random addresses (no separ
 just prepare-linz                   # transform LINZ shapefile into a cached parquet file
 just enrich                         # post-load enrichment (share %)
 just entity-resolution              # entity resolution pipeline
-just load-db                        # drop + reload Neo4j graph
+just load-db                        # drop + reload Neo4j graph (expects NZ_CO_DATA_DIR set, see docker-compose.yml)
 just fetch <num>                    # fetch company from NZBN API
+just dagster-dev                    # Dagster dev UI for the medallion pipeline (http://localhost:3000)
+just pipeline <yyyymm>               # materialize bronze/silver/gold for one snapshot month, e.g. just pipeline 202611
 ```
 
 ## Testing
@@ -47,8 +50,9 @@ just fetch <num>                    # fetch company from NZBN API
 
 - Source: `src/nz_companies_office/`.
 - CLI entrypoint: `nz-companies-office = "nz_companies_office.cli.main:run"` (in `pyproject.toml`).
-- Subcommands: `fetch`, `csv-fetch`, `load-db`, `er`, `enrich`, `prepare-linz`, `geocode`.
-- Data dirs (`data/raw/`, `data/processed/`, `data/staging/`, `data/model_features/`) are git-ignored inside (track only `.gitignore`).
+- Subcommands: `fetch`, `csv-fetch`, `load-db`, `er`, `enrich`, `prepare-linz`, `geocode`. (`fetch`/`csv-fetch` are unwired stubs — see `.specs/codebase/CONCERNS.md`.)
+- Medallion orchestration: `src/nz_companies_office/orchestration/` (Dagster `Definitions` in `definitions.py`, assets in `assets/{bronze,silver,gold,graph}.py`), driven by `.sql` files in `sql/{bronze,silver,gold}/`.
+- Data dirs (`data/raw/`, `data/bronze/`, `data/silver/`, `data/gold/`, `data/processed/`, `data/staging/`, `data/model_features/`) are git-ignored inside (track only `.gitignore`).
 
 ## Planning
 

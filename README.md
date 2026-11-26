@@ -86,21 +86,34 @@ classification.
 ## Architecture
 
 ```
-NZ Companies Office (monthly CSV)
+NZ Companies Office (monthly CSV, data/raw/<yyyymm>/)
          │
          ▼
-    LOAD CSV ──► Neo4j 5-community ──► marimo notebooks
-         │         (APOC + GDS)            │
-         │                                 ├─ 01: Mapping the network
-         │                                 ├─ 02: Co-investment patterns
-         ▼                                 ├─ 03: Communities & influence
-    Python CLI                              ├─ 04: Entity resolution
-    (NZBN API fallback)                     └─ 05: Predicting investor types
+   bronze (Parquet, 1:1 copy)
+         │  DuckDB SQL (sql/bronze/*.sql)
+         ▼
+   silver (typed, validated, deduped)
+         │  DuckDB SQL (sql/silver/*.sql)
+         ▼
+   gold (current-state dims + SCD2 change facts)
+         │  DuckDB SQL (sql/gold/{dims,facts}/*.sql), orchestrated by Dagster
+         ▼
+   gold export (flat CSV) ──► LOAD CSV ──► Neo4j 5-community ──► marimo notebooks
+                                              (APOC + GDS)            │
+                                                                       ├─ 01: Mapping the network
+                                                                       ├─ 02: Co-investment patterns
+                                                                       ├─ 03: Communities & influence
+                                                                       ├─ 04: Entity resolution
+                                                                       └─ 05: Predicting investor types
 ```
 
-Data flows: bulk CSVs downloaded monthly → loaded into Neo4j via `LOAD CSV` with
-Cypher scripts → queried and visualised in marimo notebooks. An optional NZBN API
-client provides single-company lookups as a fallback.
+Data flows: bulk CSVs downloaded monthly → a bronze/silver/gold medallion pipeline
+(Dagster + DuckDB, `src/nz_companies_office/orchestration/`) cleans, types, validates,
+and historizes them → a flat CSV export feeds Neo4j's `LOAD CSV` Cypher scripts →
+queried and visualised in marimo notebooks. **Only `companies_core_data` is migrated
+through the medallion pipeline so far** (see `.specs/features/medallion-architecture/`);
+the other 18 source tables still flow straight from `data/raw/` into the matching
+Cypher load step, unchanged, until a follow-up increment migrates them too.
 
 ## Key Concepts
 
@@ -275,6 +288,8 @@ just marimo
 | `just neo4j-down` | Stop Neo4j |
 | `just neo4j-import-csv` | Load all CSV data (pipes script to cypher-shell) |
 | `just fetch <number>` | Fetch a single company from NZBN API + load to Neo4j |
+| `just dagster-dev` | Dagster dev UI for the bronze/silver/gold medallion pipeline (`http://localhost:3000`) |
+| `just pipeline <yyyymm>` | Materialize bronze/silver/gold for one snapshot month, e.g. `just pipeline 202611` |
 | `just marimo` | Start marimo notebook server at `http://127.0.0.1:2718/` |
 | `just run pytest` | Run test suite |
 | `just run ruff check .` | Lint |
@@ -298,6 +313,8 @@ All notebooks are in `notebooks/` and use the shared helpers in
 
 ```
 ├── data/raw/<yyyymm>/        # Monthly CSV exports
+├── data/{bronze,silver,gold}/ # Medallion pipeline output (companies_core_data only so far)
+├── sql/{bronze,silver,gold}/  # DuckDB SQL transforms, one file per asset
 ├── notebooks/                 # marimo walkthrough notebooks
 │   ├── __init__.py
 │   ├── _neo4j_helpers.py     # Shared run_query() + mo_table() helpers
@@ -311,6 +328,7 @@ All notebooks are in `notebooks/` and use the shared helpers in
 │   └── explore_graph.cypher  # 810+ analysis queries
 ├── src/nz_companies_office/
 │   ├── cli/main.py           # CLI entry point
+│   ├── orchestration/        # Dagster Definitions + bronze/silver/gold/graph assets
 │   ├── clients/nzbn.py       # NZBN API client
 │   ├── db/
 │   │   ├── connection.py     # Neo4j connection manager

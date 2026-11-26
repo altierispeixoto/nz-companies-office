@@ -67,3 +67,6 @@ notebooks/application/__marimo__/session/*
 node_modules/
 .env
 .zed/
+
+# Dagster local run/event storage (set via DAGSTER_HOME in justfile's dagster-dev/pipeline recipes)
+.dagster/
