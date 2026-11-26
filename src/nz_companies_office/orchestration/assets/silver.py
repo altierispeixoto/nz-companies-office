@@ -11,12 +11,27 @@ import duckdb
 from dagster import AssetCheckExecutionContext
 from dagster import AssetCheckResult
 from dagster import AssetExecutionContext
+from dagster import AssetsDefinition
 from dagster import asset
 from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
 from nz_companies_office.config import SETTINGS
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_abn
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_address_for_service
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_business_industry_classification
 from nz_companies_office.orchestration.assets.bronze import bronze_companies_core_data
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_director
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_gst
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_insolvency
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_public_address
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_registered_office_address
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_shareholder
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_trading_area
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_trading_name
+from nz_companies_office.orchestration.assets.bronze import bronze_companies_website
+from nz_companies_office.orchestration.assets.bronze import bronze_maori_business_identifier
+from nz_companies_office.orchestration.assets.bronze import bronze_table_output_path
 from nz_companies_office.orchestration.partitions import snapshot_month_partitions
 from nz_companies_office.orchestration.sql import read_sql
 
@@ -154,3 +169,151 @@ def silver_company_reject_rate_check(context: AssetCheckExecutionContext, duckdb
         passed=rate <= REJECT_RATE_THRESHOLD,
         metadata={"reject_rate": rate, "threshold": REJECT_RATE_THRESHOLD},
     )
+
+
+def materialize_silver_table(
+    conn: duckdb.DuckDBPyConnection,
+    transform_sql: str,
+    output_path: Path,
+    params: dict[str, str],
+) -> int:
+    """Run a silver transform with no reject sidecar and write the result to Parquet.
+
+    Args:
+        conn: Open DuckDB connection.
+        transform_sql: A ``sql/silver/*.sql`` query text.
+        output_path: Destination Parquet file. Parent directories are created.
+        params: Named parameters bound into ``transform_sql`` (e.g. ``$input_path``, ``$month``).
+
+    Returns:
+        The number of rows written.
+
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    conn.execute(
+        f"COPY ({transform_sql}) TO $output_path (FORMAT PARQUET)",
+        {**params, "output_path": str(output_path)},
+    )
+    row = conn.execute(
+        "SELECT count(*) FROM read_parquet($path, hive_partitioning = false)",
+        {"path": str(output_path)},
+    ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def silver_table_output_path(name: str, month: str) -> Path:
+    """Destination Parquet path for one silver table's snapshot-month partition."""
+    return SETTINGS.silver_dir / name / f"snapshot_month={month}" / "part-0.parquet"
+
+
+def _make_silver_asset(name: str, bronze_table: str, bronze_asset: AssetsDefinition) -> AssetsDefinition:
+    """Build a single-source, no-rejects silver asset, named ``silver_<name>``.
+
+    The transform SQL is read from ``sql/silver/<name>.sql`` and must accept
+    ``$input_path`` and ``$month`` parameters, matching the convention used by
+    ``company.sql``/``shareholder.sql``/etc.
+    """
+
+    @asset(name=f"silver_{name}", partitions_def=snapshot_month_partitions, group_name="silver", deps=[bronze_asset])
+    def _silver_asset(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+        month = context.partition_key
+        input_path = bronze_table_output_path(bronze_table, month)
+        output_path = silver_table_output_path(name, month)
+        transform_sql = read_sql("silver", name)
+        with duckdb.get_connection() as conn:
+            row_count = materialize_silver_table(
+                conn,
+                transform_sql,
+                output_path,
+                {"input_path": str(input_path), "month": month},
+            )
+        context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+    return _silver_asset
+
+
+silver_shareholder = _make_silver_asset("shareholder", "companies_shareholder", bronze_companies_shareholder)
+silver_director = _make_silver_asset("director", "companies_director", bronze_companies_director)
+silver_company_industry = _make_silver_asset(
+    "company_industry",
+    "companies_business_industry_classification",
+    bronze_companies_business_industry_classification,
+)
+silver_trading_name = _make_silver_asset("trading_name", "companies_trading_name", bronze_companies_trading_name)
+silver_trading_area = _make_silver_asset("trading_area", "companies_trading_area", bronze_companies_trading_area)
+silver_insolvency = _make_silver_asset("insolvency", "companies_insolvency", bronze_companies_insolvency)
+silver_company_abn = _make_silver_asset("company_abn", "companies_abn", bronze_companies_abn)
+silver_company_gst = _make_silver_asset("company_gst", "companies_gst", bronze_companies_gst)
+silver_company_website = _make_silver_asset("company_website", "companies_website", bronze_companies_website)
+silver_maori_business_identifier = _make_silver_asset(
+    "maori_business_identifier",
+    "maori_business_identifier",
+    bronze_maori_business_identifier,
+)
+
+
+def materialize_silver_company_address(
+    conn: duckdb.DuckDBPyConnection,
+    transform_sql: str,
+    reg_office_path: Path,
+    service_path: Path,
+    public_path: Path,
+    month: str,
+    output_path: Path,
+) -> int:
+    """Union the three company-level address sources into one conformed silver table.
+
+    Args:
+        conn: Open DuckDB connection.
+        transform_sql: The ``sql/silver/company_address.sql`` query text.
+        reg_office_path: Bronze Parquet for ``companies_registered_office_address``.
+        service_path: Bronze Parquet for ``companies_address_for_service``.
+        public_path: Bronze Parquet for ``companies_public_address``.
+        month: The snapshot month (``yyyymm``) being processed.
+        output_path: Destination Parquet file.
+
+    Returns:
+        The number of rows written.
+
+    """
+    return materialize_silver_table(
+        conn,
+        transform_sql,
+        output_path,
+        {
+            "input_reg_office": str(reg_office_path),
+            "input_service": str(service_path),
+            "input_public": str(public_path),
+            "month": month,
+        },
+    )
+
+
+@asset(
+    partitions_def=snapshot_month_partitions,
+    group_name="silver",
+    deps=[
+        bronze_companies_registered_office_address,
+        bronze_companies_address_for_service,
+        bronze_companies_public_address,
+    ],
+)
+def silver_company_address(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+    """Conformed, deduplicated company address table, unioning all three address sources."""
+    month = context.partition_key
+    reg_office_path = bronze_table_output_path("companies_registered_office_address", month)
+    service_path = bronze_table_output_path("companies_address_for_service", month)
+    public_path = bronze_table_output_path("companies_public_address", month)
+    output_path = silver_table_output_path("company_address", month)
+    transform_sql = read_sql("silver", "company_address")
+    with duckdb.get_connection() as conn:
+        row_count = materialize_silver_company_address(
+            conn,
+            transform_sql,
+            reg_office_path,
+            service_path,
+            public_path,
+            month,
+            output_path,
+        )
+    context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
