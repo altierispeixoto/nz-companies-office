@@ -11,8 +11,10 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import duckdb
+from dagster import AssetCheckResult
 from dagster import AssetExecutionContext
 from dagster import asset
+from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
 from nz_companies_office.config import SETTINGS
@@ -70,6 +72,35 @@ def gold_company_dim(context: AssetExecutionContext, duckdb: DuckDBResource) -> 
     with duckdb.get_connection() as conn:
         row_count = materialize_gold_company_dim(conn, select_sql, silver_company_glob(), output_path)
     context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
+
+
+def count_duplicate_nzbn(conn: duckdb.DuckDBPyConnection, path: Path) -> int:
+    """Count how many distinct nzbn values appear more than once in a Parquet file.
+
+    Args:
+        conn: Open DuckDB connection.
+        path: Parquet file expected to have at most one row per nzbn.
+
+    Returns:
+        The number of nzbn values with more than one row.
+
+    """
+    row = conn.execute(
+        "SELECT count(*) FROM ("
+        "SELECT nzbn FROM read_parquet($path, hive_partitioning = false) "
+        "GROUP BY nzbn HAVING count(*) > 1"
+        ")",
+        {"path": str(path)},
+    ).fetchone()
+    return int(row[0]) if row else 0
+
+
+@asset_check(asset=gold_company_dim)
+def gold_company_dim_uniqueness_check(duckdb: DuckDBResource) -> AssetCheckResult:
+    """Fail if gold_company_dim contains more than one row for the same nzbn."""
+    with duckdb.get_connection() as conn:
+        duplicate_count = count_duplicate_nzbn(conn, gold_company_dim_output_path())
+    return AssetCheckResult(passed=duplicate_count == 0, metadata={"duplicate_count": duplicate_count})
 
 
 def materialize_gold_company_status_changes(
