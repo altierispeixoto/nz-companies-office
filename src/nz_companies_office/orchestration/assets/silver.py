@@ -8,6 +8,7 @@ see ``@asset_check``s in this package for the reject-rate guardrail.
 from pathlib import Path
 
 import duckdb
+from dagster import AssetCheckExecutionContext
 from dagster import AssetCheckResult
 from dagster import AssetExecutionContext
 from dagster import asset
@@ -144,7 +145,7 @@ def compute_reject_rate(conn: duckdb.DuckDBPyConnection, output_path: Path, reje
 
 
 @asset_check(asset=silver_company, partitions_def=snapshot_month_partitions)
-def silver_company_reject_rate_check(context: AssetExecutionContext, duckdb: DuckDBResource) -> AssetCheckResult:
+def silver_company_reject_rate_check(context: AssetCheckExecutionContext, duckdb: DuckDBResource) -> AssetCheckResult:
     """Fail only if the NZBN reject rate for this snapshot month exceeds the threshold."""
     month = context.partition_key
     with duckdb.get_connection() as conn:

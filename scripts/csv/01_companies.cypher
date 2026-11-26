@@ -5,22 +5,6 @@ CALL (row) {
         c.name = row.ENTITY_NAME,
         c.entity_type = row.ENTITY_TYPE,
         c.status = row.ENTITY_STATUS,
-        c.incorporation_date = CASE
-            WHEN row.REGISTRATION_DATE <> "" AND size(row.REGISTRATION_DATE) = 10
-            THEN date(
-                substring(row.REGISTRATION_DATE, 6, 4) + "-" +
-                substring(row.REGISTRATION_DATE, 3, 2) + "-" +
-                substring(row.REGISTRATION_DATE, 0, 2)
-            )
-            ELSE null
-        END,
-        c.removal_date = CASE
-            WHEN row.REMOVAL_DATE <> "" AND size(row.REMOVAL_DATE) = 10
-            THEN date(
-                substring(row.REMOVAL_DATE, 6, 4) + "-" +
-                substring(row.REMOVAL_DATE, 3, 2) + "-" +
-                substring(row.REMOVAL_DATE, 0, 2)
-            )
-            ELSE null
-        END
+        c.incorporation_date = CASE WHEN row.INCORPORATION_DATE <> "" THEN date(row.INCORPORATION_DATE) ELSE null END,
+        c.removal_date = CASE WHEN row.REMOVAL_DATE <> "" THEN date(row.REMOVAL_DATE) ELSE null END
 } IN TRANSACTIONS OF 5000 ROWS;
