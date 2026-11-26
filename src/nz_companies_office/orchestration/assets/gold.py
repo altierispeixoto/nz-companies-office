@@ -193,3 +193,49 @@ def gold_company_status_changes(context: AssetExecutionContext, duckdb: DuckDBRe
             "previous_snapshot_month": previous_month or "",
         },
     )
+
+
+def materialize_gold_export_csv(
+    conn: duckdb.DuckDBPyConnection,
+    select_sql: str,
+    input_path: Path,
+    output_path: Path,
+) -> int:
+    """Flatten a gold dimension Parquet file into a CSV for Neo4j's LOAD CSV.
+
+    Args:
+        conn: Open DuckDB connection.
+        select_sql: A query that renames gold columns to the header the target
+            ``.cypher`` script expects.
+        input_path: The gold dimension's Parquet file.
+        output_path: Destination CSV file (with header).
+
+    Returns:
+        The number of data rows written.
+
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    conn.execute(
+        f"COPY ({select_sql}) TO $output_path (FORMAT CSV, HEADER)",
+        {"input_path": str(input_path), "output_path": str(output_path)},
+    )
+    row = conn.execute(
+        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true)",
+        {"path": str(output_path)},
+    ).fetchone()
+    return int(row[0]) if row else 0
+
+
+def gold_export_companies_csv_output_path() -> Path:
+    """Destination CSV path for the Neo4j-bound company export (the Docker bind-mount target)."""
+    return SETTINGS.gold_dir / "_neo4j_export" / "latest" / "companies_core_data.csv"
+
+
+@asset(group_name="gold_export", deps=[gold_company_dim])
+def gold_export_companies_csv(context: AssetExecutionContext, duckdb: DuckDBResource) -> None:
+    """Flat CSV export of gold_company_dim, feeding scripts/csv/01_companies.cypher."""
+    select_sql = read_sql("gold", "export", "companies_core_data")
+    output_path = gold_export_companies_csv_output_path()
+    with duckdb.get_connection() as conn:
+        row_count = materialize_gold_export_csv(conn, select_sql, gold_company_dim_output_path(), output_path)
+    context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
