@@ -71,28 +71,21 @@ def _(kind_picker, mo, name_picker, row_total):
         ## `gold_{name_picker.value}`
 
         **{row_total:,} rows** ({"all materialized months" if kind_picker.value == "fact" else "current state"}).
-        Available in the ad hoc query box below as the view **`t`**.
+        Available in the ad hoc query section below as the view **`t`**.
         """,
     )
     return
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""### Schema""")
-    return
-
-
 @app.cell
 def _(dh, mo, table_path):
-    mo.ui.table(dh.describe(table_path), page_size=20)
-    return
-
-
-@app.cell(hide_code=True)
-def _(kind_picker, mo):
-    mo.md(r"""### Snapshot-month coverage""" if kind_picker.value == "fact" else "")
-    return
+    schema_content = mo.vstack(
+        [
+            mo.md("Column names/types, via DuckDB's `DESCRIBE`."),
+            mo.ui.table(dh.describe(table_path), page_size=20),
+        ],
+    )
+    return (schema_content,)
 
 
 @app.cell
@@ -112,44 +105,30 @@ def _(alt, dh, kind_picker, mo, table_path):
             )
             .properties(width="container", height=220)
         )
-        coverage = mo.ui.altair_chart(_chart)
+        coverage_content = mo.ui.altair_chart(_chart)
     else:
-        coverage = mo.md("*Dimension tables are unpartitioned -- no per-month breakdown.*")
-    coverage
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""### Rows
-
-    Sortable/searchable in the table UI (click a column header to sort, use
-    the search box to filter). Capped at 2,000 rows for responsiveness --
-    narrow down with the ad hoc query below for anything larger.
-    """)
-    return
+        coverage_content = mo.md("*Dimension tables are unpartitioned -- no per-month breakdown.*")
+    return (coverage_content,)
 
 
 @app.cell
 def _(dh, mo, table_path):
-    mo.ui.table(dh.sample(table_path, limit=2000), page_size=25, selection=None)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""### Ad hoc query
-
-    Runs against the view `t` (the table picked above) -- e.g.
-    `SELECT entity_status, count(*) FROM t GROUP BY 1 ORDER BY 2 DESC`.
-    """)
-    return
+    rows_content = mo.vstack(
+        [
+            mo.md(
+                "Sortable/searchable in the table UI (click a column header to sort, use the "
+                "search box to filter). Capped at 2,000 rows for responsiveness -- narrow down "
+                "with the ad hoc query section for anything larger.",
+            ),
+            mo.ui.table(dh.sample(table_path, limit=2000), page_size=25, selection=None),
+        ],
+    )
+    return (rows_content,)
 
 
 @app.cell
 def _(mo):
     sql_box = mo.ui.text_area(value="SELECT * FROM t LIMIT 50", label="SQL", full_width=True)
-    sql_box
     return (sql_box,)
 
 
@@ -162,7 +141,35 @@ def _(dh, mo, sql_box, table_path):
         query_result = mo.ui.table(_result, page_size=25) if len(_result) else mo.md("*No rows*")
     except Exception as exc:  # surfaced inline instead of crashing the notebook
         query_result = mo.md(f"**Query error:** `{exc}`")
-    query_result
+    return (query_result,)
+
+
+@app.cell
+def _(mo, query_result, sql_box):
+    query_content = mo.vstack(
+        [
+            mo.md(
+                "Runs against the view `t` (the table picked above) -- e.g. "
+                "`SELECT entity_status, count(*) FROM t GROUP BY 1 ORDER BY 2 DESC`.",
+            ),
+            sql_box,
+            query_result,
+        ],
+    )
+    return (query_content,)
+
+
+@app.cell
+def _(coverage_content, mo, query_content, rows_content, schema_content):
+    mo.accordion(
+        {
+            "Schema": schema_content,
+            "Snapshot-month coverage": coverage_content,
+            "Rows (sample)": rows_content,
+            "Ad hoc query": query_content,
+        },
+        multiple=True,
+    )
     return
 
 
