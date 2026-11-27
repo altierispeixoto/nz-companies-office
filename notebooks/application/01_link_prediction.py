@@ -26,8 +26,8 @@ def _():
     from sklearn.metrics import roc_curve
 
     # Local utilities
-    from nz_companies_office.models.link_predictor import LinkPredictor
-    from nz_companies_office.models.trainer import LinkPredictorTrainer
+    from machine_learning.link_predictor import LinkPredictor
+    from machine_learning.trainer import LinkPredictorTrainer
     from nz_companies_office.utils.device import get_device
 
     device = get_device()

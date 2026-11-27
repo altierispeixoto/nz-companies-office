@@ -46,7 +46,7 @@ def _():
     import torch
     from torch.nn import functional as F  # noqa: N812
 
-    from nz_companies_office.models.link_predictor import LinkPredictor
+    from machine_learning.link_predictor import LinkPredictor
     from nz_companies_office.utils.device import get_device
 
     # Select GPU if sufficient free memory (>512 MiB), else fall back to CPU

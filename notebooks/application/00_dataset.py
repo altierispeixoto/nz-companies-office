@@ -22,12 +22,12 @@ def _():
     from torch_geometric.utils import degree
 
     # Local utilities
-    from nz_companies_office.models.builder import build_hetero_data
-    from nz_companies_office.models.extractor import GraphExtractor
-    from nz_companies_office.models.extractor import filter_removed_companies
-    from nz_companies_office.models.features import build_node_features
-    from nz_companies_office.models.split import sample_negative_edges
-    from nz_companies_office.models.split import split_share_edges
+    from machine_learning.builder import build_hetero_data
+    from machine_learning.extractor import GraphExtractor
+    from machine_learning.extractor import filter_removed_companies
+    from machine_learning.features import build_node_features
+    from machine_learning.split import sample_negative_edges
+    from machine_learning.split import split_share_edges
 
     warnings.filterwarnings("ignore")
     return (
