@@ -60,7 +60,7 @@ MANIFEST
 .agents
 .cursor
 opencode.json
-notebooks/**/__marimo__/session/*
+**/notebooks/**/__marimo__/session/*
 
 # Generated data files
 *.parquet

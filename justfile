@@ -112,6 +112,10 @@ clean:
 marimo:
     @just run marimo edit notebooks/ --watch
 
+# Start marimo notebook server pointing at machine_learning/notebooks/
+marimo-ml:
+    @just run marimo edit machine_learning/notebooks/ --watch
+
 # Start DuckDB's local web UI with views over the silver/gold medallion layers
 duckdb-ui:
     @just run python scripts/duckdb_ui.py

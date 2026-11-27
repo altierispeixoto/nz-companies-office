@@ -52,7 +52,7 @@ just pipeline <yyyymm>               # materialize bronze/silver/gold for one sn
 - CLI entrypoint: `nz-companies-office = "nz_companies_office.cli.main:run"` (in `pyproject.toml`).
 - Subcommands: `fetch`, `csv-fetch`, `load-db`, `er`, `enrich`, `prepare-linz`, `geocode`. (`fetch`/`csv-fetch` are unwired stubs — see `.specs/codebase/CONCERNS.md`.)
 - Medallion orchestration: `data_ingestion/` (Dagster `Definitions` in `definitions.py`, assets in `assets/{bronze,silver,gold,graph}.py`), driven by `.sql` files in `data_ingestion/sql/{bronze,silver,gold}/`. It imports `nz_companies_office.config.SETTINGS` and `nz_companies_office.graph.loader` (the final `graph_load` asset drops/reloads Neo4j) — a cross-package dependency, expected to be unpicked once a real `knowledge_graph` package exists.
-- ML pipeline: `machine_learning/` — only consumed from `notebooks/application/*.py` and `notebooks/06_exploring_embeddings.py` (no CLI/justfile wiring). Imports `nz_companies_office.config.SETTINGS` for all data/checkpoint paths.
+- ML pipeline: `machine_learning/` — library code at its root, marimo notebooks under `machine_learning/notebooks/` (`06_exploring_embeddings.py`, `07_visualize_embeddings.py`, `application/{00_dataset,01_link_prediction,02_interactive_testing}.py`; run via `just marimo-ml`). No CLI/justfile wiring beyond that. Imports `nz_companies_office.config.SETTINGS` for all data/checkpoint paths.
 - Data dirs (`data/raw/`, `data/bronze/`, `data/silver/`, `data/gold/`, `data/processed/`, `data/staging/`, `data/model_features/`) are git-ignored inside (track only `.gitignore`).
 
 ## Planning

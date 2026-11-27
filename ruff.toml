@@ -79,6 +79,7 @@ target-version = "py312"
 # omits type annotations, and uses unicode characters in markdown strings
 "notebooks/*.py" = ["ANN001", "ANN202", "ARG001", "B018", "BLE001", "COM812", "COM818", "ERA001", "F841", "INP001", "N803", "N806", "N807", "N999", "PLC0415", "PLR1711", "PLR2004", "RET505", "RUF001", "S608", "SLF001", "T201", "TID252"]
 "notebooks/template.ipynb" = ["ERA001", "NPY002"]
+"machine_learning/notebooks/*.py" = ["ANN001", "ANN202", "ARG001", "B018", "BLE001", "COM812", "COM818", "ERA001", "F841", "INP001", "N803", "N806", "N807", "N999", "PLC0415", "PLR1711", "PLR2004", "RET505", "RUF001", "S608", "SLF001", "T201", "TID252"]
 "notebooks/workshop-gnn/*.py" = ["ANN001", "ANN202", "ANN204", "ARG001", "B018", "BLE001", "C408", "COM812", "COM818", "ERA001", "INP001", "N801", "N803", "N806", "N807", "N812", "N999", "NPY002", "PLC0415", "PLR0402", "PLR1711", "PLR2004", "RET504", "RET505", "RUF001", "RUF059", "SLF001", "S104", "S108", "TID252", "B905"]
 
 [lint.mccabe]
