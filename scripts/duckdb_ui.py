@@ -13,12 +13,12 @@ import time
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.gold import gold_dim_output_path
-from nz_companies_office.orchestration.assets.gold import gold_fact_output_path
-from nz_companies_office.orchestration.assets.gold import silver_table_glob
-from nz_companies_office.orchestration.catalog import GOLD_DIMS
-from nz_companies_office.orchestration.catalog import GOLD_FACTS
-from nz_companies_office.orchestration.catalog import SILVER_TABLES
+from data_ingestion.assets.gold import gold_dim_output_path
+from data_ingestion.assets.gold import gold_fact_output_path
+from data_ingestion.assets.gold import silver_table_glob
+from data_ingestion.catalog import GOLD_DIMS
+from data_ingestion.catalog import GOLD_FACTS
+from data_ingestion.catalog import SILVER_TABLES
 
 logger = logging.getLogger(__name__)
 

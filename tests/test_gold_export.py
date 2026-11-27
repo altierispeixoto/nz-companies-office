@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.gold import materialize_gold_export_csv
-from nz_companies_office.orchestration.assets.gold import materialize_gold_export_csv_multi
-from nz_companies_office.orchestration.sql import read_sql
+from data_ingestion.assets.gold import materialize_gold_export_csv
+from data_ingestion.assets.gold import materialize_gold_export_csv_multi
+from data_ingestion.sql import read_sql
 
 if TYPE_CHECKING:
     from pathlib import Path

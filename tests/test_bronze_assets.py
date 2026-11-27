@@ -6,8 +6,8 @@ from pathlib import Path
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.bronze import materialize_bronze_table
-from nz_companies_office.orchestration.sql import read_sql
+from data_ingestion.assets.bronze import materialize_bronze_table
+from data_ingestion.sql import read_sql
 
 _FIXTURE = "tests/fixtures/raw/companies_core_data.csv"
 _FIXTURE_ROW_COUNT = 3

@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.gold import count_duplicate_nzbn
-from nz_companies_office.orchestration.assets.silver import REJECT_RATE_THRESHOLD
-from nz_companies_office.orchestration.assets.silver import compute_reject_rate
+from data_ingestion.assets.gold import count_duplicate_nzbn
+from data_ingestion.assets.silver import REJECT_RATE_THRESHOLD
+from data_ingestion.assets.silver import compute_reject_rate
 
 if TYPE_CHECKING:
     from pathlib import Path

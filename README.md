@@ -19,16 +19,16 @@ classification.
 NZ Companies Office (monthly CSV, data/raw/<yyyymm>/)
          │
          ▼                                     ── all orchestrated by Dagster, DuckDB SQL ──
-   bronze (Parquet, 1:1 copy)                    (sql/bronze/*.sql)
+   bronze (Parquet, 1:1 copy)                    (data_ingestion/sql/bronze/*.sql)
          │
          ▼
-   silver (typed, validated, deduped)             (sql/silver/*.sql)
+   silver (typed, validated, deduped)             (data_ingestion/sql/silver/*.sql)
          │
          ▼
-   gold (current-state dims + SCD2 change facts)  (sql/gold/{dims,facts}/*.sql)
+   gold (current-state dims + SCD2 change facts)  (data_ingestion/sql/gold/{dims,facts}/*.sql)
          │
          ▼
-   gold export (flat CSV)                         (sql/gold/export/*.sql)
+   gold export (flat CSV)                         (data_ingestion/sql/gold/export/*.sql)
          │
          ▼
    graph_load asset ──► scripts/csv/*.cypher ──► Neo4j 5-community ──► marimo notebooks
@@ -36,7 +36,7 @@ NZ Companies Office (monthly CSV, data/raw/<yyyymm>/)
 ```
 
 Data flows: bulk CSVs downloaded monthly → a bronze/silver/gold medallion pipeline
-(Dagster + DuckDB, `src/nz_companies_office/orchestration/`) cleans, types, validates,
+(Dagster + DuckDB, top-level `data_ingestion/` package) cleans, types, validates,
 and historizes every previously-loaded source table → a flat CSV export → a Dagster
 asset drops and reloads Neo4j from that export, running `scripts/csv/*.cypher` → queried
 and visualised in marimo notebooks (see [Notebooks](#notebooks) below). Browse the
@@ -48,11 +48,15 @@ tooling rationale.
 
 ### Dagster orchestration
 
-Everything from bronze through the Neo4j load is one Dagster asset graph
-(`src/nz_companies_office/orchestration/`), auto-discovered from the
+Everything from bronze through the Neo4j load is one Dagster asset graph in the
+top-level `data_ingestion/` package (not nested under `src/` — it's a separate
+package root declared in `pyproject.toml`), auto-discovered from the
 `assets/{bronze,silver,gold,graph}.py` modules — adding a new `@asset` to one
 of those files registers it in `definitions.py` automatically, nothing to wire
-up by hand.
+up by hand. It still imports `nz_companies_office.config.SETTINGS` and
+`nz_companies_office.graph.loader` (for the `graph_load` asset) — a cross-package
+dependency kept intentionally for now, to be unpicked once a real
+`knowledge_graph` package exists.
 
 | Asset group | Partitioning | What it does |
 |---|---|---|
@@ -64,7 +68,7 @@ up by hand.
 | `graph` | Unpartitioned | The `graph_load` asset: drops and reloads Neo4j from that export directory, via the same `load_database()` that `just load-db` calls directly — one implementation of the drop-and-reload logic, not two |
 
 All assets share a single DuckDB resource (`DuckDBResource(database=":memory:")`,
-`orchestration/resources.py`) — there's no persisted `.duckdb` file; every asset
+`data_ingestion/resources.py`) — there's no persisted `.duckdb` file; every asset
 reads/writes explicit Parquet or CSV paths, so there's one less place for a path
 to drift from what Dagster actually materialized.
 
@@ -283,7 +287,7 @@ just marimo
 | `just marimo` | Start marimo notebook server at `http://127.0.0.1:2718/` |
 | `just run pytest` | Run the test suite (`tests/`) |
 | `just run ruff check .` / `just run ruff format .` | Lint / format |
-| `just run mypy src/` | Type-check |
+| `just run mypy src/ data_ingestion/` | Type-check |
 | `just clean` | Remove the virtual environment |
 
 ### Notebooks
@@ -319,13 +323,21 @@ independent of this project's data: `01_gnn_foundations.py`, `02_gcn.py`, `03_ga
 ├── data/raw/<yyyymm>/         # Monthly CSV exports (git-ignored)
 ├── data/{bronze,silver,gold}/ # Medallion pipeline output (git-ignored)
 ├── data/{staging,processed,model_features}/ # LINZ cache, geocode exports, ML features (git-ignored)
-├── sql/
-│   ├── bronze/*.sql           # 1:1 typed copy of each raw source table
-│   ├── silver/*.sql           # Validated, deduplicated, historized tables
-│   └── gold/
-│       ├── dims/*.sql         # Current-state dimensions
-│       ├── facts/*.sql        # SCD2 change-fact tables
-│       └── export/*.sql       # Flat CSV export feeding scripts/csv/*.cypher
+├── data_ingestion/              # Dagster/DuckDB medallion pipeline — top-level package, not under src/
+│   ├── definitions.py          # Dagster Definitions entry point
+│   ├── resources.py            # Shared DuckDBResource(":memory:")
+│   ├── partitions.py           # Snapshot-month StaticPartitionsDefinition
+│   ├── sql.py                  # read_sql() — resolves data_ingestion/sql/*.sql
+│   ├── catalog.py              # SILVER_TABLES/GOLD_DIMS/GOLD_FACTS name registry
+│   ├── assets/{bronze,silver,gold,graph}.py # the asset graph (graph.py calls into
+│   │                            # nz_companies_office.graph.loader for the Neo4j load)
+│   └── sql/
+│       ├── bronze/*.sql       # 1:1 typed copy of each raw source table
+│       ├── silver/*.sql       # Validated, deduplicated, historized tables
+│       └── gold/
+│           ├── dims/*.sql     # Current-state dimensions
+│           ├── facts/*.sql    # SCD2 change-fact tables
+│           └── export/*.sql   # Flat CSV export feeding scripts/csv/*.cypher
 ├── notebooks/                  # marimo apps — see Notebooks section above
 │   ├── _neo4j_helpers.py      # Shared run_query() + mo_table() helpers
 │   ├── 00_load_database.py .. 07_visualize_embeddings.py
@@ -341,7 +353,6 @@ independent of this project's data: `01_gnn_foundations.py`, `02_gcn.py`, `03_ga
 ├── src/nz_companies_office/
 │   ├── cli/main.py            # CLI entry point (`nz-companies-office`)
 │   ├── config.py              # Settings dataclass (paths, Neo4j/thresholds config)
-│   ├── orchestration/         # Dagster Definitions, resources, bronze/silver/gold/graph assets
 │   ├── db/                    # Neo4j connection manager + repository
 │   ├── graph/                 # Entity resolution, enrichment, geocoding, industry descriptions, loader
 │   ├── domain/models.py       # Dataclasses for Company/Director/Shareholder/Address
@@ -364,7 +375,7 @@ just run ruff check .
 just run pytest -v
 
 # Full gate
-just run ruff check . && just run ruff format --check . && just run mypy src/ && just run pytest --cov
+just run ruff check . && just run ruff format --check . && just run mypy src/ data_ingestion/ && just run pytest --cov
 ```
 
 All tests live under `tests/`, are deterministic, and make no network/DB calls.

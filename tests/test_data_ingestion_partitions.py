@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from nz_companies_office.orchestration.partitions import discover_snapshot_months
+from data_ingestion.partitions import discover_snapshot_months
 
 if TYPE_CHECKING:
     from pathlib import Path

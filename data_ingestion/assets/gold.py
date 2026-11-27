@@ -18,23 +18,23 @@ from dagster import asset
 from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
+from data_ingestion.assets.silver import silver_company
+from data_ingestion.assets.silver import silver_company_abn
+from data_ingestion.assets.silver import silver_company_address
+from data_ingestion.assets.silver import silver_company_gst
+from data_ingestion.assets.silver import silver_company_industry
+from data_ingestion.assets.silver import silver_company_output_path
+from data_ingestion.assets.silver import silver_company_website
+from data_ingestion.assets.silver import silver_director
+from data_ingestion.assets.silver import silver_insolvency
+from data_ingestion.assets.silver import silver_maori_business_identifier
+from data_ingestion.assets.silver import silver_shareholder
+from data_ingestion.assets.silver import silver_table_output_path
+from data_ingestion.assets.silver import silver_trading_area
+from data_ingestion.assets.silver import silver_trading_name
+from data_ingestion.partitions import snapshot_month_partitions
+from data_ingestion.sql import read_sql
 from nz_companies_office.config import SETTINGS
-from nz_companies_office.orchestration.assets.silver import silver_company
-from nz_companies_office.orchestration.assets.silver import silver_company_abn
-from nz_companies_office.orchestration.assets.silver import silver_company_address
-from nz_companies_office.orchestration.assets.silver import silver_company_gst
-from nz_companies_office.orchestration.assets.silver import silver_company_industry
-from nz_companies_office.orchestration.assets.silver import silver_company_output_path
-from nz_companies_office.orchestration.assets.silver import silver_company_website
-from nz_companies_office.orchestration.assets.silver import silver_director
-from nz_companies_office.orchestration.assets.silver import silver_insolvency
-from nz_companies_office.orchestration.assets.silver import silver_maori_business_identifier
-from nz_companies_office.orchestration.assets.silver import silver_shareholder
-from nz_companies_office.orchestration.assets.silver import silver_table_output_path
-from nz_companies_office.orchestration.assets.silver import silver_trading_area
-from nz_companies_office.orchestration.assets.silver import silver_trading_name
-from nz_companies_office.orchestration.partitions import snapshot_month_partitions
-from nz_companies_office.orchestration.sql import read_sql
 
 
 def materialize_gold_table(
