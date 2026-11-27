@@ -29,6 +29,24 @@ from nz_companies_office.orchestration.partitions import snapshot_month_partitio
 
 _conn = duckdb.connect(":memory:")
 
+# Every gold dim/fact asset currently defined (src/nz_companies_office/orchestration/assets/gold.py).
+GOLD_DIMS = [
+    "company_dim",
+    "shareholding",
+    "director_dim",
+    "address_dim",
+    "company_address",
+    "company_industry",
+    "company_trading_name",
+    "company_trading_area",
+    "company_insolvency",
+]
+GOLD_FACTS = [
+    "company_status_changes",
+    "shareholding_changes",
+    "director_appointment_changes",
+]
+
 
 def available_months() -> list[str]:
     """Snapshot months with materialized data on disk, sorted ascending."""
@@ -77,6 +95,25 @@ def row_count(glob_or_path: str) -> int:
         return int(query(sql)["n"][0])
     except duckdb.IOException:
         return 0
+
+
+def describe(glob_or_path: str) -> pl.DataFrame:
+    """Column name/type schema of a Parquet file or glob, via DuckDB's DESCRIBE."""
+    sql = f"DESCRIBE SELECT * FROM read_parquet('{glob_or_path}', hive_partitioning = false)"
+    return query(sql)
+
+
+def sample(glob_or_path: str, limit: int = 2000) -> pl.DataFrame:
+    """Up to `limit` rows of a Parquet file or glob, for interactive browsing."""
+    sql = f"SELECT * FROM read_parquet('{glob_or_path}', hive_partitioning = false) LIMIT {int(limit)}"
+    return query(sql)
+
+
+def create_view(view_name: str, glob_or_path: str) -> None:
+    """(Re)create a DuckDB view over a Parquet file or glob, for ad hoc querying."""
+    _conn.execute(
+        f"CREATE OR REPLACE VIEW {view_name} AS SELECT * FROM read_parquet('{glob_or_path}', hive_partitioning = false)"
+    )
 
 
 def mo_table(sql: str, **kwargs: object) -> mo.ui.table | mo.Html:
