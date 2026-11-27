@@ -41,6 +41,100 @@ def _(mo):
 
 @app.cell
 def _(mo):
+    _erd = mo.mermaid(r"""
+    erDiagram
+        COMPANY_DIM {
+            string nzbn PK
+            string entity_name
+            string entity_status
+            string abn
+            string gst_number
+            string website
+        }
+        SHAREHOLDING {
+            string nzbn FK
+            string shareholder_name
+            bigint shares
+            double share_percentage
+            boolean is_majority
+        }
+        DIRECTOR_DIM {
+            string nzbn FK
+            string director_name
+            date appointed_on
+            boolean asic_dir_yn
+        }
+        ADDRESS_DIM {
+            string address_key PK
+            string street
+            string city
+            string country
+        }
+        COMPANY_ADDRESS {
+            string nzbn FK
+            string address_key FK
+            string address_type
+            date since
+        }
+        COMPANY_INDUSTRY {
+            string nzbn FK
+            string industry_code
+            string industry_description
+        }
+        COMPANY_TRADING_NAME {
+            string nzbn FK
+            string trading_name
+        }
+        COMPANY_TRADING_AREA {
+            string nzbn FK
+            string trading_area
+        }
+        COMPANY_INSOLVENCY {
+            string nzbn FK
+            string insolvency_type
+            string appointee
+        }
+        COMPANY_STATUS_CHANGES {
+            string nzbn FK
+            string snapshot_month
+            string previous_status
+            string new_status
+        }
+        SHAREHOLDING_CHANGES {
+            string nzbn FK
+            string shareholder_name
+            string change_type
+            bigint shares_before
+            bigint shares_after
+        }
+        DIRECTOR_APPOINTMENT_CHANGES {
+            string nzbn FK
+            string director_name
+            string change_type
+        }
+
+        COMPANY_DIM ||--o{ SHAREHOLDING : "shareholder of"
+        COMPANY_DIM ||--o{ DIRECTOR_DIM : "directed by"
+        COMPANY_DIM ||--o{ COMPANY_ADDRESS : "has address"
+        ADDRESS_DIM ||--o{ COMPANY_ADDRESS : "resolves"
+        COMPANY_DIM ||--o{ COMPANY_INDUSTRY : "classified as"
+        COMPANY_DIM ||--o{ COMPANY_TRADING_NAME : "trades as"
+        COMPANY_DIM ||--o{ COMPANY_TRADING_AREA : "trades in"
+        COMPANY_DIM ||--o{ COMPANY_INSOLVENCY : "insolvency of"
+        COMPANY_DIM ||--o{ COMPANY_STATUS_CHANGES : "status history"
+        SHAREHOLDING ||--o{ SHAREHOLDING_CHANGES : "share history"
+        DIRECTOR_DIM ||--o{ DIRECTOR_APPOINTMENT_CHANGES : "appointment history"
+    """)
+    mo.accordion(
+        {
+            "Schema overview (ERD) -- all 9 dims + 3 facts, keyed off nzbn/address_key": _erd,
+        },
+    )
+    return
+
+
+@app.cell
+def _(mo):
     kind_picker = mo.ui.dropdown(options=["dim", "fact"], value="dim", label="Kind")
     kind_picker
     return (kind_picker,)
@@ -133,7 +227,7 @@ def _(mo):
 
 
 @app.cell
-def _(dh, mo, sql_box, table_path):
+def _(dh, mo, sql_box):
     # table_path (unused directly) forces this cell to rerun when the picked table changes,
     # re-registering the `t` view it depends on.
     try:
