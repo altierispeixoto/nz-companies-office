@@ -346,7 +346,7 @@ def materialize_gold_export_csv(
         {"input_path": str(input_path), "output_path": str(output_path)},
     )
     row = conn.execute(
-        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true)",
+        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true, quote = '\"')",
         {"path": str(output_path)},
     ).fetchone()
     return int(row[0]) if row else 0
@@ -394,17 +394,22 @@ def materialize_gold_export_csv_multi(
         {**params, "output_path": str(output_path)},
     )
     row = conn.execute(
-        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true)",
+        "SELECT count(*) FROM read_csv($path, header = true, all_varchar = true, quote = '\"')",
         {"path": str(output_path)},
     ).fetchone()
     return int(row[0]) if row else 0
 
 
-def _make_gold_export_asset(name: str, csv_filename: str, gold_asset: AssetsDefinition) -> AssetsDefinition:
+def _make_gold_export_asset(
+    name: str,
+    gold_dim_name: str,
+    csv_filename: str,
+    gold_asset: AssetsDefinition,
+) -> AssetsDefinition:
     """Build a single-input export asset, named ``gold_export_<name>``.
 
     The export SQL is read from ``sql/gold/export/<name>.sql`` and must accept an
-    ``$input_path`` parameter pointing at one gold dimension's Parquet file.
+    ``$input_path`` parameter pointing at the ``gold_dim_name`` dimension's Parquet file.
     """
 
     @asset(name=f"gold_export_{name}", group_name="gold_export", deps=[gold_asset])
@@ -413,7 +418,7 @@ def _make_gold_export_asset(name: str, csv_filename: str, gold_asset: AssetsDefi
         select_sql = read_sql("gold", "export", name)
         output_path = export_output_path(latest_month, csv_filename)
         with duckdb.get_connection() as conn:
-            row_count = materialize_gold_export_csv(conn, select_sql, gold_dim_output_path(name), output_path)
+            row_count = materialize_gold_export_csv(conn, select_sql, gold_dim_output_path(gold_dim_name), output_path)
         context.add_output_metadata({"row_count": row_count, "output_path": str(output_path)})
 
     return _gold_export_asset
@@ -421,31 +426,37 @@ def _make_gold_export_asset(name: str, csv_filename: str, gold_asset: AssetsDefi
 
 gold_export_companies_core_data = _make_gold_export_asset(
     "companies_core_data",
+    "company_dim",
     "companies_core_data.csv",
     gold_company_dim,
 )
 gold_export_companies_director = _make_gold_export_asset(
     "companies_director",
+    "director_dim",
     "companies_director.csv",
     gold_director_dim,
 )
 gold_export_companies_business_industry_classification = _make_gold_export_asset(
     "companies_business_industry_classification",
+    "company_industry",
     "companies_business_industry_classification.csv",
     gold_company_industry,
 )
 gold_export_companies_trading_name = _make_gold_export_asset(
     "companies_trading_name",
+    "company_trading_name",
     "companies_trading_name.csv",
     gold_company_trading_name,
 )
 gold_export_companies_trading_area = _make_gold_export_asset(
     "companies_trading_area",
+    "company_trading_area",
     "companies_trading_area.csv",
     gold_company_trading_area,
 )
 gold_export_companies_insolvency = _make_gold_export_asset(
     "companies_insolvency",
+    "company_insolvency",
     "companies_insolvency.csv",
     gold_company_insolvency,
 )
