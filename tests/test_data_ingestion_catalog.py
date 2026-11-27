@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from nz_companies_office.orchestration.catalog import GOLD_DIMS
-from nz_companies_office.orchestration.catalog import GOLD_FACTS
-from nz_companies_office.orchestration.catalog import SILVER_TABLES
+from data_ingestion.catalog import GOLD_DIMS
+from data_ingestion.catalog import GOLD_FACTS
+from data_ingestion.catalog import SILVER_TABLES
 
 
 def test_silver_tables_non_empty_and_unique() -> None:

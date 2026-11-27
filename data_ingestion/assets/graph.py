@@ -3,16 +3,16 @@
 from dagster import AssetExecutionContext
 from dagster import asset
 
+from data_ingestion.assets.gold import gold_export_companies_business_industry_classification
+from data_ingestion.assets.gold import gold_export_companies_core_data
+from data_ingestion.assets.gold import gold_export_companies_director
+from data_ingestion.assets.gold import gold_export_companies_insolvency
+from data_ingestion.assets.gold import gold_export_companies_shareholder
+from data_ingestion.assets.gold import gold_export_companies_trading_area
+from data_ingestion.assets.gold import gold_export_companies_trading_name
+from data_ingestion.assets.gold import gold_export_company_address
 from nz_companies_office.config import SETTINGS
 from nz_companies_office.graph.loader import load_database
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_business_industry_classification
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_core_data
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_director
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_insolvency
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_shareholder
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_trading_area
-from nz_companies_office.orchestration.assets.gold import gold_export_companies_trading_name
-from nz_companies_office.orchestration.assets.gold import gold_export_company_address
 
 
 @asset(

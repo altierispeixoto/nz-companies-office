@@ -13,9 +13,9 @@ from dagster import AssetsDefinition
 from dagster import asset
 from dagster_duckdb import DuckDBResource
 
+from data_ingestion.partitions import snapshot_month_partitions
+from data_ingestion.sql import read_sql
 from nz_companies_office.config import SETTINGS
-from nz_companies_office.orchestration.partitions import snapshot_month_partitions
-from nz_companies_office.orchestration.sql import read_sql
 
 
 def materialize_bronze_table(

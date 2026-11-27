@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from nz_companies_office.orchestration.assets.bronze import materialize_bronze_table
-from nz_companies_office.orchestration.assets.silver import materialize_silver_company_address
-from nz_companies_office.orchestration.assets.silver import materialize_silver_table
-from nz_companies_office.orchestration.sql import read_sql
+from data_ingestion.assets.bronze import materialize_bronze_table
+from data_ingestion.assets.silver import materialize_silver_company_address
+from data_ingestion.assets.silver import materialize_silver_table
+from data_ingestion.sql import read_sql
 
 if TYPE_CHECKING:
     from pathlib import Path

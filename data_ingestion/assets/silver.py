@@ -16,24 +16,24 @@ from dagster import asset
 from dagster import asset_check
 from dagster_duckdb import DuckDBResource
 
+from data_ingestion.assets.bronze import bronze_companies_abn
+from data_ingestion.assets.bronze import bronze_companies_address_for_service
+from data_ingestion.assets.bronze import bronze_companies_business_industry_classification
+from data_ingestion.assets.bronze import bronze_companies_core_data
+from data_ingestion.assets.bronze import bronze_companies_director
+from data_ingestion.assets.bronze import bronze_companies_gst
+from data_ingestion.assets.bronze import bronze_companies_insolvency
+from data_ingestion.assets.bronze import bronze_companies_public_address
+from data_ingestion.assets.bronze import bronze_companies_registered_office_address
+from data_ingestion.assets.bronze import bronze_companies_shareholder
+from data_ingestion.assets.bronze import bronze_companies_trading_area
+from data_ingestion.assets.bronze import bronze_companies_trading_name
+from data_ingestion.assets.bronze import bronze_companies_website
+from data_ingestion.assets.bronze import bronze_maori_business_identifier
+from data_ingestion.assets.bronze import bronze_table_output_path
+from data_ingestion.partitions import snapshot_month_partitions
+from data_ingestion.sql import read_sql
 from nz_companies_office.config import SETTINGS
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_abn
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_address_for_service
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_business_industry_classification
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_core_data
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_director
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_gst
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_insolvency
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_public_address
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_registered_office_address
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_shareholder
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_trading_area
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_trading_name
-from nz_companies_office.orchestration.assets.bronze import bronze_companies_website
-from nz_companies_office.orchestration.assets.bronze import bronze_maori_business_identifier
-from nz_companies_office.orchestration.assets.bronze import bronze_table_output_path
-from nz_companies_office.orchestration.partitions import snapshot_month_partitions
-from nz_companies_office.orchestration.sql import read_sql
 
 
 def materialize_silver_company(

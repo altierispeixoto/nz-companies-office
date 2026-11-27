@@ -85,14 +85,14 @@ dagster-dev:
     #!/usr/bin/env bash
     mkdir -p .dagster
     source .venv/bin/activate
-    DAGSTER_HOME="$(pwd)/.dagster" dagster dev -f src/nz_companies_office/orchestration/definitions.py
+    DAGSTER_HOME="$(pwd)/.dagster" dagster dev -f data_ingestion/definitions.py
 
 # Materialize all medallion pipeline assets for one snapshot month, e.g. `just pipeline 202611`
 pipeline month:
     #!/usr/bin/env bash
     mkdir -p .dagster
     source .venv/bin/activate
-    DAGSTER_HOME="$(pwd)/.dagster" dagster asset materialize --select '*' --partition {{ month }} -f src/nz_companies_office/orchestration/definitions.py
+    DAGSTER_HOME="$(pwd)/.dagster" dagster asset materialize --select '*' --partition {{ month }} -f data_ingestion/definitions.py
 
 # Transform LINZ shapefile into a cached CSV
 prepare-linz *ARGS:
