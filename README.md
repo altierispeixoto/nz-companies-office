@@ -284,7 +284,7 @@ just marimo
 | `just dagster-dev` | Dagster dev UI for the full asset graph — bronze/silver/gold plus the Neo4j `graph_load` asset (`http://localhost:3000`) |
 | `just pipeline <yyyymm>` | `dagster asset materialize --select '*' --partition <yyyymm>`: bronze → silver → gold → gold export for that month, then attempts `graph_load` (fails harmlessly if Neo4j isn't running yet) |
 | `just duckdb-ui` | Browse `silver.*`/`gold.*` Parquet tables in DuckDB's local web UI (`http://localhost:4213`) |
-| `just marimo` | Start marimo notebook server at `http://127.0.0.1:2718/` |
+| `just marimo` / `just marimo-ml` | Start marimo notebook server at `http://127.0.0.1:2718/`, over `notebooks/` or `machine_learning/notebooks/` respectively |
 | `just run pytest` | Run the test suite (`tests/`) |
 | `just run ruff check .` / `just run ruff format .` | Lint / format |
 | `just run mypy src/ data_ingestion/ machine_learning/` | Type-check |
@@ -292,10 +292,10 @@ just marimo
 
 ### Notebooks
 
-All notebooks are marimo apps (`just marimo`). The numbered root-level notebooks
+All notebooks are marimo apps (`just marimo` for `notebooks/`, `just marimo-ml`
+for `machine_learning/notebooks/`). The numbered `notebooks/` root-level files
 form the research narrative and share `_neo4j_helpers.py` (`run_query()`,
-`mo_table()`); `application/` and `workshop-gnn/` are separate, self-contained
-sub-series.
+`mo_table()`); `workshop-gnn/` is a separate, self-contained sub-series.
 
 | Notebook | What it covers |
 |----------|---------------|
@@ -306,10 +306,17 @@ sub-series.
 | `04_entity_resolution.py` | Entity resolution between Shareholder and Director names: exact match + trigram fuzzy matching, verified by company overlap |
 | `05_entity_resolution_v2.py` | Second entity-resolution pass: multi-blocking candidate generation + a trained classifier, instead of 04's single trigram threshold |
 | `05_predicting_investor_types.py` | Investor-type classification proof of concept: hand-labeled seed entities, Node2Vec vs FastRP embeddings combined with graph features |
-| `06_exploring_embeddings.py` | Extracts the graph from Neo4j, builds exploration features and a `HeteroData` object for GNN embedding experiments |
-| `07_visualize_embeddings.py` | Embedding Atlas visualization of the learned node embeddings |
 
-`notebooks/application/` — a small end-to-end GNN link-prediction app:
+The GNN/link-prediction notebooks live under `machine_learning/notebooks/`
+instead, alongside the pipeline code they import (see
+[Project Structure](#project-structure)):
+
+| Notebook | What it covers |
+|----------|---------------|
+| `06_exploring_embeddings.py` | Extracts the graph from Neo4j, builds exploration features and a `HeteroData` object for GNN embedding experiments |
+| `07_visualize_embeddings.py` | Embedding Atlas visualization of the learned node embeddings (reads `06`'s output) |
+
+`machine_learning/notebooks/application/` — a small end-to-end GNN link-prediction app:
 `00_dataset.py` (build the training dataset), `01_link_prediction.py` (train/evaluate),
 `02_interactive_testing.py` (interactive inference over a saved checkpoint).
 
@@ -345,13 +352,16 @@ independent of this project's data: `01_gnn_foundations.py`, `02_gcn.py`, `03_ga
 │   ├── split.py                 # Train/val/test edge splitting + negative sampling
 │   ├── link_predictor.py       # HeteroEncoder/Decoder/LinkPredictor (torch nn.Modules)
 │   ├── trainer.py              # LinkPredictorTrainer — training loop, AUC/AP eval, checkpointing
-│   └── embeddings.py           # Sentence-transformers industry-description embeddings
-│                                # (only consumed by notebooks/application/*.py and
-│                                #  notebooks/06_exploring_embeddings.py — no CLI/justfile wiring)
-├── notebooks/                  # marimo apps — see Notebooks section above
+│   ├── embeddings.py           # Sentence-transformers industry-description embeddings
+│   │                            # (no CLI/justfile wiring — only consumed by notebooks/ below)
+│   └── notebooks/              # marimo apps — `just marimo-ml` (see Notebooks section above)
+│       ├── 06_exploring_embeddings.py
+│       ├── 07_visualize_embeddings.py
+│       └── application/       # GNN link-prediction mini-app (00_dataset, 01_link_prediction,
+│                                # 02_interactive_testing)
+├── notebooks/                  # marimo apps — `just marimo` (see Notebooks section above)
 │   ├── _neo4j_helpers.py      # Shared run_query() + mo_table() helpers
-│   ├── 00_load_database.py .. 07_visualize_embeddings.py
-│   ├── application/           # GNN link-prediction mini-app
+│   ├── 00_load_database.py .. 05_predicting_investor_types.py
 │   └── workshop-gnn/           # Standalone GNN teaching series
 ├── scripts/
 │   ├── csv/*.cypher           # Canonical per-entity LOAD CSV steps, run in order by `just load-db`
