@@ -17,7 +17,7 @@ from nz_companies_office.config import SETTINGS
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nz_companies_office.models.link_predictor import LinkPredictor
+    from machine_learning.link_predictor import LinkPredictor
 
 
 @dataclass

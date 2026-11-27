@@ -23,13 +23,13 @@ def _():
     from sklearn.decomposition import PCA
     from torch_geometric.utils import degree
 
-    from nz_companies_office.models.builder import build_hetero_data
-    from nz_companies_office.models.extractor import GraphExtractor
-    from nz_companies_office.models.features import build_exploration_features
-    from nz_companies_office.models.link_predictor import LinkPredictor
-    from nz_companies_office.models.split import sample_negative_edges
-    from nz_companies_office.models.split import split_share_edges
-    from nz_companies_office.models.trainer import LinkPredictorTrainer
+    from machine_learning.builder import build_hetero_data
+    from machine_learning.extractor import GraphExtractor
+    from machine_learning.features import build_exploration_features
+    from machine_learning.link_predictor import LinkPredictor
+    from machine_learning.split import sample_negative_edges
+    from machine_learning.split import split_share_edges
+    from machine_learning.trainer import LinkPredictorTrainer
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)

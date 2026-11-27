@@ -287,7 +287,7 @@ just marimo
 | `just marimo` | Start marimo notebook server at `http://127.0.0.1:2718/` |
 | `just run pytest` | Run the test suite (`tests/`) |
 | `just run ruff check .` / `just run ruff format .` | Lint / format |
-| `just run mypy src/ data_ingestion/` | Type-check |
+| `just run mypy src/ data_ingestion/ machine_learning/` | Type-check |
 | `just clean` | Remove the virtual environment |
 
 ### Notebooks
@@ -338,6 +338,16 @@ independent of this project's data: `01_gnn_foundations.py`, `02_gcn.py`, `03_ga
 │           ├── dims/*.sql     # Current-state dimensions
 │           ├── facts/*.sql    # SCD2 change-fact tables
 │           └── export/*.sql   # Flat CSV export feeding scripts/csv/*.cypher
+├── machine_learning/            # GNN link-prediction pipeline — top-level package, not under src/
+│   ├── builder.py              # build_hetero_data() — assembles the PyG HeteroData graph
+│   ├── extractor.py            # GraphExtractor — pulls the investor graph from Neo4j (cached .pt)
+│   ├── features.py             # Node feature tensors (one-hots, degree, embeddings)
+│   ├── split.py                 # Train/val/test edge splitting + negative sampling
+│   ├── link_predictor.py       # HeteroEncoder/Decoder/LinkPredictor (torch nn.Modules)
+│   ├── trainer.py              # LinkPredictorTrainer — training loop, AUC/AP eval, checkpointing
+│   └── embeddings.py           # Sentence-transformers industry-description embeddings
+│                                # (only consumed by notebooks/application/*.py and
+│                                #  notebooks/06_exploring_embeddings.py — no CLI/justfile wiring)
 ├── notebooks/                  # marimo apps — see Notebooks section above
 │   ├── _neo4j_helpers.py      # Shared run_query() + mo_table() helpers
 │   ├── 00_load_database.py .. 07_visualize_embeddings.py
@@ -355,8 +365,8 @@ independent of this project's data: `01_gnn_foundations.py`, `02_gcn.py`, `03_ga
 │   ├── config.py              # Settings dataclass (paths, Neo4j/thresholds config)
 │   ├── db/                    # Neo4j connection manager + repository
 │   ├── graph/                 # Entity resolution, enrichment, geocoding, industry descriptions, loader
-│   ├── domain/models.py       # Dataclasses for Company/Director/Shareholder/Address
-│   ├── models/                # GNN link-prediction pipeline (feature builder, embeddings, trainer)
+│   ├── domain/models.py       # Dataclasses for Company/Director/Shareholder/Address (unrelated to
+│   │                          # the top-level machine_learning/ package, despite the shared name)
 │   ├── loaders/csv_loader.py  # Legacy bulk CSV loader, used only by the unwired `csv-fetch` CLI stub
 │   └── utils/device.py        # torch device selection (CPU/CUDA/MPS)
 ├── tests/                     # Unit tests, no network/DB calls
@@ -375,7 +385,7 @@ just run ruff check .
 just run pytest -v
 
 # Full gate
-just run ruff check . && just run ruff format --check . && just run mypy src/ data_ingestion/ && just run pytest --cov
+just run ruff check . && just run ruff format --check . && just run mypy src/ data_ingestion/ machine_learning/ && just run pytest --cov
 ```
 
 All tests live under `tests/`, are deterministic, and make no network/DB calls.

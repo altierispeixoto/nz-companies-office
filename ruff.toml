@@ -94,7 +94,7 @@ convention = "google"
 [lint.isort]
 force-single-line = true
 combine-as-imports = true
-known-first-party = ["nz-companies-office", "data_ingestion"]
+known-first-party = ["nz-companies-office", "data_ingestion", "machine_learning"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [lint.flake8-bugbear]
