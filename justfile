@@ -112,20 +112,6 @@ clean:
 marimo:
     @just run marimo edit notebooks/ --watch
 
-# Start the frontend dev server (Vite) — requires `npm install` in app/ first
-ui:
-    @echo "Starting Vite dev server on http://localhost:5173 ..."
-    @cd app && npx vite
-
-# Build the frontend for production
-ui-build:
-    @echo "Building frontend..."
-    @npm --prefix app run build
-
-# Start the graph visualization
-viz: ui
-
-# Export Neo4j data to parquet files for DuckDB-WASM
-exp:
-    @echo "Exporting Neo4j data to app/public/..."
-    @just run python scripts/export_parquet.py
+# Start DuckDB's local web UI with views over the silver/gold medallion layers
+duckdb-ui:
+    @just run python scripts/duckdb_ui.py
